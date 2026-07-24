@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Eye, EyeOff, User, Mail, Lock } from "lucide-react";
 
+import Button from "./Button";
+
 interface AuthFormProps {
   initialMode?: "login" | "register";
 }
@@ -263,17 +265,9 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
           )}
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full h-12 mt-2 bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] hover:opacity-95 text-white font-bold text-sm rounded-2xl shadow-md shadow-[#1B5E20]/20 active:scale-[0.98] transition-all flex items-center justify-center cursor-pointer disabled:opacity-80"
-          >
-            {isLoading ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <span>{mode === "register" ? "Daftar" : "Masuk"}</span>
-            )}
-          </button>
+          <Button type="submit" isLoading={isLoading} className="mt-2">
+            {mode === "register" ? "Daftar" : "Masuk"}
+          </Button>
         </form>
 
         {/* Switch Link */}

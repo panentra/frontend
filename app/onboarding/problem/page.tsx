@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Button from "../../components/Button";
 
 export default function OnboardingProblemPage() {
   const router = useRouter();
@@ -41,12 +42,9 @@ export default function OnboardingProblemPage() {
 
       {/* Bottom Action Button (Anchored at the bottom) */}
       <div className="w-full max-w-[360px] mx-auto relative z-10 pb-2 mt-auto">
-        <button
-          onClick={() => router.push("/onboarding/price-issue")}
-          className="w-full h-14 bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] hover:opacity-95 text-white font-bold text-base rounded-2xl shadow-lg shadow-[#1B5E20]/20 flex items-center justify-center active:scale-[0.99] transition-all cursor-pointer"
-        >
+        <Button size="lg" onClick={() => router.push("/onboarding/price-issue")}>
           Lanjut
-        </button>
+        </Button>
       </div>
     </div>
   );

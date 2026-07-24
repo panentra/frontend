@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Button from "../../components/Button";
 
 export default function OnboardingPriceIssuePage() {
   const router = useRouter();
@@ -41,20 +42,26 @@ export default function OnboardingPriceIssuePage() {
       {/* Bottom Action Buttons (Kembali & Lanjut side by side) */}
       <div className="w-full max-w-[360px] mx-auto relative z-10 pb-2 mt-auto flex items-center gap-3">
         {/* Button Kembali */}
-        <button
+        <Button
+          variant="secondary"
+          size="lg"
+          fullWidth={false}
+          className="flex-1"
           onClick={() => router.push("/onboarding/problem")}
-          className="flex-1 h-14 bg-white/80 hover:bg-white border border-[#1B5E20]/30 text-[#1B5E20] font-bold text-base rounded-2xl shadow-sm flex items-center justify-center active:scale-[0.99] transition-all cursor-pointer"
         >
           Kembali
-        </button>
+        </Button>
 
         {/* Button Lanjut */}
-        <button
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth={false}
+          className="flex-1"
           onClick={() => router.push("/")}
-          className="flex-1 h-14 bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] hover:opacity-95 text-white font-bold text-base rounded-2xl shadow-lg shadow-[#1B5E20]/20 flex items-center justify-center active:scale-[0.99] transition-all cursor-pointer"
         >
           Lanjut
-        </button>
+        </Button>
       </div>
     </div>
   );
