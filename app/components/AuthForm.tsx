@@ -100,9 +100,9 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
             <Image
               src="/assets/logo.png"
               alt="Panentra Logo"
-              width={220}
+              width={300}
               height={30}
-              className="h-10 w-auto object-contain"
+              className="h-15 w-auto object-contain"
               priority
             />
           </Link>
@@ -119,22 +119,20 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
           <button
             type="button"
             onClick={() => setRole("petani")}
-            className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all text-center ${
-              role === "petani"
+            className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all text-center ${role === "petani"
                 ? "bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] text-white shadow-sm"
                 : "text-[#4B5563] hover:text-[#111827]"
-            }`}
+              }`}
           >
             Petani
           </button>
           <button
             type="button"
             onClick={() => setRole("pemasok")}
-            className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all text-center ${
-              role === "pemasok"
+            className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all text-center ${role === "pemasok"
                 ? "bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] text-white shadow-sm"
                 : "text-[#4B5563] hover:text-[#111827]"
-            }`}
+              }`}
           >
             Pemasok
           </button>
