@@ -87,11 +87,9 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
   const copySubtitle = getCopywritingSubtitle();
 
   return (
-    <div className="w-full flex-1 flex flex-col items-center justify-center p-5 my-auto panentra-grid-bg min-h-screen relative overflow-hidden select-none bg-gradient-to-b from-[#EBF5EC]/50 via-transparent to-[#E2F0E5]/60">
-      {/* Decorative Organic Subtle Green Gradient Overlays */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#4CAF50]/8 via-transparent to-[#1B5E20]/10 pointer-events-none z-0" />
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[#4CAF50]/15 rounded-full blur-3xl pointer-events-none z-0" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#1B5E20]/15 rounded-full blur-3xl pointer-events-none z-0" />
+    <div className="w-full flex-1 flex flex-col items-center justify-center p-5 my-auto min-h-screen relative overflow-hidden select-none bg-gradient-to-b from-[#F2F8F3] to-[#E8F3EA]">
+      {/* Subtle Ambient Light Overlay */}
+      <div className="absolute top-0 right-0 w-80 h-80 bg-[#1B5E20]/5 rounded-full blur-3xl pointer-events-none z-0" />
 
       {/* OUTSIDE Logo & Brand Header */}
       <div className="flex flex-col items-center text-center mb-5 relative z-10 px-4">
@@ -113,26 +111,28 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
       </div>
 
       {/* Main Form Box Container */}
-      <div className="w-full max-w-[360px] bg-white/90 backdrop-blur-md rounded-[32px] p-6 sm:p-7 shadow-[0_15px_45px_-12px_rgba(27,94,32,0.14)] border border-[#E1E4E0] flex flex-col items-center relative z-10">
+      <div className="w-full max-w-[360px] bg-white rounded-[32px] p-6 sm:p-7 shadow-[0_15px_45px_-12px_rgba(27,94,32,0.12)] border border-[#E1E4E0] flex flex-col items-center relative z-10">
         {/* Role Switcher (Petani vs Pemasok) */}
         <div className="w-full bg-[#E5E7E5] p-1 rounded-full flex items-center mb-5">
           <button
             type="button"
             onClick={() => setRole("petani")}
-            className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all text-center ${role === "petani"
+            className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all text-center ${
+              role === "petani"
                 ? "bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] text-white shadow-sm"
                 : "text-[#4B5563] hover:text-[#111827]"
-              }`}
+            }`}
           >
             Petani
           </button>
           <button
             type="button"
             onClick={() => setRole("pemasok")}
-            className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all text-center ${role === "pemasok"
+            className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all text-center ${
+              role === "pemasok"
                 ? "bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] text-white shadow-sm"
                 : "text-[#4B5563] hover:text-[#111827]"
-              }`}
+            }`}
           >
             Pemasok
           </button>
@@ -246,7 +246,7 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full h-11 mt-1 bg-gradient-to-r from-[#1B5E20] via-[#25732A] to-[#2E7D32] hover:opacity-95 text-white font-bold text-sm rounded-full shadow-md shadow-[#1B5E20]/25 active:scale-[0.98] transition-all flex items-center justify-center cursor-pointer disabled:opacity-80"
+            className="w-full h-11 mt-1 bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] hover:opacity-95 text-white font-bold text-sm rounded-full shadow-md shadow-[#1B5E20]/20 active:scale-[0.98] transition-all flex items-center justify-center cursor-pointer disabled:opacity-80"
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
