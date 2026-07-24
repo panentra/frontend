@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, User, Mail, Lock } from "lucide-react";
 
 interface AuthFormProps {
   initialMode?: "login" | "register";
@@ -25,6 +25,7 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [agreedToPolicy, setAgreedToPolicy] = useState(false);
 
   // Password Visibility Toggle States
   const [showPassword, setShowPassword] = useState(false);
@@ -54,6 +55,10 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
     }
     if (mode === "register" && password !== confirmPassword) {
       setErrorMessage("Konfirmasi Password tidak cocok.");
+      return;
+    }
+    if (mode === "register" && !agreedToPolicy) {
+      setErrorMessage("Anda harus menyetujui Kebijakan Privasi.");
       return;
     }
 
@@ -113,11 +118,11 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
       {/* Main Form Box Container */}
       <div className="w-full max-w-[360px] bg-white rounded-[32px] p-6 sm:p-7 shadow-[0_15px_45px_-12px_rgba(27,94,32,0.12)] border border-[#E1E4E0] flex flex-col items-center relative z-10">
         {/* Role Switcher (Petani vs Pemasok) */}
-        <div className="w-full bg-[#E5E7E5] p-1 rounded-full flex items-center mb-5">
+        <div className="w-full bg-[#E5E7E5] p-1 rounded-2xl flex items-center mb-5">
           <button
             type="button"
             onClick={() => setRole("petani")}
-            className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all text-center ${
+            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all text-center ${
               role === "petani"
                 ? "bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] text-white shadow-sm"
                 : "text-[#4B5563] hover:text-[#111827]"
@@ -128,7 +133,7 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
           <button
             type="button"
             onClick={() => setRole("pemasok")}
-            className={`flex-1 py-2.5 rounded-full text-xs font-bold transition-all text-center ${
+            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all text-center ${
               role === "pemasok"
                 ? "bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] text-white shadow-sm"
                 : "text-[#4B5563] hover:text-[#111827]"
@@ -140,67 +145,65 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
 
         {/* Feedback Alerts */}
         {errorMessage && (
-          <div className="w-full mb-3 p-2.5 bg-red-50 border border-red-200 rounded-full text-red-600 text-xs text-center font-medium">
+          <div className="w-full mb-3 p-2.5 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-xs text-center font-medium">
             {errorMessage}
           </div>
         )}
 
         {successMessage && (
-          <div className="w-full mb-3 p-2.5 bg-green-50 border border-green-200 rounded-full text-[#1B5E20] text-xs text-center font-bold flex items-center justify-center gap-1.5">
+          <div className="w-full mb-3 p-2.5 bg-green-50 border border-green-200 rounded-2xl text-[#1B5E20] text-xs text-center font-bold flex items-center justify-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-[#1B5E20]" />
             {successMessage}
           </div>
         )}
 
         {/* Form Fields */}
-        <form onSubmit={handleSubmit} className="w-full space-y-3">
+        <form onSubmit={handleSubmit} className="w-full space-y-3.5">
           {/* Register: Nama */}
           {mode === "register" && (
             <div>
-              <label className="block text-xs font-bold text-[#1B5E20] mb-1 ml-3">
-                Nama
-              </label>
-              <input
-                type="text"
-                placeholder="Masukkan Nama"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full h-11 px-5 bg-white border border-[#1B5E20]/40 focus:border-2 focus:border-[#1B5E20] rounded-full text-xs text-[#1B5E20] font-semibold placeholder:text-[#1B5E20]/60 placeholder:font-normal outline-none transition-all"
-              />
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                <input
+                  type="text"
+                  placeholder="Masukkan Nama"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full h-12 pl-11 pr-4 bg-[#F3F4F6] border border-transparent focus:border-[#1B5E20]/40 focus:bg-white rounded-2xl text-xs text-[#111827] font-medium placeholder:text-[#9CA3AF] outline-none transition-all"
+                />
+              </div>
             </div>
           )}
 
           {/* Email */}
           <div>
-            <label className="block text-xs font-bold text-[#1B5E20] mb-1 ml-3">
-              Email
-            </label>
-            <input
-              type="text"
-              placeholder="Masukkan Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-11 px-5 bg-white border border-[#1B5E20]/40 focus:border-2 focus:border-[#1B5E20] rounded-full text-xs text-[#1B5E20] font-semibold placeholder:text-[#1B5E20]/60 placeholder:font-normal outline-none transition-all"
-            />
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+              <input
+                type="text"
+                placeholder="Masukkan Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full h-12 pl-11 pr-4 bg-[#F3F4F6] border border-transparent focus:border-[#1B5E20]/40 focus:bg-white rounded-2xl text-xs text-[#111827] font-medium placeholder:text-[#9CA3AF] outline-none transition-all"
+              />
+            </div>
           </div>
 
           {/* Password */}
           <div>
-            <label className="block text-xs font-bold text-[#1B5E20] mb-1 ml-3">
-              Password
-            </label>
             <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Masukkan Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-11 pl-5 pr-11 bg-white border border-[#1B5E20]/40 focus:border-2 focus:border-[#1B5E20] rounded-full text-xs text-[#1B5E20] font-semibold placeholder:text-[#1B5E20]/60 placeholder:font-normal outline-none transition-all"
+                className="w-full h-12 pl-11 pr-11 bg-[#F3F4F6] border border-transparent focus:border-[#1B5E20]/40 focus:bg-white rounded-2xl text-xs text-[#111827] font-medium placeholder:text-[#9CA3AF] outline-none transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#1B5E20]/70 hover:text-[#1B5E20] focus:outline-none p-1 cursor-pointer"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#111827] focus:outline-none p-1 cursor-pointer"
                 aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
               >
                 {showPassword ? (
@@ -215,21 +218,19 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
           {/* Register: Konfirmasi Password */}
           {mode === "register" && (
             <div>
-              <label className="block text-xs font-bold text-[#1B5E20] mb-1 ml-3">
-                Konfirmasi Password
-              </label>
               <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Ketik Ulang Password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full h-11 pl-5 pr-11 bg-white border border-[#1B5E20]/40 focus:border-2 focus:border-[#1B5E20] rounded-full text-xs text-[#1B5E20] font-semibold placeholder:text-[#1B5E20]/60 placeholder:font-normal outline-none transition-all"
+                  className="w-full h-12 pl-11 pr-11 bg-[#F3F4F6] border border-transparent focus:border-[#1B5E20]/40 focus:bg-white rounded-2xl text-xs text-[#111827] font-medium placeholder:text-[#9CA3AF] outline-none transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#1B5E20]/70 hover:text-[#1B5E20] focus:outline-none p-1 cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#111827] focus:outline-none p-1 cursor-pointer"
                   aria-label={showConfirmPassword ? "Sembunyikan konfirmasi password" : "Tampilkan konfirmasi password"}
                 >
                   {showConfirmPassword ? (
@@ -242,11 +243,30 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
             </div>
           )}
 
+          {/* Register: Privacy Policy Checkbox */}
+          {mode === "register" && (
+            <div className="flex items-center gap-2.5 pt-1 px-1">
+              <input
+                type="checkbox"
+                id="privacyPolicy"
+                checked={agreedToPolicy}
+                onChange={(e) => setAgreedToPolicy(e.target.checked)}
+                className="w-4 h-4 accent-[#1B5E20] rounded border-gray-300 cursor-pointer"
+              />
+              <label htmlFor="privacyPolicy" className="text-xs text-[#4B5563] cursor-pointer">
+                Saya menyetujui{" "}
+                <span className="text-[#1B5E20] font-semibold underline">
+                  Kebijakan Privasi
+                </span>
+              </label>
+            </div>
+          )}
+
           {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full h-11 mt-1 bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] hover:opacity-95 text-white font-bold text-sm rounded-full shadow-md shadow-[#1B5E20]/20 active:scale-[0.98] transition-all flex items-center justify-center cursor-pointer disabled:opacity-80"
+            className="w-full h-12 mt-2 bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] hover:opacity-95 text-white font-bold text-sm rounded-2xl shadow-md shadow-[#1B5E20]/20 active:scale-[0.98] transition-all flex items-center justify-center cursor-pointer disabled:opacity-80"
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
