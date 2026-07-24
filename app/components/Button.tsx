@@ -21,8 +21,9 @@ export default function Button({
   ...props
 }: ButtonProps) {
   // Base styling
+  const justifyClass = className.includes("justify-") ? "" : "justify-center";
   const baseClasses =
-    "inline-flex items-center justify-center transition-all cursor-pointer font-bold select-none disabled:opacity-75 disabled:cursor-not-allowed";
+    `inline-flex items-center ${justifyClass} transition-all cursor-pointer font-bold select-none disabled:opacity-75 disabled:cursor-not-allowed`;
 
   // Size styling
   const sizeClasses = {
