@@ -71,6 +71,37 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
     }, 800);
   };
 
+  // Dynamic Copywriting based on Mode and Role
+  const getCopywriting = () => {
+    if (mode === "login") {
+      if (role === "petani") {
+        return {
+          title: "Masuk Akun Petani",
+          subtitle: "Kelola hasil panen & perluas jangkauan pasar pertanianmu.",
+        };
+      } else {
+        return {
+          title: "Masuk Akun Pemasok",
+          subtitle: "Temukan komoditas panen segar terbaik langsung dari petani.",
+        };
+      }
+    } else {
+      if (role === "petani") {
+        return {
+          title: "Daftar Akun Petani",
+          subtitle: "Gabung ekosistem Panentra & jual hasil panen dengan harga terbaik.",
+        };
+      } else {
+        return {
+          title: "Daftar Akun Pemasok",
+          subtitle: "Gabung sebagai mitra pembeli & dapatkan suplai komoditas terpercaya.",
+        };
+      }
+    }
+  };
+
+  const copy = getCopywriting();
+
   return (
     <div className="w-full flex-1 flex flex-col items-center justify-center p-5 my-auto panentra-grid-bg min-h-screen relative overflow-hidden select-none bg-gradient-to-b from-[#EBF5EC]/50 via-transparent to-[#E2F0E5]/60">
       {/* Decorative Organic Subtle Green Gradient Overlays */}
@@ -100,7 +131,7 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
       {/* Main Form Box Container */}
       <div className="w-full max-w-[360px] bg-white/90 backdrop-blur-md rounded-[32px] p-6 sm:p-7 shadow-[0_15px_45px_-12px_rgba(27,94,32,0.14)] border border-[#E1E4E0] flex flex-col items-center relative z-10">
         {/* Role Switcher (Petani vs Pemasok) */}
-        <div className="w-full bg-[#E5E7E5] p-1 rounded-full flex items-center mb-5">
+        <div className="w-full bg-[#E5E7E5] p-1 rounded-full flex items-center mb-4">
           <button
             type="button"
             onClick={() => setRole("petani")}
@@ -123,6 +154,16 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
           >
             Pemasok
           </button>
+        </div>
+
+        {/* Dynamic Title & Subtitle based on Role & Mode */}
+        <div className="text-center mb-5 transition-all">
+          <h2 className="text-base font-extrabold text-[#111827]">
+            {copy.title}
+          </h2>
+          <p className="text-xs text-[#5E635E] mt-1 font-normal max-w-[270px] mx-auto leading-relaxed">
+            {copy.subtitle}
+          </p>
         </div>
 
         {/* Feedback Alerts */}
