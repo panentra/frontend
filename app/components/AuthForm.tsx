@@ -110,8 +110,8 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#1B5E20]/15 rounded-full blur-3xl pointer-events-none z-0" />
 
       {/* OUTSIDE Logo & Brand Header */}
-      <div className="flex flex-col items-center text-center mb-6 relative z-10">
-        <div className="flex items-center justify-center gap-2.5 mb-1">
+      <div className="flex flex-col items-center text-center mb-5 relative z-10 px-4">
+        <div className="flex items-center justify-center gap-2.5 mb-1.5">
           <Link href="/">
             <Image
               src="/assets/logo.png"
@@ -123,8 +123,8 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
             />
           </Link>
         </div>
-        <p className="text-xs font-semibold text-[#1B5E20] tracking-tight">
-          Menghubungkan Panen dengan Peluang
+        <p className="text-xs sm:text-sm font-semibold text-[#1B5E20] tracking-tight max-w-[300px] leading-relaxed">
+          {copy.subtitle}
         </p>
       </div>
 
@@ -156,14 +156,11 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
           </button>
         </div>
 
-        {/* Dynamic Title & Subtitle based on Role & Mode */}
-        <div className="text-center mb-5 transition-all">
+        {/* Form Section Title */}
+        <div className="text-center mb-4">
           <h2 className="text-base font-extrabold text-[#111827]">
             {copy.title}
           </h2>
-          <p className="text-xs text-[#5E635E] mt-1 font-normal max-w-[270px] mx-auto leading-relaxed">
-            {copy.subtitle}
-          </p>
         </div>
 
         {/* Feedback Alerts */}
