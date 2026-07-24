@@ -71,7 +71,7 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
         setTimeout(() => router.push("/"), 1200);
       } else {
         setSuccessMessage(`Pendaftaran ${role === "petani" ? "Petani" : "Pemasok"} berhasil!`);
-        setTimeout(() => router.push("/login"), 1200);
+        setTimeout(() => router.push("/onboarding/problem"), 1200);
       }
     }, 800);
   };
