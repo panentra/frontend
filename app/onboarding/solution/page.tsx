@@ -45,8 +45,7 @@ export default function OnboardingSolutionPage() {
         <Button
           variant="secondary"
           size="lg"
-          fullWidth={false}
-          className="w-1/3"
+          className="flex-1"
           onClick={() => router.push("/onboarding/price-issue")}
         >
           Kembali
@@ -56,8 +55,7 @@ export default function OnboardingSolutionPage() {
         <Button
           variant="primary"
           size="lg"
-          fullWidth={false}
-          className="w-2/3 text-xs sm:text-sm"
+          className="flex-[1.6] text-xs sm:text-sm px-3"
           onClick={() => router.push("/")}
         >
           Mulai Isi Data Tani

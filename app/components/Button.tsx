@@ -43,7 +43,7 @@ export default function Button({
   }[variant];
 
   // Width styling
-  const widthClass = fullWidth ? "w-full" : "w-auto";
+  const widthClass = fullWidth ? "w-full" : "";
 
   return (
     <button

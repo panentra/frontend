@@ -45,7 +45,6 @@ export default function OnboardingPriceIssuePage() {
         <Button
           variant="secondary"
           size="lg"
-          fullWidth={false}
           className="flex-1"
           onClick={() => router.push("/onboarding/problem")}
         >
@@ -56,7 +55,6 @@ export default function OnboardingPriceIssuePage() {
         <Button
           variant="primary"
           size="lg"
-          fullWidth={false}
           className="flex-1"
           onClick={() => router.push("/onboarding/solution")}
         >
