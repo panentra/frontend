@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff } from "lucide-react";
 
 interface AuthFormProps {
   initialMode?: "login" | "register";
@@ -25,6 +25,10 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Password Visibility Toggle States
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Feedback State
   const [isLoading, setIsLoading] = useState(false);
@@ -172,13 +176,27 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
             <label className="block text-xs font-bold text-[#1B5E20] mb-1 ml-3">
               Password
             </label>
-            <input
-              type="password"
-              placeholder="Masukkan Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-11 px-5 bg-white border border-[#1B5E20]/40 focus:border-2 focus:border-[#1B5E20] rounded-full text-xs text-[#1B5E20] font-semibold placeholder:text-[#1B5E20]/60 placeholder:font-normal outline-none transition-all"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Masukkan Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full h-11 pl-5 pr-11 bg-white border border-[#1B5E20]/40 focus:border-2 focus:border-[#1B5E20] rounded-full text-xs text-[#1B5E20] font-semibold placeholder:text-[#1B5E20]/60 placeholder:font-normal outline-none transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#1B5E20]/70 hover:text-[#1B5E20] focus:outline-none p-1 cursor-pointer"
+                aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Register: Konfirmasi Password */}
@@ -187,13 +205,27 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
               <label className="block text-xs font-bold text-[#1B5E20] mb-1 ml-3">
                 Konfirmasi Password
               </label>
-              <input
-                type="password"
-                placeholder="Ketik Ulang Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full h-11 px-5 bg-white border border-[#1B5E20]/40 focus:border-2 focus:border-[#1B5E20] rounded-full text-xs text-[#1B5E20] font-semibold placeholder:text-[#1B5E20]/60 placeholder:font-normal outline-none transition-all"
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Ketik Ulang Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full h-11 pl-5 pr-11 bg-white border border-[#1B5E20]/40 focus:border-2 focus:border-[#1B5E20] rounded-full text-xs text-[#1B5E20] font-semibold placeholder:text-[#1B5E20]/60 placeholder:font-normal outline-none transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#1B5E20]/70 hover:text-[#1B5E20] focus:outline-none p-1 cursor-pointer"
+                  aria-label={showConfirmPassword ? "Sembunyikan konfirmasi password" : "Tampilkan konfirmasi password"}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
             </div>
           )}
 
