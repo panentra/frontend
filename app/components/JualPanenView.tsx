@@ -322,17 +322,19 @@ export default function JualPanenView({
 
       {/* ================= 3. SECTION 2: PILIH GRADE PANEN (STANDAR SNI) ================= */}
       <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm sm:text-base font-black text-[#1A1C19] flex items-center gap-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-sm sm:text-base font-black text-[#1A1C19]">
               2. Pilih Grade Panen (Standar SNI)
             </h2>
-            <p className="text-[11px] text-gray-500 font-semibold">Sesuaikan fisik hasil panen Anda dengan kelas mutu nasional</p>
+            <p className="text-[11px] text-gray-500 font-semibold truncate">
+              Sesuaikan fisik hasil panen Anda dengan kelas mutu nasional
+            </p>
           </div>
           <button
             type="button"
             onClick={() => setShowGradeEduModal(true)}
-            className="text-[10px] font-extrabold text-[#0F4C25] bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1 cursor-pointer transition-colors"
+            className="text-[10px] font-extrabold text-[#0F4C25] bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-full border border-emerald-200 flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
           >
             <HelpCircle className="w-3.5 h-3.5" /> Edukasi Grade
           </button>
@@ -365,21 +367,27 @@ export default function JualPanenView({
                 onClick={() => handleSelectGrade(item)}
                 className={`bg-white rounded-[26px] p-4 border transition-all cursor-pointer space-y-3 relative overflow-hidden ${
                   isSelected
-                    ? "border-[#0F4C25] ring-2 ring-[#0F4C25]/20 shadow-md"
+                    ? "border-[#0F4C25] ring-2 ring-[#0F4C25]/20 shadow-md bg-emerald-50/20"
                     : "border-gray-200 hover:border-emerald-300"
                 }`}
               >
-                <div className="space-y-0.5">
-                  <div className="flex items-center justify-between gap-1">
-                    <div className="flex items-center gap-1.5">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    {/* Checklist Icon on Card */}
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                          isSelected
+                            ? "bg-[#0F4C25] text-white shadow-2xs"
+                            : "border-2 border-gray-300 bg-white"
+                        }`}
+                      >
+                        {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                      </div>
+
                       <span className="text-sm font-black text-[#1A1C19]">
                         {item.grade} — {item.title}
                       </span>
-                      {isSelected && (
-                        <span className="bg-[#0F4C25] text-white p-0.5 rounded-full">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                        </span>
-                      )}
                     </div>
 
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border shrink-0 ${item.badgeColor}`}>
@@ -387,10 +395,10 @@ export default function JualPanenView({
                     </span>
                   </div>
 
-                  <p className="text-xs text-gray-600 font-medium leading-snug pt-0.5">{item.specs}</p>
+                  <p className="text-xs text-gray-600 font-medium leading-snug pt-0.5 pl-7">{item.specs}</p>
                 </div>
 
-                <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 text-[11px]">
+                <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 text-[11px] pl-7">
                   <span className="text-gray-500 font-medium">
                     Target Pembeli: <strong className="text-gray-800">{item.targetMarket}</strong>
                   </span>
