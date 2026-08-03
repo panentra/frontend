@@ -606,7 +606,7 @@ export default function JualPanenView({
           <form onSubmit={handleSubmitSale} className="space-y-5">
             {/* 5.1 FOTO HASIL PANEN */}
             <div className="bg-white rounded-[24px] p-4 border border-gray-200 space-y-2 shadow-2xs">
-              <label className="font-black text-xs text-gray-800 block">5.1 Foto Hasil Panen</label>
+              <label className="font-black text-xs text-gray-800 block">Foto Hasil Panen</label>
               <div className="w-full h-28 bg-[#F8FAF8] border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-[#0F4C25] transition-all">
                 <Upload className="w-6 h-6 text-[#0F4C25] mb-1" />
                 <span className="text-xs font-black text-[#0F4C25]">
@@ -618,7 +618,7 @@ export default function JualPanenView({
 
             {/* 5.2 DETAIL JUMLAH & HARGA + VALIDASI REAL-TIME */}
             <div className="bg-white rounded-[24px] p-4 border border-gray-200 space-y-3 shadow-2xs">
-              <label className="font-black text-xs text-gray-800 block">5.2 Detail Jumlah & Harga Jual</label>
+              <label className="font-black text-xs text-gray-800 block">Detail Jumlah & Harga Jual</label>
 
               <div>
                 <label className="font-bold text-[11px] text-gray-600 mb-1 block">Jumlah Panen Siap Jual (kg)</label>
@@ -650,7 +650,7 @@ export default function JualPanenView({
                 <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-xs text-red-800 animate-fade-in">
                   <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-black block">⚠️ Peringatan: Harga Di Bawah Modal!</span>
+                    <span className="font-black block">Peringatan: Harga Di Bawah Modal!</span>
                     <p className="text-[11px] text-red-700 font-medium">
                       Harga Rp {priceNumber.toLocaleString("id-ID")}/kg berada di bawah HPP (Rp {hppPerKg.toLocaleString("id-ID")}/kg). Anda berpotensi mengalami kerugian total sekitar{" "}
                       <strong>Rp {((hppPerKg - priceNumber) * qtyNumber).toLocaleString("id-ID")}</strong>.
@@ -669,7 +669,7 @@ export default function JualPanenView({
 
             {/* 5.3 RINGKASAN KEUNTUNGAN (+ BIAYA PLATFORM TERPISAH) */}
             <div className="bg-white rounded-[24px] p-4 border border-gray-200 space-y-2.5 text-xs shadow-2xs">
-              <label className="font-black text-xs text-gray-800 block mb-1">5.3 Proyeksi Ringkasan Keuangan</label>
+              <label className="font-black text-xs text-gray-800 block mb-1">yaProyeksi Ringkasan Keuangan</label>
 
               <div className="flex justify-between items-center text-gray-600 font-semibold">
                 <span>Total Penerimaan Kotor:</span>
