@@ -233,10 +233,6 @@ export default function KalenderView() {
       <div className="bg-gradient-to-br from-[#0F4C25] via-[#1B5E20] to-[#0A381B] rounded-[28px] p-5 text-white relative overflow-hidden shadow-lg">
         <div className="flex items-start justify-between relative z-10 gap-3">
           <div className="space-y-1.5 max-w-[68%]">
-            <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide uppercase text-emerald-100 border border-white/20 inline-flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-300" />
-              AI Musim Tanam Ideal
-            </span>
             <h2 className="text-base sm:text-lg font-black tracking-tight leading-snug">
               Cuaca Cerah: Saat Terbaik Pemupukan Cabai!
             </h2>
