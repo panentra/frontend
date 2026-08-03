@@ -326,7 +326,7 @@ export default function JualPanenView({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 flex-wrap">
               <h2 className="text-base font-black text-[#1A1C19] tracking-tight">
-                2. Pilih Grade Panen
+                Pilih Grade Panen
               </h2>
               <span className="bg-emerald-100 text-[#0F4C25] text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-200 uppercase">
                 Standar SNI
@@ -419,68 +419,42 @@ export default function JualPanenView({
 
       {/* ================= 4. SECTION 3: BENCHMARK HARGA PETANI LAIN ================= */}
       <section className="space-y-3 pt-1">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm sm:text-base font-black text-[#1A1C19]">
-              3. Benchmark Harga Petani Lain ({cropName})
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex-1 min-w-[200px]">
+            <h2 className="text-base font-black text-[#1A1C19] tracking-tight">
+              Benchmark Harga Petani Lain
             </h2>
-            <p className="text-[11px] text-gray-500 font-semibold">
-              Berikut referensi harga jual asli dari petani terdekat & pasar grosir daerah Anda
+            <p className="text-xs text-gray-500 font-medium">
+              Referensi harga jual asli dari petani terdekat & pasar grosir
             </p>
           </div>
-        </div>
 
-        {/* [BARU] FILTER & SORT BAR */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider flex items-center gap-1 pr-1">
-            <Filter className="w-3 h-3" /> Urutkan:
-          </span>
-          <button
-            type="button"
-            onClick={() => setActiveSortFilter("grade-sama")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
-              activeSortFilter === "grade-sama"
-                ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
-                : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-            }`}
-          >
-            Grade Sama ({selectedGradeObj.grade})
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveSortFilter("jarak")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
-              activeSortFilter === "jarak"
-                ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
-                : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-            }`}
-          >
-            Jarak Terdekat
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveSortFilter("harga-tertinggi")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
-              activeSortFilter === "harga-tertinggi"
-                ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
-                : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-            }`}
-          >
-            Harga Tertinggi
-          </button>
+          {/* FILTER DROPDOWN (SPACE-BETWEEN LAYOUT) */}
+          <div className="relative shrink-0">
+            <select
+              value={activeSortFilter}
+              onChange={(e) => setActiveSortFilter(e.target.value as any)}
+              className="h-9.5 px-3 pr-8 bg-white border border-gray-200 rounded-xl text-xs font-bold text-[#0F4C25] outline-none cursor-pointer shadow-2xs appearance-none focus:border-[#0F4C25] transition-all"
+            >
+              <option value="grade-sama">Filter: Grade Sama ({selectedGradeObj.grade})</option>
+              <option value="jarak">Filter: Jarak Terdekat</option>
+              <option value="harga-tertinggi">Filter: Harga Tertinggi</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
         </div>
 
         {/* Benchmark List Container */}
         <div className="bg-[#F8FAF8] rounded-[28px] p-4 border border-gray-200 space-y-4">
           {/* GRUP A — HARGA GRADE SAMA (Top Priority) */}
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <div className="flex items-center justify-between text-xs font-black text-[#0F4C25] px-1">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4" /> Grup A — Patokan Grade Terpilih ({selectedGradeObj.grade})
+              <span className="text-xs font-black text-[#0F4C25] tracking-tight">
+                Grup A — Patokan Grade Terpilih ({selectedGradeObj.grade})
               </span>
-              <span className="text-[10px] bg-emerald-100 px-2 py-0.5 rounded-md font-extrabold">Paling Relevan</span>
+              <span className="text-[10px] bg-emerald-100/90 text-[#0F4C25] px-2.5 py-0.5 rounded-full font-extrabold border border-emerald-200 shrink-0">
+                Paling Relevan
+              </span>
             </div>
 
             {sortedSameGrade.length === 0 ? (
@@ -509,7 +483,6 @@ export default function JualPanenView({
 
                     <p className="text-[10px] text-gray-600 font-medium italic">{sale.status}</p>
 
-                    {/* [BARU] WAKTU TRANSAKSI */}
                     <div className="text-[9px] font-bold text-gray-400 flex items-center gap-1 pt-0.5">
                       <Clock className="w-2.5 h-2.5" /> {sale.transactionTime}
                     </div>
@@ -595,8 +568,8 @@ export default function JualPanenView({
       {/* ================= 6. SECTION 5: PASANG HARGA & TAYANGKAN PANEN ================= */}
       <section id="section-form-jual" className="space-y-4 pt-2">
         <div className="border-b border-gray-200 pb-2">
-          <h2 className="text-base font-black text-[#1A1C19]">
-            5. Form Pasang Harga & Tayangkan Panen
+          <h2 className="text-base font-black text-[#1A1C19] tracking-tight">
+            Form Pasang Harga & Tayangkan Panen
           </h2>
           <p className="text-xs text-gray-500 font-medium">Isi detail kelengkapan panen Anda sebelum ditayangkan ke Pasar Panentra</p>
         </div>
@@ -886,7 +859,7 @@ export default function JualPanenView({
           >
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-1.5">
-                <HelpCircle className="w-5 h-5 text-[#0F4C25]" /> Kenapa Harga Beda Jauh Antar Grade?
+                Kenapa Harga Beda Jauh Antar Grade?
               </h3>
               <button
                 type="button"
@@ -902,19 +875,19 @@ export default function JualPanenView({
                 Standar SNI membagi komoditas hortikultura berdasarkan daya simpan, ukuran fisik, dan peruntukan pembeli.
               </p>
               <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 space-y-1">
-                <strong className="text-[#0F4C25] block">🌟 Grade A Super:</strong>
+                <strong className="text-[#0F4C25] block">Grade A Super:</strong>
                 <p className="text-[11px] text-emerald-900">
                   Pembeli supermarket & hotel mencari penampilan sempurna. Harga tinggi karena sortir ketat.
                 </p>
               </div>
               <div className="p-3 bg-blue-50 rounded-2xl border border-blue-200 space-y-1">
-                <strong className="text-blue-900 block">🏪 Grade B Standar:</strong>
+                <strong className="text-blue-900 block">Grade B Standar:</strong>
                 <p className="text-[11px] text-blue-900">
                   Cocok untuk konsumsi harian keluarga di pasar induk & pedagang keliling. Perputaran volume paling besar.
                 </p>
               </div>
               <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 space-y-1">
-                <strong className="text-amber-900 block">🏭 Grade C Olahan:</strong>
+                <strong className="text-amber-900 block">Grade C Olahan:</strong>
                 <p className="text-[11px] text-amber-900">
                   Dibeli pabrik dalam volume tonase untuk digiling jadi sambal botol. Fisik tidak begitu penting asal rasa & pedas tetap baik.
                 </p>
@@ -936,7 +909,7 @@ export default function JualPanenView({
           >
             <div className="flex justify-between items-center border-b pb-2">
               <h3 className="text-xs font-black text-[#1A1C19] flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-[#0F4C25]" /> AI Grade Inspector
+                AI Grade Inspector
               </h3>
               <button type="button" onClick={() => setShowAiScanModal(false)} className="text-gray-400">
                 <X className="w-5 h-5" />
