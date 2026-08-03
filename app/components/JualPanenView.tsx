@@ -563,11 +563,11 @@ export default function JualPanenView({
             Rekomendasi Harga Jual Optimal
           </span>
 
-          <div className="flex items-baseline justify-center gap-1.5 pt-0.5">
-            <span className="text-2xl sm:text-3xl font-black text-[#0F4C25] tracking-tight">
+          <div className="flex flex-wrap items-baseline justify-center gap-1 sm:gap-1.5 pt-0.5">
+            <span className="text-xl sm:text-3xl font-black text-[#0F4C25] tracking-tight">
               Rp {selectedGradeObj.minPrice.toLocaleString("id-ID")} – Rp {selectedGradeObj.maxPrice.toLocaleString("id-ID")}
             </span>
-            <span className="text-xs font-extrabold text-gray-500">/ kg</span>
+            <span className="text-xs font-extrabold text-gray-500 whitespace-nowrap shrink-0">/ kg</span>
           </div>
 
           <p className="text-xs text-gray-600 font-medium leading-relaxed max-w-[95%] mx-auto pt-1">
