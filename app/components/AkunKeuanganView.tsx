@@ -23,23 +23,116 @@ import {
   Coins,
   Sparkles,
   ArrowRightLeft,
+  Star,
+  CreditCard,
+  Bell,
+  Globe,
+  Store,
+  Plus,
+  X,
+  ShoppingBag,
+  Check,
+  Building2,
+  ExternalLink,
 } from "lucide-react";
 import Button from "./Button";
 
-const EXPENSE_HISTORY = [
+// Sample Expense Data (Biaya HPP)
+const INITIAL_EXPENSE_HISTORY = [
   { id: 1, title: "Bibit Cabai Unggul (10 Pack)", category: "Bibit", amount: "Rp 150.000", date: "25 Juli 2026" },
   { id: 2, title: "Pupuk NPK 16-16-16 (50kg)", category: "Pupuk", amount: "Rp 480.000", date: "28 Juli 2026" },
   { id: 3, title: "Pestisida Organik Neem (2L)", category: "Obat", amount: "Rp 120.000", date: "30 Juli 2026" },
-  { id: 4, title: "Upah Buruh Olah Lahan (2 Hari)", category: "Tenaga Kerja", amount: "Rp 300.000", date: "1 Agustus 2026" },
+];
+
+// Sample Harvest Sales History (Riwayat Penjualan Hasil Panen)
+const SALES_HISTORY = [
+  {
+    id: "TRX-901",
+    buyer: "Toko Berkah Jaya",
+    item: "Cabai Rawit Merah Super",
+    qty: "150 kg",
+    total: "Rp 5.250.000",
+    date: "3 Agustus 2026",
+    status: "Selesai",
+  },
+  {
+    id: "TRX-882",
+    buyer: "Resto Sambal Nusantara",
+    item: "Pakcoy Hydroponic Grade A",
+    qty: "80 kg",
+    total: "Rp 1.440.000",
+    date: "1 Agustus 2026",
+    status: "Selesai",
+  },
+  {
+    id: "TRX-754",
+    buyer: "Supermarket Fresh Mart",
+    item: "Tomat Red Super",
+    qty: "200 kg",
+    total: "Rp 2.400.000",
+    date: "28 Juli 2026",
+    status: "Selesai",
+  },
+];
+
+// Multi-Lahan Data
+const FARM_PLOTS = [
+  {
+    id: "plot-1",
+    name: "Plot 1: Kebun Lembang",
+    area: "0.5 Ha",
+    location: "Kec. Lembang, Bandung Barat",
+    crop: "Cabai Rawit Merah",
+    cropIcon: "🌶️",
+    progressDay: 68,
+    totalDays: 90,
+  },
+  {
+    id: "plot-2",
+    name: "Plot 2: Kebun Ciwidey",
+    area: "0.8 Ha",
+    location: "Kec. Pasirjambu, Ciwidey",
+    crop: "Tomat Red Super",
+    cropIcon: "🍅",
+    progressDay: 30,
+    totalDays: 80,
+  },
 ];
 
 export default function AkunKeuanganView() {
   const router = useRouter();
+
+  // Multi Lahan State
+  const [activePlotId, setActivePlotId] = useState<string>("plot-1");
+
+  // Modals Control States
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [showAllExpensesModal, setShowAllExpensesModal] = useState(false);
+  const [showSalesModal, setShowSalesModal] = useState(false);
+  const [showBankModal, setShowBankModal] = useState(false);
+  const [showSupplierModal, setShowSupplierModal] = useState(false);
+  const [showNotifModal, setShowNotifModal] = useState(false);
+  const [showLangModal, setShowLangModal] = useState(false);
+
+  // Form State Profile
+  const [profileName, setProfileName] = useState("Pak Bowo Santoso");
+  const [profilePhone, setProfilePhone] = useState("+62 812-3456-7890");
+
+  // Form State Expense
   const [expenseTitle, setExpenseTitle] = useState("");
   const [expenseCategory, setExpenseCategory] = useState("Pupuk");
   const [expenseAmount, setExpenseAmount] = useState("");
-  const [expenses, setExpenses] = useState(EXPENSE_HISTORY);
+  const [expenses, setExpenses] = useState(INITIAL_EXPENSE_HISTORY);
+
+  // Preference Toggles
+  const [waNotify, setWaNotify] = useState(true);
+  const [pushNotify, setPushNotify] = useState(true);
+  const [selectedLang, setSelectedLang] = useState("Bahasa Indonesia");
+
+  const currentPlot = FARM_PLOTS.find((p) => p.id === activePlotId) || FARM_PLOTS[0];
 
   const handleLogout = () => {
     if (confirm("Apakah Anda yakin ingin keluar dari akun Panentra?")) {
@@ -67,17 +160,17 @@ export default function AkunKeuanganView() {
   };
 
   return (
-    <div className="space-y-5 animate-fade-in pb-4">
-      {/* ================= 1. HEADER PROFILE HERO CARD (MATCHING REFERENCE IMAGE 2) ================= */}
+    <div className="space-y-5 animate-fade-in pb-8">
+      {/* ================= 1. HEADER PROFILE HERO CARD ================= */}
       <div className="rounded-[32px] overflow-hidden border border-emerald-900/10 shadow-xl bg-white">
-        {/* Forest Green Header */}
-        <div className="bg-gradient-to-br from-[#0F4C25] via-[#1B5E20] to-[#0A381B] p-6 text-white text-center relative flex flex-col items-center justify-center min-h-[160px]">
-          {/* Edit Pencil Button Top Right */}
+        {/* Dark Green Header Hero */}
+        <div className="bg-gradient-to-br from-[#0F4C25] via-[#1B5E20] to-[#0A381B] p-6 text-white text-center relative flex flex-col items-center justify-center min-h-[170px]">
+          {/* Edit Profile Pencil Button Top Right */}
           <button
             type="button"
-            onClick={() => alert("Edit Profil Petani & Lahan")}
-            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white border border-white/20 transition-all cursor-pointer"
-            title="Edit Profil"
+            onClick={() => setShowEditProfileModal(true)}
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white border border-white/20 transition-all cursor-pointer shadow-xs active:scale-95"
+            title="Edit Profil Petani"
           >
             <Edit2 className="w-4 h-4" />
           </button>
@@ -86,45 +179,126 @@ export default function AkunKeuanganView() {
           <div className="w-20 h-20 rounded-full bg-emerald-50 border-4 border-white shadow-lg overflow-hidden relative mb-2 p-0.5">
             <Image
               src="/assets/bowo-senang.png"
-              alt="Profil Andi Sugiharto"
+              alt={profileName}
               width={80}
               height={80}
               className="w-full h-full object-contain"
             />
           </div>
 
-          <h2 className="text-lg font-black tracking-tight text-white flex items-center gap-1.5">
-            Andi Sugiharto <ShieldCheck className="w-4 h-4 text-emerald-300" />
-          </h2>
-          <span className="text-xs font-bold text-emerald-200">
-            Lahan Kelompok Tani Mandiri (1,5 Ha)
-          </span>
+          {/* User Name & Verification Badge */}
+          <div className="flex items-center gap-1.5 justify-center">
+            <h2 className="text-lg font-black tracking-tight text-white">
+              {profileName}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setShowVerifyModal(true)}
+              className="inline-flex items-center gap-1 bg-emerald-400/20 hover:bg-emerald-400/30 text-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-black border border-emerald-300/30 cursor-pointer transition-colors"
+              title="Klik untuk info verifikasi"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Terverifikasi</span>
+            </button>
+          </div>
+
+          {/* Seller Reputation Rating */}
+          <div className="mt-1 flex items-center justify-center gap-1.5 text-xs text-amber-300 font-extrabold bg-black/20 px-3 py-1 rounded-full border border-white/10 backdrop-blur-xs">
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <span>4.8 / 5.0</span>
+            <span className="text-white/80 font-medium text-[10px]">• 32 Transaksi Penjualan Sukses</span>
+          </div>
         </div>
 
-        {/* Info Grid Card (Matching Image 2 details) */}
+        {/* Info Lahan Active Grid Summary */}
         <div className="p-4 sm:p-5 bg-white space-y-3 divide-y divide-gray-100 text-xs">
           <div className="flex justify-between items-center pt-1">
-            <span className="font-bold text-gray-500">Lokasi Lahan</span>
-            <span className="font-black text-[#1A1C19] flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-[#0F4C25]" /> Lembang, Kab. Bandung Barat
-            </span>
+            <span className="font-bold text-gray-500">No. Handphone / WhatsApp</span>
+            <span className="font-black text-[#1A1C19]">{profilePhone}</span>
           </div>
 
           <div className="flex justify-between items-center pt-2">
-            <span className="font-bold text-gray-500">Komoditas Aktif</span>
+            <span className="font-bold text-gray-500">Status Akun Tani</span>
             <span className="font-black text-[#0F4C25] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-              🌶️ Cabai Rawit Merah
+              Petani Komoditas Terverifikasi
             </span>
-          </div>
-
-          <div className="flex justify-between items-center pt-2">
-            <span className="font-bold text-gray-500">Status Panen</span>
-            <span className="font-black text-[#1A1C19]">Hari Ke-68 / 90 Hari</span>
           </div>
         </div>
       </div>
 
-      {/* ================= 2. REKAP SALDO & KEUANGAN ================= */}
+      {/* ================= 2. MULTI-LAHAN & STATUS PANEN ================= */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base sm:text-lg font-black text-[#1A1C19] tracking-tight">
+            Lahan & Komoditas Aktif
+          </h2>
+          <button
+            type="button"
+            onClick={() => alert("Tambah Lahan Tanam Baru")}
+            className="text-xs font-black text-[#0F4C25] hover:underline flex items-center gap-1 cursor-pointer bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Tambah Lahan
+          </button>
+        </div>
+
+        {/* Plot Selector Tabs */}
+        <div className="relative">
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar pr-6">
+            {FARM_PLOTS.map((plot) => (
+              <button
+                key={plot.id}
+                type="button"
+                onClick={() => setActivePlotId(plot.id)}
+                className={`px-3.5 py-2 rounded-2xl text-xs font-black shrink-0 border transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activePlotId === plot.id
+                    ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
+                    : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <span>{plot.cropIcon} {plot.name} ({plot.area})</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Selected Plot Active Details Card */}
+        <div className="bg-white rounded-[26px] p-4 border border-gray-200 shadow-sm space-y-3">
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="text-[10px] font-bold text-gray-400 block">{currentPlot.name}</span>
+              <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-1.5">
+                <span>{currentPlot.cropIcon}</span>
+                <span>{currentPlot.crop}</span>
+              </h3>
+            </div>
+            <span className="px-2.5 py-1 bg-emerald-50 text-[#0F4C25] border border-emerald-200 rounded-xl text-[10px] font-black">
+              Luas {currentPlot.area}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1 text-xs text-gray-500 font-medium">
+            <MapPin className="w-3.5 h-3.5 text-[#0F4C25] shrink-0" />
+            <span>{currentPlot.location}</span>
+          </div>
+
+          {/* Progress Bar Progress Panen */}
+          <div className="space-y-1.5 pt-1">
+            <div className="flex justify-between text-xs font-black text-gray-700">
+              <span>Progres Masa Tanam</span>
+              <span>Hari ke-{currentPlot.progressDay} / {currentPlot.totalDays} Hari</span>
+            </div>
+            <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden p-0.5 border border-gray-200">
+              <div
+                className="h-full bg-gradient-to-r from-[#0F4C25] to-[#2E7D32] rounded-full transition-all duration-500"
+                style={{ width: `${(currentPlot.progressDay / currentPlot.totalDays) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= 3. REKAP SALDO & KEUANGAN ================= */}
       <div className="bg-gradient-to-br from-[#0F4C25] via-[#1B5E20] to-[#0A381B] rounded-[28px] p-5 text-white shadow-lg space-y-4 relative overflow-hidden">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
@@ -137,8 +311,8 @@ export default function AkunKeuanganView() {
           </div>
           <button
             type="button"
-            onClick={() => alert("Fitur Penarikan Saldo Panentra Pay ke Bank / E-Wallet")}
-            className="px-3.5 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-black backdrop-blur-md border border-white/20 transition-all cursor-pointer"
+            onClick={() => setShowWithdrawModal(true)}
+            className="px-3.5 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-black backdrop-blur-md border border-white/20 transition-all cursor-pointer active:scale-95 shadow-xs"
           >
             Tarik Saldo
           </button>
@@ -160,17 +334,111 @@ export default function AkunKeuanganView() {
               <TrendingDown className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[10px] text-emerald-200 block font-medium">Total Biaya Produksi</span>
+              <span className="text-[10px] text-emerald-200 block font-medium">Total Biaya Produksi (HPP)</span>
               <span className="font-black text-white text-xs">Rp 1.050.000</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ================= 3. PENGELOLAAN TANI ("MANAGE" - MATCHING IMAGE 2) ================= */}
+      {/* ================= 4. RINGKASAN PENGELUARAN PRODUKSI (HPP RINGKAS - 2 ITEM) ================= */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-black text-[#1A1C19]">
+            Ringkasan Biaya Produksi (HPP)
+          </h3>
+          <button
+            type="button"
+            onClick={() => setShowExpenseModal(true)}
+            className="text-xs font-black text-[#0F4C25] hover:underline flex items-center gap-1 cursor-pointer bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200"
+          >
+            <PlusCircle className="w-3.5 h-3.5" />
+            Catat Biaya
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {expenses.slice(0, 2).map((exp) => (
+            <div
+              key={exp.id}
+              className="p-3 bg-white rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between text-xs"
+            >
+              <div className="space-y-0.5">
+                <h4 className="font-black text-[#1A1C19]">{exp.title}</h4>
+                <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+                  <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] rounded-md font-extrabold border border-emerald-100">
+                    {exp.category}
+                  </span>
+                  <span>{exp.date}</span>
+                </div>
+              </div>
+
+              <span className="font-black text-red-600 text-xs">
+                - {exp.amount}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowAllExpensesModal(true)}
+          className="w-full py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl text-xs font-black border border-gray-200 flex items-center justify-center gap-1 transition-all cursor-pointer"
+        >
+          <span>Lihat Semua Catatan Keuangan HPP</span>
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </section>
+
+      {/* ================= 5. [BARU] RIWAYAT PENJUALAN HASIL PANEN ================= */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-1.5">
+            <ShoppingBag className="w-4 h-4 text-[#0F4C25]" />
+            Riwayat Penjualan Hasil Panen
+          </h3>
+          <span className="text-[10px] font-extrabold text-[#0F4C25] bg-emerald-50 px-2 py-0.5 rounded-full">
+            3 Transaksi
+          </span>
+        </div>
+
+        <div className="space-y-2">
+          {SALES_HISTORY.slice(0, 2).map((sale) => (
+            <div
+              key={sale.id}
+              className="p-3.5 bg-white rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between text-xs"
+            >
+              <div className="space-y-0.5 min-w-0 pr-2">
+                <h4 className="font-black text-[#1A1C19] truncate">{sale.item}</h4>
+                <p className="text-[10px] text-gray-500 font-semibold truncate">
+                  Pembeli: {sale.buyer} · {sale.qty}
+                </p>
+              </div>
+
+              <div className="text-right shrink-0">
+                <span className="font-black text-[#0F4C25] block text-xs">{sale.total}</span>
+                <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100">
+                  ✓ {sale.status}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowSalesModal(true)}
+          className="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-[#0F4C25] rounded-2xl text-xs font-black border border-emerald-200 flex items-center justify-center gap-1 transition-all cursor-pointer"
+        >
+          <span>Lihat Semua Riwayat Penjualan</span>
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </section>
+
+      {/* ================= 6. PENGELOLAAN TANI ("MANAGE") ================= */}
       <section className="space-y-3">
         <h2 className="text-base sm:text-lg font-black text-[#1A1C19] tracking-tight">
-          Pengelolaan Tani (Manage)
+          Pengelolaan Tani & AI
         </h2>
 
         {/* Reset / Adjust Goals Card */}
@@ -200,69 +468,48 @@ export default function AkunKeuanganView() {
         </button>
       </section>
 
-      {/* ================= 4. CATATAN PENGELUARAN PRODUKSI (HPP) ================= */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-black text-[#1A1C19]">
-            Pencatatan Biaya Produksi (HPP)
-          </h3>
-          <button
-            type="button"
-            onClick={() => setShowExpenseModal(true)}
-            className="text-xs font-black text-[#0F4C25] hover:underline flex items-center gap-1 cursor-pointer bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200"
-          >
-            <PlusCircle className="w-4 h-4" />
-            Catat Biaya
-          </button>
-        </div>
-
-        <div className="space-y-2">
-          {expenses.map((exp) => (
-            <div
-              key={exp.id}
-              className="p-3.5 bg-white rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between text-xs"
-            >
-              <div className="space-y-0.5">
-                <h4 className="font-black text-[#1A1C19]">{exp.title}</h4>
-                <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
-                  <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] rounded-md font-extrabold border border-emerald-100">
-                    {exp.category}
-                  </span>
-                  <span>{exp.date}</span>
-                </div>
-              </div>
-
-              <span className="font-black text-red-600 text-xs">
-                - {exp.amount}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ================= 5. PENGATURAN & BANTUAN ================= */}
+      {/* ================= 7. PENGATURAN & AKSES PERAN ================= */}
       <section className="space-y-2 pt-2">
         <h3 className="text-xs font-black text-gray-500 uppercase tracking-wider">
           Pengaturan & Akses Peran
         </h3>
 
         <div className="bg-white rounded-[24px] border border-gray-200 shadow-sm divide-y divide-gray-100 overflow-hidden text-xs">
+          {/* Kelola Rekening Bank [BARU] */}
           <button
             type="button"
-            onClick={() => alert("Ganti mode ke Dashboard Pemasok/Pembeli")}
-            className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer"
+            onClick={() => setShowBankModal(true)}
+            className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-3">
-              <ArrowRightLeft className="w-4 h-4 text-[#0F4C25]" />
-              <span className="font-black text-[#1A1C19]">Ganti Peran ke Dashboard Pemasok</span>
+              <CreditCard className="w-4 h-4 text-[#0F4C25]" />
+              <span className="font-black text-[#1A1C19]">Kelola Rekening Bank / E-Wallet</span>
             </div>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
+            <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
+              BCA · 8821xxxx <ChevronRight className="w-4 h-4 text-gray-400" />
+            </span>
           </button>
 
+          {/* Daftar Sebagai Pemasok [REVISI - BUKAN GANTI PERAN KASAR] */}
+          <button
+            type="button"
+            onClick={() => setShowSupplierModal(true)}
+            className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Store className="w-4 h-4 text-[#0F4C25]" />
+              <span className="font-black text-[#1A1C19]">Daftar Sebagai Pemasok / Pembeli</span>
+            </div>
+            <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              Daftar Toko
+            </span>
+          </button>
+
+          {/* Unduh Laporan PDF */}
           <button
             type="button"
             onClick={() => alert("Unduh Rekap Laporan Keuangan HPP (PDF/Excel)")}
-            className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer"
+            className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-3">
               <FileText className="w-4 h-4 text-[#0F4C25]" />
@@ -271,10 +518,39 @@ export default function AkunKeuanganView() {
             <ChevronRight className="w-4 h-4 text-gray-400" />
           </button>
 
+          {/* Notifikasi & Privasi [BARU] */}
           <button
             type="button"
-            onClick={() => alert("Menghubungi Pusat Bantuan Panentra AI")}
-            className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer"
+            onClick={() => setShowNotifModal(true)}
+            className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Bell className="w-4 h-4 text-[#0F4C25]" />
+              <span className="font-black text-[#1A1C19]">Notifikasi & Preferensi Privasi</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          </button>
+
+          {/* Bahasa Aplikasi [BARU] */}
+          <button
+            type="button"
+            onClick={() => setShowLangModal(true)}
+            className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Globe className="w-4 h-4 text-[#0F4C25]" />
+              <span className="font-black text-[#1A1C19]">Bahasa Aplikasi</span>
+            </div>
+            <span className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
+              {selectedLang} <ChevronRight className="w-4 h-4 text-gray-400" />
+            </span>
+          </button>
+
+          {/* Pusat Bantuan AI */}
+          <button
+            type="button"
+            onClick={() => alert("Menghubungi Pusat Bantuan Panentra AI 24/7")}
+            className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-3">
               <HelpCircle className="w-4 h-4 text-[#0F4C25]" />
@@ -284,7 +560,7 @@ export default function AkunKeuanganView() {
           </button>
         </div>
 
-        {/* STANDALONE PROMINENT LIGHT RED LOGOUT BUTTON (EXACTLY LIKE REFERENCE IMAGE 2) */}
+        {/* STANDALONE PROMINENT LIGHT RED LOGOUT BUTTON */}
         <div className="pt-3">
           <button
             type="button"
@@ -297,17 +573,536 @@ export default function AkunKeuanganView() {
         </div>
       </section>
 
-      {/* Expense Modal */}
+      {/* ================= MODALS SECTION ================= */}
+
+      {/* 1. MODAL VERIFIKASI STATUS */}
+      {showVerifyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[360px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 text-center relative">
+            <button
+              onClick={() => setShowVerifyModal(false)}
+              className="absolute right-4 top-4 p-1 text-gray-400 hover:text-gray-600 rounded-full"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-14 h-14 rounded-full bg-emerald-100 text-[#0F4C25] flex items-center justify-center mx-auto">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-base font-black text-[#1A1C19]">
+                Akun Terverifikasi Resmi
+              </h3>
+              <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                Identitas KTP, nomor WhatsApp, dan dokumen kepemilikan lahan pertanian Anda telah berhasil diverifikasi oleh tim keamanan Panentra.
+              </p>
+            </div>
+
+            <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-left text-xs space-y-1.5 text-[#0F4C25]">
+              <div className="flex items-center gap-2 font-bold">
+                <Check className="w-4 h-4 text-[#0F4C25]" /> KTP terverifikasi
+              </div>
+              <div className="flex items-center gap-2 font-bold">
+                <Check className="w-4 h-4 text-[#0F4C25]" /> Lahan Lembang (0.5 Ha) Terdaftar
+              </div>
+              <div className="flex items-center gap-2 font-bold">
+                <Check className="w-4 h-4 text-[#0F4C25]" /> Hak Akses Escrow Panentra Pay Aktif
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => setShowVerifyModal(false)}
+              className="w-full justify-center py-2.5 font-bold"
+            >
+              Mengerti
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* 2. MODAL EDIT PROFIL */}
+      {showEditProfileModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[380px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-sm font-black text-[#1A1C19]">
+                Edit Profil Petani
+              </h3>
+              <button
+                onClick={() => setShowEditProfileModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setShowEditProfileModal(false);
+                alert("Profil berhasil diperbarui!");
+              }}
+              className="space-y-3 text-xs"
+            >
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Nama Lengkap Petani</label>
+                <input
+                  type="text"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">No. WhatsApp / HP</label>
+                <input
+                  type="text"
+                  value={profilePhone}
+                  onChange={(e) => setProfilePhone(e.target.value)}
+                  className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                  required
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowEditProfileModal(false)}
+                  className="flex-1 justify-center"
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  className="flex-1 justify-center"
+                >
+                  Simpan Profil
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 3. MODAL KELOLA REKENING BANK */}
+      {showBankModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[380px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-[#0F4C25]" />
+                Rekening Pencairan Saldo
+              </h3>
+              <button
+                onClick={() => setShowBankModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#0F4C25] text-white flex items-center justify-center font-black text-[10px]">
+                    BCA
+                  </div>
+                  <div>
+                    <p className="font-black text-[#1A1C19]">Bank Central Asia (BCA)</p>
+                    <p className="text-[10px] text-gray-500 font-semibold">8821-4402-192 • a.n. Bowo Santoso</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                  Utama
+                </span>
+              </div>
+
+              <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-[10px]">
+                    DANA
+                  </div>
+                  <div>
+                    <p className="font-black text-[#1A1C19]">DANA E-Wallet</p>
+                    <p className="text-[10px] text-gray-500 font-semibold">0812-3456-7890 • Bowo Santoso</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => alert("Tambah Rekening Bank / E-Wallet Baru")}
+              className="w-full py-2.5 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              Tambah Rekening Tujuan
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4. MODAL DAFTAR SEBAGAI PEMASOK */}
+      {showSupplierModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[380px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative text-center">
+            <button
+              onClick={() => setShowSupplierModal(false)}
+              className="absolute right-4 top-4 p-1 text-gray-400 hover:text-gray-600 rounded-full"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-14 h-14 rounded-full bg-emerald-100 text-[#0F4C25] flex items-center justify-center mx-auto">
+              <Store className="w-7 h-7" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-base font-black text-[#1A1C19]">
+                Daftar Sebagai Pemasok / Pembeli
+              </h3>
+              <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                Selain menjual hasil tani milik sendiri, Anda dapat mendaftarkan akun Toko Pemasok untuk membeli pasokan dari sesama kelompok tani.
+              </p>
+            </div>
+
+            <div className="p-3 bg-emerald-50/80 rounded-2xl border border-emerald-200 text-left text-xs space-y-1.5 text-[#0F4C25]">
+              <p className="font-black text-[#1A1C19]">Keuntungan Pemasok Panentra:</p>
+              <p className="text-[11px] font-medium">• Akses borong hasil panen langsung dari 50+ petani</p>
+              <p className="text-[11px] font-medium">• Garansi kualitas & Rekening Escrow Panentra Pay</p>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSupplierModal(false)}
+                className="flex-1 justify-center"
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setShowSupplierModal(false);
+                  router.push("/dashboard-pemasok");
+                }}
+                className="flex-1 justify-center py-2.5 font-bold"
+              >
+                Buka Dashboard Pemasok
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. MODAL NOTIFIKASI & PRIVASI */}
+      {showNotifModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[380px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-2">
+                <Bell className="w-4 h-4 text-[#0F4C25]" />
+                Notifikasi & Privasi
+              </h3>
+              <button
+                onClick={() => setShowNotifModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="flex items-center justify-between p-3 bg-[#F8FAF8] rounded-2xl border border-gray-200">
+                <div>
+                  <p className="font-black text-[#1A1C19]">Notifikasi WhatsApp Alert</p>
+                  <p className="text-[10px] text-gray-500 font-semibold">Kirim pemberitahuan nego & pesanan via WA</p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={waNotify}
+                  onChange={(e) => setWaNotify(e.target.checked)}
+                  className="w-4 h-4 accent-[#0F4C25] rounded cursor-pointer"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-[#F8FAF8] rounded-2xl border border-gray-200">
+                <div>
+                  <p className="font-black text-[#1A1C19]">Push Notification Aplikasi</p>
+                  <p className="text-[10px] text-gray-500 font-semibold">Notifikasi pengingat siram & panen AI</p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={pushNotify}
+                  onChange={(e) => setPushNotify(e.target.checked)}
+                  className="w-4 h-4 accent-[#0F4C25] rounded cursor-pointer"
+                />
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => setShowNotifModal(false)}
+              className="w-full justify-center py-2.5 font-bold"
+            >
+              Simpan Pengaturan
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* 6. MODAL BAHASA APLIKASI */}
+      {showLangModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[360px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-2">
+                <Globe className="w-4 h-4 text-[#0F4C25]" />
+                Pilih Bahasa Aplikasi
+              </h3>
+              <button
+                onClick={() => setShowLangModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              {["Bahasa Indonesia", "Basa Jawa", "Basa Sunda"].map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => {
+                    setSelectedLang(lang);
+                    setShowLangModal(false);
+                  }}
+                  className={`w-full p-3 rounded-2xl border text-left font-black flex items-center justify-between cursor-pointer transition-all ${
+                    selectedLang === lang
+                      ? "bg-emerald-50 text-[#0F4C25] border-emerald-300"
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <span>{lang}</span>
+                  {selectedLang === lang && <Check className="w-4 h-4 text-[#0F4C25]" />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. MODAL TARIK SALDO */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[380px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-sm font-black text-[#1A1C19]">
+                Tarik Saldo Panentra Pay
+              </h3>
+              <button
+                onClick={() => setShowWithdrawModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-[#0F4C25]">
+              <span className="font-bold block">Saldo Tersedia:</span>
+              <span className="text-lg font-black text-[#0F4C25]">Rp 14.850.000</span>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Nominal Penarikan (Rp)</label>
+                <input
+                  type="number"
+                  placeholder="Contoh: 1000000"
+                  className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Rekening Tujuan</label>
+                <select className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold">
+                  <option value="bca">BCA • 8821-4402-192 (Bowo Santoso)</option>
+                  <option value="dana">DANA • 0812-3456-7890 (Bowo Santoso)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowWithdrawModal(false)}
+                className="flex-1 justify-center"
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setShowWithdrawModal(false);
+                  alert("Permintaan penarikan saldo berhasil diproses ke rekening Bank BCA!");
+                }}
+                className="flex-1 justify-center py-2.5 font-bold"
+              >
+                Proses Penarikan
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 8. MODAL LIHAT SEMUA BIAYA PRODUKSI HPP */}
+      {showAllExpensesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[420px] max-h-[85vh] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative flex flex-col">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3 shrink-0">
+              <h3 className="text-sm font-black text-[#1A1C19]">
+                Semua Catatan Biaya Produksi (HPP)
+              </h3>
+              <button
+                onClick={() => setShowAllExpensesModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2 overflow-y-auto pr-1 flex-1">
+              {expenses.map((exp) => (
+                <div
+                  key={exp.id}
+                  className="p-3.5 bg-[#F8FAF8] rounded-2xl border border-gray-200 flex items-center justify-between text-xs"
+                >
+                  <div className="space-y-0.5">
+                    <h4 className="font-black text-[#1A1C19]">{exp.title}</h4>
+                    <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+                      <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] rounded-md font-extrabold border border-emerald-100">
+                        {exp.category}
+                      </span>
+                      <span>{exp.date}</span>
+                    </div>
+                  </div>
+
+                  <span className="font-black text-red-600 text-xs">
+                    - {exp.amount}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAllExpensesModal(false)}
+              className="w-full justify-center shrink-0 py-2.5 font-bold"
+            >
+              Tutup
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* 9. MODAL LIHAT RIWAYAT PENJUALAN */}
+      {showSalesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[420px] max-h-[85vh] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative flex flex-col">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3 shrink-0">
+              <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4 text-[#0F4C25]" />
+                Semua Riwayat Penjualan Hasil Panen
+              </h3>
+              <button
+                onClick={() => setShowSalesModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2.5 overflow-y-auto pr-1 flex-1">
+              {SALES_HISTORY.map((sale) => (
+                <div
+                  key={sale.id}
+                  className="p-3.5 bg-[#F8FAF8] rounded-2xl border border-gray-200 flex items-center justify-between text-xs space-y-1"
+                >
+                  <div className="space-y-0.5 min-w-0 pr-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-[#0F4C25] text-[10px]">{sale.id}</span>
+                      <span className="text-[10px] text-gray-400">· {sale.date}</span>
+                    </div>
+                    <h4 className="font-black text-[#1A1C19]">{sale.item}</h4>
+                    <p className="text-[10px] text-gray-500 font-semibold">
+                      Pembeli: {sale.buyer} ({sale.qty})
+                    </p>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="font-black text-[#0F4C25] block text-xs">{sale.total}</span>
+                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                      ✓ {sale.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSalesModal(false)}
+              className="w-full justify-center shrink-0 py-2.5 font-bold"
+            >
+              Tutup
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* 10. MODAL CATAT BIAYA (HPP FORM MODAL) */}
       {showExpenseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-[360px] bg-white rounded-[32px] p-5 space-y-4 shadow-2xl border border-gray-100">
-            <h3 className="text-sm font-black text-[#1A1C19]">
-              Catat Biaya Produksi (HPP)
-            </h3>
+          <div className="w-full max-w-[360px] bg-white rounded-[32px] p-5 space-y-4 shadow-2xl border border-gray-100 relative">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-sm font-black text-[#1A1C19]">
+                Catat Biaya Produksi (HPP)
+              </h3>
+              <button
+                onClick={() => setShowExpenseModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
             <form onSubmit={handleAddExpense} className="space-y-3 text-xs">
               <div>
-                <label className="font-black text-gray-700 block mb-1">Kategori Biaya</label>
+                <label className="font-bold text-gray-700 block mb-1">Kategori Biaya</label>
                 <select
                   value={expenseCategory}
                   onChange={(e) => setExpenseCategory(e.target.value)}
@@ -322,7 +1117,7 @@ export default function AkunKeuanganView() {
               </div>
 
               <div>
-                <label className="font-black text-gray-700 block mb-1">Deskripsi Item</label>
+                <label className="font-bold text-gray-700 block mb-1">Deskripsi Item</label>
                 <input
                   type="text"
                   placeholder="Contoh: Pembelian Pupuk KCL 25kg"
@@ -334,7 +1129,7 @@ export default function AkunKeuanganView() {
               </div>
 
               <div>
-                <label className="font-black text-gray-700 block mb-1">Nominal Biaya (Rp)</label>
+                <label className="font-bold text-gray-700 block mb-1">Nominal Biaya (Rp)</label>
                 <input
                   type="number"
                   placeholder="Contoh: 250000"
