@@ -419,28 +419,32 @@ export default function JualPanenView({
 
       {/* ================= 4. SECTION 3: BENCHMARK HARGA PETANI LAIN ================= */}
       <section className="space-y-3 pt-1">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex-1 min-w-[200px]">
-            <h2 className="text-base font-black text-[#1A1C19] tracking-tight">
-              Benchmark Harga Petani Lain
-            </h2>
-            <p className="text-xs text-gray-500 font-medium">
-              Referensi harga jual asli dari petani terdekat & pasar grosir
-            </p>
-          </div>
+        <div>
+          <h2 className="text-base font-black text-[#1A1C19] tracking-tight">
+            Benchmark Harga Petani Lain
+          </h2>
+          <p className="text-xs text-gray-500 font-medium">
+            Referensi harga jual asli dari petani terdekat & pasar grosir
+          </p>
+        </div>
 
-          {/* FILTER DROPDOWN (SPACE-BETWEEN LAYOUT) */}
+        {/* FILTER BAR: TEXT ON LEFT, DROPDOWN ON RIGHT (SPACE-BETWEEN) */}
+        <div className="flex items-center justify-between gap-2 pt-0.5">
+          <span className="text-xs font-black uppercase tracking-wider text-gray-600 flex items-center gap-1.5">
+            <Filter className="w-3.5 h-3.5 text-[#0F4C25]" /> Filter:
+          </span>
+
           <div className="relative shrink-0">
             <select
               value={activeSortFilter}
               onChange={(e) => setActiveSortFilter(e.target.value as any)}
-              className="h-9.5 px-3 pr-8 bg-white border border-gray-200 rounded-xl text-xs font-bold text-[#0F4C25] outline-none cursor-pointer shadow-2xs appearance-none focus:border-[#0F4C25] transition-all"
+              className="h-9.5 px-3.5 pr-8 bg-white border border-[#0F4C25] rounded-full text-xs font-black text-[#0F4C25] outline-none cursor-pointer shadow-2xs appearance-none focus:ring-2 focus:ring-[#0F4C25]/20 transition-all"
             >
-              <option value="grade-sama">Filter: Grade Sama ({selectedGradeObj.grade})</option>
-              <option value="jarak">Filter: Jarak Terdekat</option>
-              <option value="harga-tertinggi">Filter: Harga Tertinggi</option>
+              <option value="grade-sama">Grade Sama ({selectedGradeObj.grade})</option>
+              <option value="jarak">Jarak Terdekat</option>
+              <option value="harga-tertinggi">Harga Tertinggi</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-[#0F4C25] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2.5]" />
           </div>
         </div>
 
