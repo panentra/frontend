@@ -230,9 +230,9 @@ export default function KalenderView() {
       </div>
 
       {/* AI Seasonal Recommendation Banner */}
-      <div className="bg-gradient-to-br from-[#0F4C25] via-[#1B5E20] to-[#0A381B] rounded-[28px] p-5 text-white relative overflow-hidden shadow-lg">
-        <div className="flex items-start justify-between relative z-10 gap-3">
-          <div className="space-y-1.5 max-w-[68%]">
+      <div className="bg-gradient-to-br from-[#0F4C25] via-[#1B5E20] to-[#0A381B] rounded-[28px] p-5 sm:p-6 text-white relative overflow-hidden shadow-lg">
+        <div className="flex items-center justify-between relative z-10 gap-3">
+          <div className="space-y-1.5 max-w-[60%] sm:max-w-[65%]">
             <h2 className="text-base sm:text-lg font-black tracking-tight leading-snug">
               Cuaca Cerah: Saat Terbaik Pemupukan Cabai!
             </h2>
@@ -241,13 +241,14 @@ export default function KalenderView() {
             </p>
           </div>
 
-          <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 relative -mr-2 -mb-2">
+          <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 relative -mr-4 -mb-5 scale-110 sm:scale-125">
             <Image
               src="/assets/bowo-checklist.png"
               alt="Bowo AI Kalender"
-              width={110}
-              height={110}
-              className="w-full h-full object-contain drop-shadow-md"
+              width={160}
+              height={160}
+              className="w-full h-full object-contain drop-shadow-2xl"
+              priority
             />
           </div>
         </div>
