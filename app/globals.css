@@ -50,4 +50,14 @@ body {
   box-shadow: 0 10px 30px -10px rgba(27, 94, 32, 0.08);
 }
 
+/* Hide scrollbar utility for clean horizontal scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 

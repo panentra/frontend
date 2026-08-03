@@ -229,55 +229,59 @@ export default function PesananView() {
           )}
         </div>
 
-        {/* Filter Tab Pills */}
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-          <button
-            type="button"
-            onClick={() => setActiveFilter("all")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap border ${
-              activeFilter === "all"
-                ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
-                : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            Semua ({orders.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveFilter("incoming")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
-              activeFilter === "incoming"
-                ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
-                : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
-            Masuk ({incomingCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveFilter("shipping")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
-              activeFilter === "shipping"
-                ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
-                : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <span className="w-2 h-2 rounded-full bg-blue-400" />
-            Dikirim ({shippingCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveFilter("completed")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
-              activeFilter === "completed"
-                ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
-                : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            Selesai ({completedCount})
-          </button>
+        {/* Filter Tab Pills with Soft Edge Gradient Fade */}
+        <div className="relative">
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar pr-8">
+            <button
+              type="button"
+              onClick={() => setActiveFilter("all")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap border ${
+                activeFilter === "all"
+                  ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              Semua ({orders.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveFilter("incoming")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
+                activeFilter === "incoming"
+                  ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              Masuk ({incomingCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveFilter("shipping")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
+                activeFilter === "shipping"
+                  ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-blue-400" />
+              Dikirim ({shippingCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveFilter("completed")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 ${
+                activeFilter === "completed"
+                  ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              Selesai ({completedCount})
+            </button>
+          </div>
+          {/* Edge Gradient Mask Overlay */}
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#F7F9F7] via-[#F7F9F7]/80 to-transparent pointer-events-none z-10" />
         </div>
       </div>
 
