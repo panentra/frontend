@@ -367,10 +367,10 @@ export default function PesananView() {
                   <button
                     type="button"
                     onClick={() => handleUpdateStatus(order.id, "completed")}
-                    className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
+                    className="flex-1 py-2 bg-[#0F4C25] hover:bg-[#0A381B] text-white rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    Pesanan Selesai
+                    Tandai Selesai
                   </button>
                 )}
 
