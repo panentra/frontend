@@ -295,17 +295,17 @@ export default function PesananView() {
           filteredOrders.map((order) => (
             <div
               key={order.id}
-              className="bg-white rounded-[26px] p-4.5 border border-gray-200 shadow-sm hover:border-emerald-300 transition-all space-y-3.5 relative overflow-hidden"
+              className="bg-white rounded-[24px] p-4 border border-gray-200 shadow-sm space-y-3 relative overflow-hidden hover:border-emerald-300 transition-all"
             >
-              {/* Header Status & Order ID */}
-              <div className="flex items-center justify-between text-xs pb-2 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <span className="font-black text-[#0F4C25]">{order.id}</span>
-                  <span className="text-[10px] font-bold text-gray-400">· {order.date}</span>
+              {/* Header: Buyer Name & Status */}
+              <div className="flex items-center justify-between text-xs pb-2.5 border-b border-gray-100">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-black text-[#1A1C19] truncate">{order.customer}</span>
+                  <span className="text-[10px] font-bold text-gray-400 shrink-0">• {order.id}</span>
                 </div>
 
                 <span
-                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${
+                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border shrink-0 ${
                     order.status === "incoming"
                       ? "bg-amber-50 text-amber-800 border-amber-200"
                       : order.status === "shipping"
@@ -316,88 +316,71 @@ export default function PesananView() {
                   {order.status === "incoming"
                     ? "Pesanan Baru"
                     : order.status === "shipping"
-                    ? "Dalam Pengiriman"
+                    ? "Dikirim"
                     : "Selesai"}
                 </span>
               </div>
 
-              {/* Buyer & Item Card Info */}
-              <div className="flex items-start gap-3">
-                <div className="w-13 h-13 rounded-2xl bg-emerald-50/80 p-1 flex items-center justify-center shrink-0 border border-emerald-200 shadow-2xs">
-                  <Image
-                    src={order.image}
-                    alt={order.item}
-                    width={48}
-                    height={48}
-                    className="w-11 h-11 object-contain"
-                  />
-                </div>
+              {/* Main Commodity & Price Row */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-2xl bg-emerald-50 p-1 flex items-center justify-center shrink-0 border border-emerald-100">
+                    <Image
+                      src={order.image}
+                      alt={order.item}
+                      width={40}
+                      height={40}
+                      className="w-9 h-9 object-contain"
+                    />
+                  </div>
 
-                <div className="space-y-1 flex-1 min-w-0">
-                  <h3 className="text-sm font-black text-[#1A1C19] leading-tight truncate">
-                    {order.item}
-                  </h3>
-                  <p className="text-xs font-bold text-[#0F4C25] truncate">
-                    {order.customer} <span className="text-gray-400 font-normal">({order.customerType})</span>
-                  </p>
-                  <div className="flex items-center gap-1 text-[11px] text-gray-500 font-medium">
-                    <MapPin className="w-3 h-3 text-[#0F4C25] shrink-0" />
-                    <span className="truncate">{order.location}</span>
+                  <div className="space-y-0.5 min-w-0">
+                    <h3 className="text-sm font-black text-[#1A1C19] leading-tight truncate">
+                      {order.item}
+                    </h3>
+                    <p className="text-xs text-gray-500 font-medium">
+                      {order.qty} · <span className="text-[#0F4C25] font-bold">{order.unitPrice}</span>
+                    </p>
                   </div>
                 </div>
-              </div>
 
-              {/* Quantity & Total Payment Summary Box */}
-              <div className="p-3 bg-[#F8FAF8] rounded-2xl border border-gray-100 grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-[10px] text-gray-500 font-semibold block">Jumlah Pasokan</span>
-                  <span className="font-black text-[#1A1C19]">{order.qty}</span>
-                  <span className="text-[10px] text-gray-400 font-medium block">({order.unitPrice})</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] text-gray-500 font-semibold block">Total Pembayaran</span>
-                  <span className="font-black text-[#0F4C25] text-sm sm:text-base">{order.total}</span>
-                  <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded-md inline-block">
-                    {order.paymentMethod}
-                  </span>
+                <div className="text-right shrink-0">
+                  <span className="text-[10px] text-gray-400 font-bold block">Total</span>
+                  <span className="text-base font-black text-[#0F4C25]">{order.total}</span>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 pt-0.5">
+              {/* Clean Action Bar */}
+              <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
                 {order.status === "incoming" && (
-                  <Button
+                  <button
                     type="button"
-                    variant="primary"
-                    size="sm"
                     onClick={() => handleUpdateStatus(order.id, "shipping")}
-                    className="flex-1 justify-center text-xs font-black py-2.5 bg-[#0F4C25] hover:bg-[#0A381B] shadow-xs"
+                    className="flex-1 py-2 bg-[#0F4C25] hover:bg-[#0A381B] text-white rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
                   >
-                    <Truck className="w-4 h-4 mr-1" />
-                    Konfirmasi & Kirim Pasokan
-                  </Button>
+                    <Truck className="w-3.5 h-3.5" />
+                    Kirim Pasokan
+                  </button>
                 )}
 
                 {order.status === "shipping" && (
-                  <Button
+                  <button
                     type="button"
-                    variant="outline"
-                    size="sm"
                     onClick={() => handleUpdateStatus(order.id, "completed")}
-                    className="flex-1 justify-center text-xs font-black py-2.5 border-emerald-300 text-[#0F4C25] hover:bg-emerald-50"
+                    className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
                   >
-                    <CheckCircle2 className="w-4 h-4 mr-1 text-[#0F4C25]" />
-                    Tandai Pesanan Selesai
-                  </Button>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Pesanan Selesai
+                  </button>
                 )}
 
                 {order.status === "completed" && (
-                  <div className="flex-1 py-2 text-center text-xs font-bold text-emerald-800 bg-emerald-50 rounded-xl border border-emerald-200">
-                    ✓ Transaksi Selesai & Dana Dicairkan
+                  <div className="flex-1 py-1.5 text-center text-xs font-bold text-emerald-800 bg-emerald-50 rounded-xl border border-emerald-200">
+                    ✓ Transaksi Selesai
                   </div>
                 )}
 
-                {/* Chat Nego Button */}
+                {/* Chat Button */}
                 <button
                   type="button"
                   onClick={() => setSelectedChatOrder(order)}
@@ -405,10 +388,9 @@ export default function PesananView() {
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-[#0F4C25]" />
                   <span>Chat</span>
-                  <span className="w-2 h-2 rounded-full bg-rose-500 absolute -top-0.5 -right-0.5 animate-pulse" />
                 </button>
 
-                {/* Detail Drawer Trigger */}
+                {/* Detail Button */}
                 <button
                   type="button"
                   onClick={() => setSelectedOrderDetail(order)}
