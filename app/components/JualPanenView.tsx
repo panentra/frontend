@@ -286,11 +286,6 @@ export default function JualPanenView({
       {/* ================= 2. SECTION 1: RINGKASAN AI (HERO CARD) ================= */}
       <div className="bg-gradient-to-br from-[#0F4C25] via-[#1B5E20] to-[#0A381B] rounded-[32px] p-5 sm:p-6 text-white relative overflow-hidden shadow-xl min-h-[175px] flex items-center">
         <div className="space-y-2 z-10 relative max-w-[62%]">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider text-emerald-200 border border-white/20 inline-flex items-center gap-1">
-              <Clock className="w-3 h-3 text-emerald-300" /> Data harga diperbarui 2 jam lalu
-            </span>
-          </div>
 
           <h2 className="text-base sm:text-lg font-black tracking-tight leading-snug drop-shadow-md">
             Rekomendasi Margin Penjualan AI
@@ -313,7 +308,7 @@ export default function JualPanenView({
         </div>
 
         {/* Mascot Image */}
-        <div className="absolute -right-3 -bottom-6 z-0 w-44 h-44 sm:w-48 sm:h-48 pointer-events-none">
+        <div className="absolute -right-6 -bottom-8 z-0 w-60 h-60 sm:w-64 sm:h-64 pointer-events-none">
           <Image
             src="/assets/bowo-duit.png"
             alt="Bowo Panentra Jual Panen"
@@ -343,13 +338,10 @@ export default function JualPanenView({
           </button>
         </div>
 
-        {/* [BARU] BANTU CEK GRADE OTOMATIS BANNER */}
+        {/* BANTU CEK GRADE OTOMATIS BANNER */}
         <div className="p-4 bg-gradient-to-r from-emerald-900 to-[#0F4C25] rounded-[24px] text-white flex items-center justify-between gap-3 shadow-md">
           <div className="space-y-1">
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-emerald-300 animate-pulse" />
-              <h3 className="text-xs font-black tracking-tight text-white">🔍 Bantu Cek Grade Otomatis AI</h3>
-            </div>
+            <h3 className="text-xs font-black tracking-tight text-white">Bantu Cek Grade Otomatis AI</h3>
             <p className="text-[11px] text-emerald-100/90 leading-tight">
               Upload foto hasil panen, AI akan menganalisis diameter, warna & kesegaran untuk menyarankan grade terakurat!
             </p>
@@ -377,35 +369,25 @@ export default function JualPanenView({
                     : "border-gray-200 hover:border-emerald-300"
                 }`}
               >
-                <div className="flex items-start gap-3">
-                  {/* [BARU] THUMBNAIL FOTO CONTOH GRADE */}
-                  <div className={`w-14 h-14 rounded-2xl ${item.imageBg} flex flex-col items-center justify-center border border-black/5 shrink-0 shadow-2xs relative overflow-hidden`}>
-                    <span className="text-xl">🌶️</span>
-                    <span className="text-[9px] font-black uppercase text-[#0F4C25] bg-white/90 px-1 rounded-sm mt-0.5">
-                      {item.grade}
+                <div className="space-y-0.5">
+                  <div className="flex items-center justify-between gap-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-black text-[#1A1C19]">
+                        {item.grade} — {item.title}
+                      </span>
+                      {isSelected && (
+                        <span className="bg-[#0F4C25] text-white p-0.5 rounded-full">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        </span>
+                      )}
+                    </div>
+
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border shrink-0 ${item.badgeColor}`}>
+                      {item.priceRange}
                     </span>
                   </div>
 
-                  <div className="flex-1 space-y-0.5">
-                    <div className="flex items-center justify-between gap-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-black text-[#1A1C19]">
-                          {item.grade} — {item.title}
-                        </span>
-                        {isSelected && (
-                          <span className="bg-[#0F4C25] text-white p-0.5 rounded-full">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                          </span>
-                        )}
-                      </div>
-
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border shrink-0 ${item.badgeColor}`}>
-                        {item.priceRange}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-gray-600 font-medium leading-snug pt-0.5">{item.specs}</p>
-                  </div>
+                  <p className="text-xs text-gray-600 font-medium leading-snug pt-0.5">{item.specs}</p>
                 </div>
 
                 <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 text-[11px]">
@@ -565,14 +547,9 @@ export default function JualPanenView({
 
       {/* ================= 5. SECTION 4: KESIMPULAN AI PANENTRA ================= */}
       <section className="bg-gradient-to-br from-emerald-50 via-emerald-100/60 to-emerald-50 rounded-[28px] p-5 border border-emerald-300 space-y-3.5 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[#0F4C25] text-white flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4" />
-          </div>
-          <div>
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#0F4C25]">💡 Kesimpulan & Rekomendasi AI Panentra</h3>
-            <p className="text-[11px] font-semibold text-emerald-800">Analisis Rentang Harga Ideal Untuk {selectedGradeObj.grade}</p>
-          </div>
+        <div>
+          <h3 className="text-xs font-black uppercase tracking-wider text-[#0F4C25]">Kesimpulan & Rekomendasi AI Panentra</h3>
+          <p className="text-[11px] font-semibold text-emerald-800">Analisis Rentang Harga Ideal Untuk {selectedGradeObj.grade}</p>
         </div>
 
         {/* ANGKAI BESAR TONJOLAN RENTANG HARGA IDEAL */}
