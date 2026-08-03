@@ -229,13 +229,13 @@ export default function PesananView() {
           )}
         </div>
 
-        {/* Filter Tab Pills with Full Bleed & Soft Left/Right Edge Gradient Fade */}
-        <div className="relative -mx-4 sm:-mx-5">
+        {/* Filter Tab Pills with Soft Left & Right Edge Gradient Fade */}
+        <div className="relative">
           {/* Left Edge Gradient Mask */}
           <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-[#F7F9F7] via-[#F7F9F7]/80 to-transparent pointer-events-none z-10" />
 
           {/* Scrollable Container */}
-          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar px-4 sm:px-5">
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar pr-6">
             <button
               type="button"
               onClick={() => setActiveFilter("all")}
@@ -286,7 +286,7 @@ export default function PesananView() {
           </div>
 
           {/* Right Edge Gradient Mask */}
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#F7F9F7] via-[#F7F9F7]/90 to-transparent pointer-events-none z-10" />
+          <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-[#F7F9F7] via-[#F7F9F7]/80 to-transparent pointer-events-none z-10" />
         </div>
       </div>
 
