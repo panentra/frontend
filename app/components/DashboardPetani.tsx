@@ -158,6 +158,7 @@ const AI_CROP_RECOMMENDATIONS = [
 export default function DashboardPetani() {
   const [activeTab, setActiveTab] = useState<"beranda" | "kalender" | "jual" | "pesanan" | "chat" | "akun">("beranda");
   const [viewMode, setViewMode] = useState<"dashboard" | "rekomendasi" | "jual">("dashboard");
+  const [isChatRoomActive, setIsChatRoomActive] = useState(false);
   const [selectedCommodity, setSelectedCommodity] = useState<keyof typeof COMMODITY_PRICE_DATA>("Cabai Rawit");
   const [selectedDate, setSelectedDate] = useState<number>(3);
 
@@ -274,7 +275,7 @@ export default function DashboardPetani() {
             <>
               {activeTab === "kalender" && <KalenderView />}
               {activeTab === "pesanan" && <PesananView />}
-              {activeTab === "chat" && <ChatListView />}
+              {activeTab === "chat" && <ChatListView onChatRoomStateChange={setIsChatRoomActive} />}
               {activeTab === "akun" && <AkunKeuanganView />}
 
               {activeTab === "beranda" && (
@@ -583,8 +584,8 @@ export default function DashboardPetani() {
       )}
         </div>
 
-        {/* ================= 6. GLASSMORPHISM BOTTOM NAVBAR (Only visible in main dashboard view) ================= */}
-        {viewMode === "dashboard" && (
+        {/* ================= 6. GLASSMORPHISM BOTTOM NAVBAR (Only visible in main dashboard view & not inside sub chat room) ================= */}
+        {viewMode === "dashboard" && !isChatRoomActive && (
           <BottomNavbar
             activeTab={activeTab}
             onTabChange={setActiveTab}

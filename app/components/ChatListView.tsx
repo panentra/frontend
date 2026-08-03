@@ -110,7 +110,11 @@ const CHAT_LIST_DATA: ChatConversation[] = [
   },
 ];
 
-export default function ChatListView() {
+interface ChatListViewProps {
+  onChatRoomStateChange?: (isOpen: boolean) => void;
+}
+
+export default function ChatListView({ onChatRoomStateChange }: ChatListViewProps) {
   const [activeFilter, setActiveFilter] = useState<"all" | "nego" | "unread" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [chatList, setChatList] = useState<ChatConversation[]>(CHAT_LIST_DATA);
@@ -136,18 +140,24 @@ export default function ChatListView() {
       prev.map((c) => (c.id === chat.id ? { ...c, unreadCount: 0 } : c))
     );
     setSelectedChat(chat);
+    if (onChatRoomStateChange) onChatRoomStateChange(true);
+  };
+
+  const handleCloseChat = () => {
+    setSelectedChat(null);
+    if (onChatRoomStateChange) onChatRoomStateChange(false);
   };
 
   // ================= VIEW FULL PAGE NATIVE CHAT ROOM (WA / SHOPEE / TOKPED STYLE) =================
   if (selectedChat) {
     return (
-      <div className="animate-fade-in -mx-4 sm:-mx-5 -mt-4 sm:-mt-5 pb-24 bg-[#F4F6F4] min-h-screen flex flex-col">
+      <div className="animate-fade-in -mx-4 sm:-mx-5 -mt-4 sm:-mt-5 pb-24 bg-[#F4F6F4] min-h-screen flex flex-col relative z-20">
         {/* Native Top Header Bar (Fixed / Sticky at Top) */}
         <div className="sticky top-0 z-40 bg-white border-b border-gray-200 p-3 px-4 flex items-center justify-between shadow-2xs">
           <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
-              onClick={() => setSelectedChat(null)}
+              onClick={handleCloseChat}
               className="p-1.5 hover:bg-gray-100 rounded-full text-gray-700 transition-colors cursor-pointer shrink-0"
             >
               <ArrowLeft className="w-5 h-5 text-[#1A1C19]" />
@@ -290,7 +300,7 @@ export default function ChatListView() {
         </div>
 
         {/* Native Fixed Bottom Input Bar (Full Width WA / Tokped Style) */}
-        <div className="sticky bottom-14 sm:bottom-16 z-40 bg-white border-t border-gray-200 p-2.5 px-3 flex items-center gap-2 shadow-lg">
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] z-50 bg-white border-t border-gray-200 p-2.5 px-3.5 flex items-center gap-2 shadow-2xl">
           <button
             type="button"
             className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 cursor-pointer shrink-0"
