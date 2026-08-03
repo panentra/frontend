@@ -243,7 +243,7 @@ export default function KalenderView() {
 
           <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 relative -mr-2 -mb-2">
             <Image
-              src="/assets/bowo-calendar.png"
+              src="/assets/bowo-checklist.png"
               alt="Bowo AI Kalender"
               width={110}
               height={110}
