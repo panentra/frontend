@@ -9,6 +9,7 @@ import {
   MapPin,
   Clock,
   ChevronRight,
+  ChevronLeft,
   X,
   Handshake,
   Send,
@@ -160,9 +161,10 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
               <button
                 type="button"
                 onClick={handleCloseChat}
-                className="p-1.5 hover:bg-gray-100 rounded-full text-gray-700 transition-colors cursor-pointer shrink-0"
+                aria-label="Kembali ke Daftar Chat"
+                className="w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-[#1A1C19] hover:bg-gray-50 active:scale-95 transition-all cursor-pointer shrink-0"
               >
-                <ArrowLeft className="w-5 h-5 text-[#1A1C19]" />
+                <ChevronLeft className="w-5 h-5 stroke-[2.5] text-[#1A1C19]" />
               </button>
 
               <div className="w-9 h-9 rounded-full bg-emerald-50 border border-emerald-200 relative shrink-0 p-0.5 overflow-hidden">
