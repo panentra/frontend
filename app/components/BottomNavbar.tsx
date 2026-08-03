@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { Home, Calendar, ShoppingBag, User } from "lucide-react";
+import { Home, Calendar, ShoppingBag, MessageSquare, User } from "lucide-react";
 
 interface BottomNavbarProps {
-  activeTab?: "beranda" | "kalender" | "jual" | "pesanan" | "akun";
+  activeTab?: "beranda" | "kalender" | "jual" | "pesanan" | "chat" | "akun";
   onTabChange?: (tab: any) => void;
 }
 
@@ -12,14 +12,14 @@ export default function BottomNavbar({
   activeTab = "beranda",
   onTabChange,
 }: BottomNavbarProps) {
-  const handleSelect = (tab: "beranda" | "kalender" | "pesanan" | "akun") => {
+  const handleSelect = (tab: "beranda" | "kalender" | "pesanan" | "chat" | "akun") => {
     if (onTabChange) {
       onTabChange(tab);
     }
   };
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] bg-white border-t border-gray-200 shadow-2xl px-3 py-2 flex justify-between items-center z-40">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-2xl px-2 py-2 flex justify-between items-center z-40">
       {/* 1. Beranda */}
       <button
         type="button"
@@ -56,7 +56,22 @@ export default function BottomNavbar({
         <span className="text-[9px] font-black uppercase tracking-wider mt-1">Pesanan</span>
       </button>
 
-      {/* 4. Akun */}
+      {/* 4. Chat Nego */}
+      <button
+        type="button"
+        onClick={() => handleSelect("chat")}
+        className={`flex-1 flex flex-col items-center justify-center py-1 transition-all cursor-pointer relative ${
+          activeTab === "chat" ? "text-[#0F4C25]" : "text-gray-400 hover:text-gray-600"
+        }`}
+      >
+        <div className="relative">
+          <MessageSquare className={`w-5 h-5 ${activeTab === "chat" ? "stroke-[2.5]" : "stroke-[1.8]"}`} />
+          <span className="w-2 h-2 rounded-full bg-rose-500 absolute -top-0.5 -right-0.5 animate-pulse" />
+        </div>
+        <span className="text-[9px] font-black uppercase tracking-wider mt-1">Chat</span>
+      </button>
+
+      {/* 5. Akun */}
       <button
         type="button"
         onClick={() => handleSelect("akun")}

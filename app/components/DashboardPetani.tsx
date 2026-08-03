@@ -35,6 +35,7 @@ import PesananView from "./PesananView";
 import AkunKeuanganView from "./AkunKeuanganView";
 import RekomendasiTanamView from "./RekomendasiTanamView";
 import JualPanenView from "./JualPanenView";
+import ChatListView from "./ChatListView";
 
 // Sample commodities for price prediction chart
 const COMMODITY_PRICE_DATA = {
@@ -155,7 +156,7 @@ const AI_CROP_RECOMMENDATIONS = [
 ];
 
 export default function DashboardPetani() {
-  const [activeTab, setActiveTab] = useState<"beranda" | "kalender" | "jual" | "pesanan" | "akun">("beranda");
+  const [activeTab, setActiveTab] = useState<"beranda" | "kalender" | "jual" | "pesanan" | "chat" | "akun">("beranda");
   const [viewMode, setViewMode] = useState<"dashboard" | "rekomendasi" | "jual">("dashboard");
   const [selectedCommodity, setSelectedCommodity] = useState<keyof typeof COMMODITY_PRICE_DATA>("Cabai Rawit");
   const [selectedDate, setSelectedDate] = useState<number>(3);
@@ -241,9 +242,8 @@ export default function DashboardPetani() {
       name: cropName,
       daysPassed: 1,
       totalDays: days,
-      estimatedHarvestKg: 500,
+      estimatedHarvestKg: 1200,
     });
-    alert(`Komoditas "${cropName}" berhasil didaftarkan sebagai Tanaman Aktif! Musim tanam dimulai.`);
   };
 
   return (
@@ -274,6 +274,7 @@ export default function DashboardPetani() {
             <>
               {activeTab === "kalender" && <KalenderView />}
               {activeTab === "pesanan" && <PesananView />}
+              {activeTab === "chat" && <ChatListView />}
               {activeTab === "akun" && <AkunKeuanganView />}
 
               {activeTab === "beranda" && (
