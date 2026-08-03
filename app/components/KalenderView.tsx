@@ -105,10 +105,10 @@ const MONTH_NAMES = [
 const YEARS = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
 
 const SEASONAL_CROPS = [
-  { id: "semua", name: "Semua Komoditas", icon: "🌱" },
-  { id: "Cabai Rawit Red", name: "Cabai Rawit Red", icon: "🌶️" },
-  { id: "Pakcoy Hydro", name: "Pakcoy Hydro", icon: "🥬" },
-  { id: "Tomat Super", name: "Tomat Super", icon: "🍅" },
+  { id: "semua", name: "Semua Komoditas"},
+  { id: "Cabai Rawit Red", name: "Cabai Rawit Red"},
+  { id: "Pakcoy Hydro", name: "Pakcoy Hydro"},
+  { id: "Tomat Super", name: "Tomat Super" },
 ];
 
 const TYPE_CONFIG = {
@@ -241,7 +241,7 @@ export default function KalenderView() {
             </p>
           </div>
 
-          <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 relative -mr-4 -mb-5 scale-110 sm:scale-125">
+          <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 relative -mr-4 -mb-11 scale-110 sm:scale-170">
             <Image
               src="/assets/bowo-checklist.png"
               alt="Bowo AI Kalender"
@@ -271,7 +271,6 @@ export default function KalenderView() {
                   : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
               }`}
             >
-              <span>{crop.icon}</span>
               <span>{crop.name}</span>
             </button>
           ))}
