@@ -70,7 +70,8 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
       setIsLoading(false);
       if (mode === "login") {
         setSuccessMessage(`Selamat datang kembali di Panentra!`);
-        setTimeout(() => router.push("/"), 1200);
+        const targetRoute = role === "petani" ? "/dashboard" : "/pemasok/dashboard";
+        setTimeout(() => router.push(targetRoute), 1200);
       } else {
         setSuccessMessage(`Pendaftaran ${role === "petani" ? "Petani" : "Pemasok"} berhasil!`);
         const targetRoute = role === "petani" ? "/onboarding/problem" : "/onboarding/pemasok/1";

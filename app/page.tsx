@@ -1,10 +1,10 @@
-import OnboardingView from "./components/OnboardingView";
+import DashboardPetani from "./components/DashboardPetani";
 
 export const metadata = {
-  title: "Panentra - Panen Cerdas, Masa Depan Berkualitas",
+  title: "Panentra - Dashboard Petani & Smart Farming",
   description: "Platform digital agrotech & smart farming Indonesia",
 };
 
 export default function Home() {
-  return <OnboardingView />;
+  return <DashboardPetani />;
 }

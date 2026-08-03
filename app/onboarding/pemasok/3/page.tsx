@@ -56,7 +56,7 @@ export default function PemasokOnboardingStep3() {
           variant="primary"
           size="lg"
           className="flex-[1.6] text-xs sm:text-sm px-3"
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/onboarding/pemasok/kuisioner")}
         >
           Mulai Isi Profil Usaha
         </Button>
