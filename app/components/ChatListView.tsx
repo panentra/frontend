@@ -359,8 +359,8 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
 
           <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 relative -mr-4 -mb-11 scale-110 sm:scale-170">
             <Image
-              src="/assets/bowo-checklist.png"
-              alt="Bowo AI Chat"
+              src="/assets/bowo-nego.png"
+              alt="Bowo AI Nego"
               width={160}
               height={160}
               className="w-full h-full object-contain drop-shadow-2xl"

@@ -163,7 +163,7 @@ export default function PesananView() {
 
           <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 relative -mr-4 -mb-11 scale-110 sm:scale-170">
             <Image
-              src="/assets/bowo-checklist.png"
+              src="/assets/bowo-pesanan.png"
               alt="Bowo AI Pesanan"
               width={160}
               height={160}
