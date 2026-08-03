@@ -440,7 +440,7 @@ export default function JualPanenView({
               onChange={(e) => setActiveSortFilter(e.target.value as any)}
               className="h-9.5 px-3.5 pr-8 bg-white border border-[#0F4C25] rounded-full text-xs font-black text-[#0F4C25] outline-none cursor-pointer shadow-2xs appearance-none focus:ring-2 focus:ring-[#0F4C25]/20 transition-all"
             >
-              <option value="grade-sama">Grade Sama ({selectedGradeObj.grade})</option>
+              <option value="grade-sama">{selectedGradeObj.grade}</option>
               <option value="jarak">Jarak Terdekat</option>
               <option value="harga-tertinggi">Harga Tertinggi</option>
             </select>
@@ -538,32 +538,50 @@ export default function JualPanenView({
       </section>
 
       {/* ================= 5. SECTION 4: KESIMPULAN AI PANENTRA ================= */}
-      <section className="bg-gradient-to-br from-emerald-50 via-emerald-100/60 to-emerald-50 rounded-[28px] p-5 border border-emerald-300 space-y-3.5 shadow-sm">
-        <div>
-          <h3 className="text-xs font-black uppercase tracking-wider text-[#0F4C25]">Kesimpulan & Rekomendasi AI Panentra</h3>
-          <p className="text-[11px] font-semibold text-emerald-800">Analisis Rentang Harga Ideal Untuk {selectedGradeObj.grade}</p>
+      <section className="bg-white rounded-[32px] p-5 sm:p-6 border border-emerald-200 shadow-md space-y-4 relative overflow-hidden">
+        {/* Ambient subtle light glow */}
+        <div className="absolute -top-12 -right-12 w-36 h-36 bg-emerald-100/50 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Section Header */}
+        <div className="flex items-start justify-between gap-2 border-b border-gray-100 pb-3">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-[#0F4C25] bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-200 inline-block">
+              Analisis AI Panentra
+            </span>
+            <h3 className="text-sm sm:text-base font-black text-[#1A1C19] pt-1 tracking-tight">
+              Kesimpulan & Rekomendasi Harga Jual
+            </h3>
+          </div>
+          <span className="text-xs font-black text-[#0F4C25] bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200 shrink-0">
+            {selectedGradeObj.grade}
+          </span>
         </div>
 
-        {/* ANGKAI BESAR TONJOLAN RENTANG HARGA IDEAL */}
-        <div className="bg-white rounded-2xl p-4 border border-emerald-200 text-center space-y-1 shadow-2xs">
-          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-800 block">
+        {/* Highlighted Price Recommendation Card */}
+        <div className="bg-gradient-to-br from-emerald-50/90 via-emerald-50 to-emerald-100/50 rounded-2xl p-4 sm:p-5 border border-emerald-200 text-center space-y-1.5 shadow-2xs">
+          <span className="text-[10px] font-black uppercase tracking-widest text-[#0F4C25] block">
             Rekomendasi Harga Jual Optimal
           </span>
-          <div className="text-2xl sm:text-3xl font-black text-[#0F4C25] tracking-tight">
-            Rp {selectedGradeObj.minPrice.toLocaleString("id-ID")} – Rp {selectedGradeObj.maxPrice.toLocaleString("id-ID")} <span className="text-xs font-extrabold text-gray-400">/ kg</span>
+
+          <div className="flex items-baseline justify-center gap-1.5 pt-0.5">
+            <span className="text-2xl sm:text-3xl font-black text-[#0F4C25] tracking-tight">
+              Rp {selectedGradeObj.minPrice.toLocaleString("id-ID")} – Rp {selectedGradeObj.maxPrice.toLocaleString("id-ID")}
+            </span>
+            <span className="text-xs font-extrabold text-gray-500">/ kg</span>
           </div>
-          <p className="text-[11px] text-gray-600 font-medium pt-1">
-            Di atas HPP modal Anda (Rp {hppPerKg.toLocaleString("id-ID")}/kg) & sangat kompetitif dengan transaksi petani terdekat di wilayah Lembang.
+
+          <p className="text-xs text-gray-600 font-medium leading-relaxed max-w-[95%] mx-auto pt-1">
+            Di atas HPP modal Anda (<strong className="text-gray-900 font-extrabold">Rp {hppPerKg.toLocaleString("id-ID")}/kg</strong>) & sangat kompetitif dengan transaksi petani terdekat di wilayah Lembang.
           </p>
         </div>
 
-        {/* [BARU] CTA: GUNAKAN HARGA REKOMENDASI INI */}
+        {/* Primary CTA Button */}
         <Button
           type="button"
           variant="primary"
           size="md"
           onClick={handleApplyRecommendedPrice}
-          className="w-full justify-center text-xs font-black py-3 shadow-md"
+          className="w-full justify-center text-xs font-black py-3.5 shadow-md bg-[#0F4C25] hover:bg-[#1B5E20] active:scale-[0.99] transition-all"
         >
           Gunakan Harga Rekomendasi Ini (Rp {selectedGradeObj.recommendedPrice.toLocaleString("id-ID")}/kg) →
         </Button>
