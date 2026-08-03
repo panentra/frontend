@@ -138,9 +138,9 @@ export default function ChatListView() {
   // ================= VIEW FULL PAGE CHAT ROOM =================
   if (selectedChat) {
     return (
-      <div className="space-y-4 animate-fade-in pb-20 -mt-1 sm:-mt-2">
-        {/* Full Page Top Navigation Bar */}
-        <div className="bg-white rounded-[28px] p-3.5 sm:p-4 border border-gray-200 shadow-sm flex items-center justify-between gap-3">
+      <div className="space-y-3.5 animate-fade-in pb-20 -mt-1 sm:-mt-2">
+        {/* Full Page Top Navigation Bar (Fixed / Sticky at Top) */}
+        <div className="sticky top-2 z-30 bg-white/95 backdrop-blur-md rounded-[28px] p-3.5 sm:p-4 border border-gray-200 shadow-md flex items-center justify-between gap-3 transition-all">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
@@ -253,8 +253,8 @@ export default function ChatListView() {
           </div>
         </div>
 
-        {/* Action Panel & Input Field */}
-        <div className="bg-white rounded-[28px] border border-gray-200 p-3.5 shadow-md space-y-2.5">
+        {/* Action Panel & Input Field (Sticky at Bottom) */}
+        <div className="sticky bottom-16 sm:bottom-20 z-30 bg-white/95 backdrop-blur-md rounded-[28px] border border-gray-200 p-3.5 shadow-xl space-y-2.5">
           {/* Quick Deal Buttons */}
           <div className="flex gap-2">
             <button
