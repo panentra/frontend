@@ -145,6 +145,31 @@ export default function PesananView() {
         </p>
       </div>
 
+      {/* Hero Recommendation Banner (Selaras dengan Kalender & Beranda) */}
+      <div className="bg-gradient-to-br from-[#0F4C25] via-[#1B5E20] to-[#0A381B] rounded-[28px] p-5 sm:p-6 text-white relative overflow-hidden shadow-lg">
+        <div className="flex items-center justify-between relative z-10 gap-3">
+          <div className="space-y-1.5 max-w-[60%] sm:max-w-[65%]">
+            <h2 className="text-base sm:text-lg font-black tracking-tight leading-snug">
+              Ada {incomingCount} Pesanan Baru Siap Diproses!
+            </h2>
+            <p className="text-xs text-emerald-100/90 leading-relaxed font-medium">
+              Konfirmasi pasokan sebelum pukul 14:00 WIB untuk jadwal penjemputan armada hari ini.
+            </p>
+          </div>
+
+          <div className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 relative -mr-4 -mb-11 scale-110 sm:scale-170">
+            <Image
+              src="/assets/bowo-checklist.png"
+              alt="Bowo AI Pesanan"
+              width={160}
+              height={160}
+              className="w-full h-full object-contain drop-shadow-2xl"
+              priority
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Quick Summary Stats Cards */}
       <div className="grid grid-cols-3 gap-2.5">
         <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/60 border border-emerald-200 p-3.5 rounded-[22px] space-y-1 shadow-2xs">
