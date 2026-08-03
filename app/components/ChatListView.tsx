@@ -152,70 +152,73 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
   if (selectedChat) {
     return (
       <div className="animate-fade-in -mx-4 sm:-mx-5 -mt-4 sm:-mt-5 pb-24 bg-[#F4F6F4] min-h-screen flex flex-col relative z-20">
-        {/* Native Top Header Bar (Fixed / Sticky at Top) */}
-        <div className="sticky top-0 z-40 bg-white border-b border-gray-200 p-3 px-4 flex items-center justify-between shadow-2xs">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <button
-              type="button"
-              onClick={handleCloseChat}
-              className="p-1.5 hover:bg-gray-100 rounded-full text-gray-700 transition-colors cursor-pointer shrink-0"
-            >
-              <ArrowLeft className="w-5 h-5 text-[#1A1C19]" />
-            </button>
+        {/* Combined Fixed Top Header Container (Buyer Info + Product Summary - Sticky at Top) */}
+        <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm divide-y divide-gray-100">
+          {/* Top Buyer Info Row */}
+          <div className="p-3 px-4 flex items-center justify-between">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <button
+                type="button"
+                onClick={handleCloseChat}
+                className="p-1.5 hover:bg-gray-100 rounded-full text-gray-700 transition-colors cursor-pointer shrink-0"
+              >
+                <ArrowLeft className="w-5 h-5 text-[#1A1C19]" />
+              </button>
 
-            <div className="w-9 h-9 rounded-full bg-emerald-50 border border-emerald-200 relative shrink-0 p-0.5 overflow-hidden">
-              <Image
-                src={selectedChat.image}
-                alt={selectedChat.customer}
-                width={36}
-                height={36}
-                className="w-full h-full object-contain"
-              />
+              <div className="w-9 h-9 rounded-full bg-emerald-50 border border-emerald-200 relative shrink-0 p-0.5 overflow-hidden">
+                <Image
+                  src={selectedChat.image}
+                  alt={selectedChat.customer}
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <h2 className="text-sm font-black text-[#1A1C19] leading-tight truncate">
+                  {selectedChat.customer}
+                </h2>
+                <p className="text-[10px] text-gray-500 font-semibold truncate flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                  {selectedChat.customerType}
+                </p>
+              </div>
             </div>
 
-            <div className="min-w-0">
-              <h2 className="text-sm font-black text-[#1A1C19] leading-tight truncate">
-                {selectedChat.customer}
-              </h2>
-              <p className="text-[10px] text-gray-500 font-semibold truncate flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                {selectedChat.customerType}
-              </p>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 font-black text-[10px] rounded-md">
+                {selectedChat.id}
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 font-black text-[10px] rounded-md">
-              {selectedChat.id}
+          {/* Shopee / Tokopedia Style Pinned Product Bar */}
+          <div className="p-2.5 px-4 flex items-center justify-between gap-3 bg-[#F9FAF9]">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 p-1 border border-emerald-100 shrink-0">
+                <Image
+                  src={selectedChat.image}
+                  alt={selectedChat.item}
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div className="min-w-0">
+                <h4 className="text-xs font-black text-[#1A1C19] truncate">
+                  {selectedChat.item} ({selectedChat.qty})
+                </h4>
+                <p className="text-[10px] text-gray-500 font-semibold">
+                  Penawaran: <span className="text-[#0F4C25] font-bold">{selectedChat.unitPrice}</span>
+                </p>
+              </div>
+            </div>
+
+            <span className="px-2.5 py-1 bg-emerald-50 text-[#0F4C25] border border-emerald-200 text-[10px] font-black rounded-lg shrink-0">
+              Nego Aktif
             </span>
           </div>
-        </div>
-
-        {/* Shopee / Tokopedia Style Pinned Product Bar */}
-        <div className="sticky top-[57px] z-30 bg-white border-b border-gray-200 p-2.5 px-4 flex items-center justify-between shadow-2xs gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 p-1 border border-emerald-100 shrink-0">
-              <Image
-                src={selectedChat.image}
-                alt={selectedChat.item}
-                width={36}
-                height={36}
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div className="min-w-0">
-              <h4 className="text-xs font-black text-[#1A1C19] truncate">
-                {selectedChat.item} ({selectedChat.qty})
-              </h4>
-              <p className="text-[10px] text-gray-500 font-semibold">
-                Penawaran: <span className="text-[#0F4C25] font-bold">{selectedChat.unitPrice}</span>
-              </p>
-            </div>
-          </div>
-
-          <span className="px-2.5 py-1 bg-emerald-50 text-[#0F4C25] border border-emerald-200 text-[10px] font-black rounded-lg shrink-0">
-            Nego Aktif
-          </span>
         </div>
 
         {/* Main Chat Stream Container (Seamless Background) */}
@@ -344,10 +347,6 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
       <div className="bg-gradient-to-br from-[#0F4C25] via-[#1B5E20] to-[#0A381B] rounded-[28px] p-5 sm:p-6 text-white relative overflow-hidden shadow-lg">
         <div className="flex items-center justify-between relative z-10 gap-3">
           <div className="space-y-1.5 max-w-[60%] sm:max-w-[65%]">
-            <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide uppercase text-emerald-100 border border-white/20 inline-flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-300" />
-              AI Nego Helper
-            </span>
             <h2 className="text-base sm:text-lg font-black tracking-tight leading-snug">
               Ada Penawaran Nego Rp 34.000/kg!
             </h2>

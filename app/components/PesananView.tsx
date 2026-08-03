@@ -404,7 +404,7 @@ export default function PesananView() {
                   className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#0F4C25] rounded-xl border border-emerald-200 font-black text-xs cursor-pointer transition-colors shrink-0 flex items-center gap-1 relative"
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-[#0F4C25]" />
-                  <span>Chat Nego</span>
+                  <span>Chat</span>
                   <span className="w-2 h-2 rounded-full bg-rose-500 absolute -top-0.5 -right-0.5 animate-pulse" />
                 </button>
 
@@ -539,7 +539,7 @@ export default function PesananView() {
                 className="flex-1 justify-center py-2.5 font-black bg-[#0F4C25] hover:bg-[#0A381B]"
               >
                 <MessageSquare className="w-4 h-4 mr-1" />
-                Chat Nego
+                Chat
               </Button>
             </div>
           </div>

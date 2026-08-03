@@ -273,7 +273,7 @@ export default function DashboardPemasok() {
                       onClick={() => alert(`Menghubungkan pesan langsung ke ${item.farmerName}...`)}
                       className="py-1.5 px-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold text-xs rounded-xl transition-all cursor-pointer"
                     >
-                      Chat Nego
+                      Chat
                     </button>
                   </div>
                 </div>
