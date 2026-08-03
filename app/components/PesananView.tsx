@@ -84,8 +84,8 @@ export default function PesananView() {
     <div className="space-y-5 animate-fade-in">
       {/* Header Title */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-extrabold text-[#1A1C19] tracking-tight flex items-center gap-2">
-          <ShoppingBag className="w-6 h-6 text-[#1B5E20]" />
+        <h1 className="text-xl sm:text-2xl font-black text-[#1A1C19] tracking-tight flex items-center gap-2">
+          <ShoppingBag className="w-6 h-6 text-[#0F4C25]" />
           Pesanan & Penjualan Pasokan
         </h1>
         <p className="text-xs font-semibold text-gray-500">
@@ -97,7 +97,7 @@ export default function PesananView() {
       <div className="grid grid-cols-3 gap-2.5 text-xs">
         <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-2xl space-y-1">
           <span className="text-[10px] font-bold text-gray-500 block">Pesanan Masuk</span>
-          <span className="text-base font-black text-[#1B5E20]">3 Baru</span>
+          <span className="text-base font-black text-[#0F4C25]">3 Baru</span>
         </div>
         <div className="bg-amber-50 border border-amber-100 p-3 rounded-2xl space-y-1">
           <span className="text-[10px] font-bold text-gray-500 block">Dalam Pengiriman</span>
@@ -114,9 +114,9 @@ export default function PesananView() {
         <button
           type="button"
           onClick={() => setActiveFilter("all")}
-          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
             activeFilter === "all"
-              ? "bg-[#1B5E20] text-white"
+              ? "bg-[#0F4C25] text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           }`}
         >
@@ -125,9 +125,9 @@ export default function PesananView() {
         <button
           type="button"
           onClick={() => setActiveFilter("incoming")}
-          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
             activeFilter === "incoming"
-              ? "bg-[#1B5E20] text-white"
+              ? "bg-[#0F4C25] text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           }`}
         >
@@ -136,9 +136,9 @@ export default function PesananView() {
         <button
           type="button"
           onClick={() => setActiveFilter("shipping")}
-          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
             activeFilter === "shipping"
-              ? "bg-[#1B5E20] text-white"
+              ? "bg-[#0F4C25] text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           }`}
         >
@@ -147,9 +147,9 @@ export default function PesananView() {
         <button
           type="button"
           onClick={() => setActiveFilter("completed")}
-          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
             activeFilter === "completed"
-              ? "bg-[#1B5E20] text-white"
+              ? "bg-[#0F4C25] text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           }`}
         >

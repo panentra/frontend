@@ -82,8 +82,8 @@ export default function KalenderView() {
       {/* Header Title */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-[#1A1C19] tracking-tight flex items-center gap-2">
-            <CalendarIcon className="w-6 h-6 text-[#1B5E20]" />
+          <h1 className="text-xl sm:text-2xl font-black text-[#1A1C19] tracking-tight flex items-center gap-2">
+            <CalendarIcon className="w-6 h-6 text-[#0F4C25]" />
             Kalender Musim Tanam
           </h1>
           <p className="text-xs font-semibold text-gray-500">
@@ -94,7 +94,7 @@ export default function KalenderView() {
         <button
           type="button"
           onClick={() => setShowAddModal(true)}
-          className="bg-[#1B5E20] hover:bg-[#154D1A] text-white p-2.5 rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all cursor-pointer"
+          className="bg-[#0F4C25] hover:bg-[#0A381B] text-white p-2.5 rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all cursor-pointer"
           title="Tambah Jadwal Tanam"
         >
           <Plus className="w-5 h-5 stroke-[2.5]" />
@@ -102,10 +102,10 @@ export default function KalenderView() {
       </div>
 
       {/* AI Seasonal Recommendation Banner */}
-      <div className="bg-gradient-to-br from-[#1B5E20] via-[#2E7D32] to-[#154D1A] rounded-[28px] p-5 text-white relative overflow-hidden shadow-lg">
+      <div className="bg-gradient-to-br from-[#0F4C25] via-[#1B5E20] to-[#0A381B] rounded-[28px] p-5 text-white relative overflow-hidden shadow-lg">
         <div className="flex items-start justify-between relative z-10 gap-3">
           <div className="space-y-1.5 max-w-[68%]">
-            <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase text-emerald-100 border border-white/20 inline-flex items-center gap-1">
+            <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide uppercase text-emerald-100 border border-white/20 inline-flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-amber-300" />
               AI Musim Tanam Ideal
             </span>
@@ -131,7 +131,7 @@ export default function KalenderView() {
 
       {/* Crop Selector Tabs */}
       <div className="space-y-2">
-        <h3 className="text-xs font-extrabold text-[#1A1C19] uppercase tracking-wider">
+        <h3 className="text-xs font-black text-[#1A1C19] uppercase tracking-wider">
           Pilih Komoditas Aktif
         </h3>
         <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
@@ -140,9 +140,9 @@ export default function KalenderView() {
               key={crop.id}
               type="button"
               onClick={() => setSelectedCrop(crop.id)}
-              className={`px-3.5 py-2 rounded-2xl text-xs font-extrabold shrink-0 border transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3.5 py-2 rounded-2xl text-xs font-black shrink-0 border transition-all cursor-pointer flex items-center gap-1.5 ${
                 selectedCrop === crop.id
-                  ? "bg-[#1B5E20] text-white border-[#1B5E20] shadow-sm"
+                  ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-sm"
                   : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
               }`}
             >
