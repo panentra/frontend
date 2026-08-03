@@ -197,15 +197,6 @@ export default function KalenderView() {
             Jadwal Tanam, Dosis Pupuk & Rekomendasi AI Panentra
           </p>
         </div>
-
-        <button
-          type="button"
-          onClick={() => handleOpenAddModal(selectedDay)}
-          className="bg-[#0F4C25] hover:bg-[#0A381B] text-white p-2.5 rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all cursor-pointer"
-          title="Tambah Jadwal Tanam"
-        >
-          <Plus className="w-5 h-5 stroke-[2.5]" />
-        </button>
       </div>
 
       {/* AI Seasonal Recommendation Banner */}
@@ -384,22 +375,24 @@ export default function KalenderView() {
 
       {/* ================= DETAIL AGENDA TANGGAL TERPILIH ================= */}
       <div className="space-y-3 pt-1">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-extrabold text-[#1A1C19] flex items-center gap-1.5">
-            Agenda Tanggal {selectedDay} Agustus 2026
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+            <h3 className="text-sm sm:text-base font-black text-[#1A1C19] tracking-tight whitespace-nowrap">
+              Agenda {selectedDay} Agustus 2026
+            </h3>
             {selectedDayItems.length > 0 && (
-              <span className="bg-[#0F4C25] text-white text-[10px] px-2 py-0.5 rounded-full font-black">
+              <span className="bg-[#0F4C25] text-white text-[10px] px-2.5 py-0.5 rounded-full font-black whitespace-nowrap shrink-0">
                 {selectedDayItems.length} Kegiatan
               </span>
             )}
-          </h3>
+          </div>
 
           <button
             type="button"
             onClick={() => handleOpenAddModal(selectedDay)}
-            className="text-xs font-black text-[#0F4C25] bg-emerald-50 hover:bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1 cursor-pointer transition-colors"
+            className="text-xs font-black text-[#0F4C25] bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-full border border-emerald-200 flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap shrink-0"
           >
-            <Plus className="w-3.5 h-3.5" /> Tambah Kegiatan
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" /> Tambah
           </button>
         </div>
 
