@@ -322,22 +322,29 @@ export default function JualPanenView({
 
       {/* ================= 3. SECTION 2: PILIH GRADE PANEN (STANDAR SNI) ================= */}
       <section className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-sm sm:text-base font-black text-[#1A1C19]">
-              2. Pilih Grade Panen (Standar SNI)
-            </h2>
-            <p className="text-[11px] text-gray-500 font-semibold truncate">
-              Sesuaikan fisik hasil panen Anda dengan kelas mutu nasional
-            </p>
+        <div className="space-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h2 className="text-base font-black text-[#1A1C19] tracking-tight">
+                2. Pilih Grade Panen
+              </h2>
+              <span className="bg-emerald-100 text-[#0F4C25] text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-200 uppercase">
+                Standar SNI
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowGradeEduModal(true)}
+              className="text-[10px] font-extrabold text-[#0F4C25] bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap shrink-0"
+            >
+              <HelpCircle className="w-3.5 h-3.5" /> Edukasi Grade
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowGradeEduModal(true)}
-            className="text-[10px] font-extrabold text-[#0F4C25] bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-full border border-emerald-200 flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
-          >
-            <HelpCircle className="w-3.5 h-3.5" /> Edukasi Grade
-          </button>
+
+          <p className="text-xs text-gray-500 font-medium leading-normal">
+            Sesuaikan fisik hasil panen Anda dengan kelas mutu nasional
+          </p>
         </div>
 
         {/* BANTU CEK GRADE OTOMATIS BANNER */}
