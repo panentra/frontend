@@ -151,9 +151,9 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
   // ================= VIEW FULL PAGE NATIVE CHAT ROOM (WA / SHOPEE / TOKPED STYLE) =================
   if (selectedChat) {
     return (
-      <div className="animate-fade-in -mx-4 sm:-mx-5 -mt-4 sm:-mt-5 pb-24 bg-[#F4F6F4] min-h-screen flex flex-col relative z-20">
-        {/* Combined Fixed Top Header Container (Buyer Info + Product Summary - Sticky at Top) */}
-        <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm divide-y divide-gray-100">
+      <div className="animate-fade-in -mx-4 sm:-mx-5 -mt-4 sm:-mt-5 pt-[116px] pb-24 bg-[#F4F6F4] min-h-screen flex flex-col relative z-20">
+        {/* Combined Fixed Top Header Container (Fixed 100% at Top of Canvas - Never Scrolls) */}
+        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] z-50 bg-white border-b border-gray-200 shadow-md divide-y divide-gray-100">
           {/* Top Buyer Info Row */}
           <div className="p-3 px-4 flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
