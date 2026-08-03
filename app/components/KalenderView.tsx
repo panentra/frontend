@@ -7,6 +7,7 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Plus,
   CheckCircle2,
   Clock,
@@ -96,6 +97,13 @@ const INITIAL_SCHEDULE: ScheduleItem[] = [
   },
 ];
 
+const MONTH_NAMES = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+];
+
+const YEARS = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
+
 const SEASONAL_CROPS = [
   { id: "semua", name: "Semua Komoditas", icon: "🌱" },
   { id: "Cabai Rawit Red", name: "Cabai Rawit Red", icon: "🌶️" },
@@ -118,6 +126,10 @@ export default function KalenderView() {
   // Selected date on calendar (1-31)
   const [selectedDay, setSelectedDay] = useState<number>(3); // Default today (3 Aug)
   
+  // Month & Year state
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(7); // Default 7 = Agustus
+  const [selectedYear, setSelectedYear] = useState<number>(2026); // Default 2026
+
   // Modal state
   const [showAddModal, setShowAddModal] = useState(false);
   const [modalTargetDay, setModalTargetDay] = useState<number>(3);
@@ -131,9 +143,27 @@ export default function KalenderView() {
 
   const todayNum = 3; // August 3, 2026
 
-  // August 2026 details: 31 days, starts on Saturday (offset 6)
-  const daysInAugust = 31;
-  const startDayOffset = 6; // 0=Sun, 1=Mon, ..., 6=Sat
+  // Dynamic days in selected month and starting day offset
+  const daysInMonth = new Date(selectedYear, selectedMonthIndex + 1, 0).getDate();
+  const startDayOffset = new Date(selectedYear, selectedMonthIndex, 1).getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+
+  const handlePrevMonth = () => {
+    if (selectedMonthIndex === 0) {
+      setSelectedMonthIndex(11);
+      setSelectedYear((prev) => prev - 1);
+    } else {
+      setSelectedMonthIndex((prev) => prev - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (selectedMonthIndex === 11) {
+      setSelectedMonthIndex(0);
+      setSelectedYear((prev) => prev + 1);
+    } else {
+      setSelectedMonthIndex((prev) => prev + 1);
+    }
+  };
 
   // Filter schedule based on crop
   const filteredSchedule = scheduleList.filter((item) => {
@@ -163,7 +193,7 @@ export default function KalenderView() {
     const newItem: ScheduleItem = {
       id: Date.now(),
       day: modalTargetDay,
-      monthYear: "Agustus 2026",
+      monthYear: `${MONTH_NAMES[selectedMonthIndex]} ${selectedYear}`,
       title: newTitle.trim(),
       crop: newCrop,
       time: newTime || "08:00 WIB",
@@ -253,27 +283,57 @@ export default function KalenderView() {
 
       {/* ================= UI KALENDER BULANAN INTERAKTIF ================= */}
       <div className="bg-white rounded-[28px] p-4 sm:p-5 border border-gray-200 shadow-sm space-y-4">
-        {/* Month Header Navigation */}
-        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5 text-[#0F4C25]" />
-            <h2 className="text-base font-black text-[#1A1C19] tracking-tight">
-              Agustus 2026
-            </h2>
+        {/* Month & Year Header Navigation */}
+        <div className="flex items-center justify-between border-b border-gray-100 pb-3 gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <CalendarIcon className="w-5 h-5 text-[#0F4C25] shrink-0" />
+            
+            {/* Shortcut Month Select */}
+            <div className="relative">
+              <select
+                value={selectedMonthIndex}
+                onChange={(e) => setSelectedMonthIndex(Number(e.target.value))}
+                className="h-8.5 pl-2.5 pr-7 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-xs sm:text-sm font-black text-[#0F4C25] outline-none cursor-pointer appearance-none transition-colors"
+              >
+                {MONTH_NAMES.map((name, idx) => (
+                  <option key={idx} value={idx}>{name}</option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-[#0F4C25] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2.5]" />
+            </div>
+
+            {/* Shortcut Year Select */}
+            <div className="relative">
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="h-8.5 pl-2.5 pr-7 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-xs sm:text-sm font-black text-[#0F4C25] outline-none cursor-pointer appearance-none transition-colors"
+              >
+                {YEARS.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-[#0F4C25] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2.5]" />
+            </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          {/* Prev / Next Month Navigation Buttons */}
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
-              className="p-1.5 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 cursor-pointer"
+              onClick={handlePrevMonth}
+              className="w-8 h-8 rounded-full border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:border-emerald-300 hover:text-[#0F4C25] flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-2xs"
+              title="Bulan Sebelumnya"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
             </button>
             <button
               type="button"
-              className="p-1.5 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 cursor-pointer"
+              onClick={handleNextMonth}
+              className="w-8 h-8 rounded-full border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:border-emerald-300 hover:text-[#0F4C25] flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-2xs"
+              title="Bulan Berikutnya"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4 stroke-[2.5]" />
             </button>
           </div>
         </div>
@@ -296,10 +356,10 @@ export default function KalenderView() {
             <div key={`empty-${idx}`} className="h-11 sm:h-13 rounded-2xl bg-gray-50/50" />
           ))}
 
-          {/* Days 1 to 31 */}
-          {Array.from({ length: daysInAugust }).map((_, idx) => {
+          {/* Days 1 to daysInMonth */}
+          {Array.from({ length: daysInMonth }).map((_, idx) => {
             const dayNum = idx + 1;
-            const isToday = dayNum === todayNum;
+            const isToday = dayNum === todayNum && selectedMonthIndex === 7 && selectedYear === 2026;
             const isSelected = dayNum === selectedDay;
 
             // Get activities for this day
@@ -378,7 +438,7 @@ export default function KalenderView() {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
             <h3 className="text-sm sm:text-base font-black text-[#1A1C19] tracking-tight whitespace-nowrap">
-              Agenda {selectedDay} Agustus 2026
+              Agenda {selectedDay} {MONTH_NAMES[selectedMonthIndex]} {selectedYear}
             </h3>
             {selectedDayItems.length > 0 && (
               <span className="bg-[#0F4C25] text-white text-[10px] px-2.5 py-0.5 rounded-full font-black whitespace-nowrap shrink-0">
@@ -484,7 +544,7 @@ export default function KalenderView() {
                   Tambah Kegiatan Tanam
                 </h3>
                 <p className="text-xs text-gray-500 font-medium">
-                  Terjadwal untuk tanggal <strong className="text-[#0F4C25]">{modalTargetDay} Agustus 2026</strong>
+                  Terjadwal untuk tanggal <strong className="text-[#0F4C25]">{modalTargetDay} {MONTH_NAMES[selectedMonthIndex]} {selectedYear}</strong>
                 </p>
               </div>
               <button
