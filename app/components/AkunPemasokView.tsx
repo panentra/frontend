@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -92,6 +92,18 @@ export default function AkunPemasokView({
   const [newBankName, setNewBankName] = useState("Bank BCA");
   const [newAccNumber, setNewAccNumber] = useState("");
   const [newAccHolder, setNewAccHolder] = useState("");
+
+  // Lock background body scroll when popup/modal is open
+  useEffect(() => {
+    if (showPaymentModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showPaymentModal]);
 
   const handleAddAccount = (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   ChevronLeft,
@@ -105,6 +105,18 @@ export default function RiwayatPembelianPemasokView({
   // Review Form States
   const [ratingStars, setRatingStars] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+
+  // Lock background body scroll when modal is open
+  useEffect(() => {
+    if (selectedForReview || selectedInvoice) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [selectedForReview, selectedInvoice]);
 
   const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
