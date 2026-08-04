@@ -1,10 +1,11 @@
-import DashboardPetani from "./components/DashboardPetani";
+import HomeClient from "./components/HomeClient";
 
 export const metadata = {
-  title: "Panentra - Dashboard Petani & Smart Farming",
+  title: "Panentra - Smart Farming & Agrotech",
   description: "Platform digital agrotech & smart farming Indonesia",
 };
 
 export default function Home() {
-  return <DashboardPetani />;
+  return <HomeClient />;
 }
+

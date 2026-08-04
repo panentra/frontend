@@ -410,29 +410,6 @@ export default function DashboardPemasok() {
                       </p>
                     </div>
                   </section>
-
-                  {/* ================= 5. MARKETPLACE CALLOUT BANNER CARD ================= */}
-                  <section
-                    onClick={handleOpenMarketplace}
-                    className="bg-white rounded-[28px] p-5 shadow-sm border border-gray-200 hover:border-[#0F4C25]/40 transition-all cursor-pointer flex items-center justify-between group"
-                  >
-                    <div className="space-y-1 max-w-[72%]">
-                      <div className="flex items-center gap-1.5 text-xs font-black text-[#0F4C25]">
-                        <ShoppingBag className="w-4 h-4" />
-                        <span>Katalog Marketplace Panentra</span>
-                      </div>
-                      <h3 className="text-sm font-black text-[#1A1C19] group-hover:text-[#0F4C25] transition-colors leading-snug">
-                        Eksplor Pasokan Hasil Panen Tani Terdekat
-                      </h3>
-                      <p className="text-[11px] text-gray-500 font-medium leading-relaxed">
-                        Petani Lembang & Bandung dengan Grade SNI terverifikasi & harga HPP transparan.
-                      </p>
-                    </div>
-
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#0F4C25] flex items-center justify-center group-hover:bg-[#0F4C25] group-hover:text-white transition-all shadow-2xs shrink-0">
-                      <ChevronRight className="w-5 h-5 stroke-[2.5]" />
-                    </div>
-                  </section>
                 </>
               )}
             </>

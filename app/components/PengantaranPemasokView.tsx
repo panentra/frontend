@@ -284,7 +284,6 @@ export default function PengantaranPemasokView() {
       {/* Header Title */}
       <div>
         <h1 className="text-xl sm:text-2xl font-black text-[#1A1C19] tracking-tight flex items-center gap-2">
-          <Truck className="w-6 h-6 text-[#0F4C25]" />
           Lacak Pengantaran Pasokan
         </h1>
         <p className="text-xs font-bold text-gray-500">

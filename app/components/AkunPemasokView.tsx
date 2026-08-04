@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { logoutUser } from "@/lib/api";
 import {
   User,
   Store,
@@ -142,8 +143,9 @@ export default function AkunPemasokView({
     );
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm("Apakah Anda yakin ingin keluar dari akun Pemasok Panentra?")) {
+      await logoutUser();
       router.push("/login");
     }
   };

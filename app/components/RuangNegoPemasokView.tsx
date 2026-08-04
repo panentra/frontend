@@ -614,7 +614,7 @@ export default function RuangNegoPemasokView({
             </p>
           </div>
 
-          <div className="w-32 h-32 shrink-0 relative -mr-4 -mb-11 scale-110">
+          <div className="w-32 h-32 shrink-0 relative -mr-2 -mb-11 scale-190">
             <Image
               src="/assets/budi-chat.png"
               alt="Budi Chat Pemasok"

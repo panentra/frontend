@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { logoutUser } from "@/lib/api";
 import {
   User,
   Wallet,
@@ -265,8 +266,9 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
     if (onSubViewChange) onSubViewChange(false);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm("Apakah Anda yakin ingin keluar dari akun Panentra?")) {
+      await logoutUser();
       router.push("/login");
     }
   };

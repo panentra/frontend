@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Eye, EyeOff, User, Mail, Lock } from "lucide-react";
 
 import Button from "./Button";
+import { loginUser, registerUser, setAuthData } from "@/lib/api";
 
 interface AuthFormProps {
   initialMode?: "login" | "register";
@@ -38,7 +39,7 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -66,18 +67,26 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
       if (mode === "login") {
+        const res = await loginUser({ email, password });
+        setAuthData(res.token, { ...res.user, role });
         setSuccessMessage(`Selamat datang kembali di Panentra!`);
         const targetRoute = role === "petani" ? "/dashboard" : "/pemasok/dashboard";
-        setTimeout(() => router.push(targetRoute), 1200);
+        setTimeout(() => router.push(targetRoute), 1000);
       } else {
+        const res = await registerUser({ name, email, password });
+        setAuthData(res.token, { ...res.user, role });
         setSuccessMessage(`Pendaftaran ${role === "petani" ? "Petani" : "Pemasok"} berhasil!`);
         const targetRoute = role === "petani" ? "/onboarding/problem" : "/onboarding/pemasok/1";
-        setTimeout(() => router.push(targetRoute), 1200);
+        setTimeout(() => router.push(targetRoute), 1000);
       }
-    }, 800);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setErrorMessage(error.message || "Terjadi kesalahan saat menghubungi server.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Dynamic Copywriting Subtitle based on Mode and Role

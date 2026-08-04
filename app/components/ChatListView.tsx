@@ -337,7 +337,6 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
       {/* Header Title */}
       <div>
         <h1 className="text-xl sm:text-2xl font-black text-[#1A1C19] tracking-tight flex items-center gap-2">
-          <MessageSquare className="w-6 h-6 text-[#0F4C25]" />
           Pesan & Negosiasi Pasokan
         </h1>
         <p className="text-xs font-semibold text-gray-500">
