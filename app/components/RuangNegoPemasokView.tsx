@@ -594,7 +594,6 @@ export default function RuangNegoPemasokView({
 
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-[#1A1C19] tracking-tight flex items-center gap-2">
-            <MessageSquare className="w-6 h-6 text-[#0F4C25]" />
             Pesan & Negosiasi Pasokan
           </h1>
           <p className="text-xs font-semibold text-gray-500">
@@ -617,8 +616,8 @@ export default function RuangNegoPemasokView({
 
           <div className="w-32 h-32 shrink-0 relative -mr-4 -mb-11 scale-110">
             <Image
-              src="/assets/bowo-catat.png"
-              alt="Bowo Chat Pemasok"
+              src="/assets/budi-chat.png"
+              alt="Budi Chat Pemasok"
               width={160}
               height={160}
               className="w-full h-full object-contain drop-shadow-2xl"

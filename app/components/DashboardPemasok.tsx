@@ -329,9 +329,9 @@ export default function DashboardPemasok() {
                         onClick={() => setViewMode("nego")}
                         className="w-full bg-[#EBF7EE] rounded-[28px] p-3.5 pl-20 flex items-center justify-between transition-all active:scale-[0.99] text-left cursor-pointer group relative overflow-hidden min-h-[78px] shadow-sm"
                       >
-                        <div className="absolute -left-2 -bottom-2.1 z-10 w-24 h-24 sm:w-30 sm:h-30 pointer-events-none">
+                        <div className="absolute -left-4 -bottom-2.1 z-10 w-24 h-24 sm:w-30 sm:h-30 pointer-events-none">
                           <Image
-                            src="/assets/bowo-catat.png"
+                            src="/assets/budi-chat.png"
                             alt="Ruang Negosiasi"
                             width={100}
                             height={100}
