@@ -274,12 +274,15 @@ export default function DashboardPemasok() {
                         </div>
 
                         <p className="text-xs text-emerald-100/95 leading-relaxed font-medium drop-shadow-sm">
-                          450 kg pasokan dipesan dari <span className="font-extrabold text-[#FFFFFF]">12 mitra petani terverifikasi!</span>
+                          450 kg sudah diamankan dari <span className="font-extrabold text-[#FFFFFF]">12 petani mitra terpercaya — pasokanmu makin kuat!</span>
                         </p>
 
-                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
                           <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white border border-white/20 shadow-sm">
-                            450 kg Dipesan
+                            450 kg Terpesan
+                          </span>
+                          <span className="text-[10px] text-emerald-100/90 font-medium leading-none">
+                            Sisa 50 kg lagi menuju target bulan ini
                           </span>
                         </div>
                       </div>
@@ -298,9 +301,9 @@ export default function DashboardPemasok() {
                     </div>
 
                     {/* Bottom White Progress Bar Track Section */}
-                    <div className="bg-white p-4 sm:p-5 space-y-2.5">
+                    <div className="bg-white p-4 sm:p-5 space-y-2">
                       <div className="flex justify-between items-center text-xs sm:text-sm font-black text-[#1A1C19]">
-                        <span>Progress Target Pasokan: 450 / 500 kg</span>
+                        <span>Target Pasokan Bulanan</span>
                         <span className="text-[#0F4C25] font-extrabold">90%</span>
                       </div>
 
@@ -311,6 +314,10 @@ export default function DashboardPemasok() {
                           style={{ width: "90%" }}
                         />
                       </div>
+                      
+                      <p className="text-[11px] text-gray-500 font-semibold pt-0.5">
+                        Tinggal 50 kg lagi — beberapa mitra petani baru siap panen minggu ini
+                      </p>
                     </div>
                   </section>
 
@@ -318,7 +325,7 @@ export default function DashboardPemasok() {
                   <section className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h2 className="text-base sm:text-lg font-black text-[#1A1C19] tracking-tight">
-                        Langkah Utama Pemasok
+                        Aksi Cepat
                       </h2>
                     </div>
 
@@ -346,7 +353,7 @@ export default function DashboardPemasok() {
                             </h3>
                           </div>
                           <p className="text-[11px] text-gray-600 font-medium leading-tight">
-                            Ajukan penawaran harga & kuantitas pasokan real-time
+                            Tawar harga langsung ke petani, dapatkan kesepakatan terbaik tanpa perantara
                           </p>
                         </div>
 
@@ -378,7 +385,7 @@ export default function DashboardPemasok() {
                             </h3>
                           </div>
                           <p className="text-[11px] text-gray-600 font-medium leading-tight">
-                            Rekap invoice, ulasan rating petani & tombol Beli Lagi
+                            Semua invoice rapi di satu tempat — repeat order dari petani langganan tinggal satu tap
                           </p>
                         </div>
 
@@ -396,7 +403,7 @@ export default function DashboardPemasok() {
                     </h2>
                     <div className="bg-white rounded-[28px] p-5 border border-gray-200 shadow-sm space-y-2">
                       <p className="text-xs sm:text-sm italic font-extrabold text-[#0F4C25] leading-relaxed">
-                        &ldquo;Panen Cabai Rawit Merah Grade A di Lembang sedang melimpah minggu ini (HPP Rp 28.500/kg). Harga pasar Rp 38.000/kg — dapatkan harga langsung petani dengan potensi hemat hingga 18%.&rdquo;
+                        &ldquo;Peluang hari ini: Cabai Rawit Merah Grade A dari petani Lembang sedang melimpah (HPP Rp 28.500/kg vs harga pasar Rp 38.000/kg). Ambil sekarang, hemat hingga 18% dibanding beli musim depan.&rdquo;
                       </p>
                       <p className="text-[11px] text-gray-400 font-medium">
                         *Insight dipersonalisasi berdasarkan lokasi toko Bandung & rekomendasi HPP.
@@ -407,14 +414,19 @@ export default function DashboardPemasok() {
                   {/* ================= 5. RADAR PASOKAN TANI TERDEKAT (Shopee/Tokped 2-Column Card Grid Style) ================= */}
                   <section className="bg-white rounded-[28px] p-4 sm:p-5 shadow-sm border border-gray-200 space-y-3.5">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-xs sm:text-sm font-black text-[#1A1C19] tracking-tight flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4 text-[#0F4C25]" />
-                        Radar Pasokan Tani Siap Beli
-                      </h2>
+                      <div className="space-y-0.5">
+                        <h2 className="text-xs sm:text-sm font-black text-[#1A1C19] tracking-tight flex items-center gap-1.5">
+                          <MapPin className="w-4 h-4 text-[#0F4C25]" />
+                          Radar Pasokan Tani Siap Beli
+                        </h2>
+                        <p className="text-[10px] text-gray-500 font-semibold pl-5">
+                          Petani terdekat dengan hasil panen siap kirim minggu ini
+                        </p>
+                      </div>
                       <button
                         type="button"
                         onClick={handleOpenMarketplace}
-                        className="text-[10px] font-bold text-[#0F4C25] hover:underline cursor-pointer"
+                        className="text-[10px] font-bold text-[#0F4C25] hover:underline cursor-pointer shrink-0"
                       >
                         Lihat Semua
                       </button>
