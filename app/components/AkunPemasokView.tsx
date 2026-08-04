@@ -374,7 +374,7 @@ export default function AkunPemasokView({
 
       {/* ================= MODAL KELOLA REKENING BANK & METODE PEMBAYARAN ================= */}
       {showPaymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="w-full max-w-[420px] bg-white rounded-[32px] p-5 space-y-4 shadow-2xl border border-gray-100 relative max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">

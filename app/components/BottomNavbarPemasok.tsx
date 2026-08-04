@@ -25,7 +25,7 @@ export default function BottomNavbarPemasok({
   };
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-2xl px-2 py-2 flex justify-between items-center z-40">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-2xl px-2 py-2 flex justify-between items-center z-30">
       {/* 1. Beranda */}
       <button
         type="button"
