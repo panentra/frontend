@@ -160,8 +160,7 @@ export default function DashboardPemasok() {
 
   const handleOpenBuyEscrow = (listing: HarvestListing) => {
     setSelectedListing(listing);
-    setAgreedDeal(null);
-    setViewMode("pembayaran");
+    setViewMode("nego"); // Alur: Marketplace -> Milih Produk -> Beli -> Nego Harga (chat)
   };
 
   const handleProceedFromNegoToPayment = (dealDetails: {
@@ -193,7 +192,7 @@ export default function DashboardPemasok() {
               listing={selectedListing}
               onBack={() => setViewMode("dashboard")}
               onSelectNego={(listing) => handleOpenNego(listing)}
-              onSelectBuy={(listing) => handleOpenBuyEscrow(listing)}
+              onSelectBuy={(listing) => handleOpenNego(listing)} // Alur: Milih produk -> Beli/Nego -> Chat Nego dulu
             />
           ) : viewMode === "nego" ? (
             <RuangNegoPemasokView
@@ -206,13 +205,13 @@ export default function DashboardPemasok() {
               listing={selectedListing}
               agreedPrice={agreedDeal?.price}
               agreedQty={agreedDeal?.qty}
-              onBack={() => setViewMode("dashboard")}
+              onBack={() => setViewMode("nego")}
               onPaymentSuccess={() => setViewMode("riwayat")}
             />
           ) : viewMode === "riwayat" ? (
             <RiwayatPembelianPemasokView
               onBack={() => setViewMode("dashboard")}
-              onBuyAgain={(farmerName) => {
+              onBuyAgain={() => {
                 setActiveTab("jualbeli");
                 setViewMode("dashboard");
               }}
@@ -225,7 +224,7 @@ export default function DashboardPemasok() {
                 <MarketplacePemasokView
                   onBack={() => setActiveTab("beranda")}
                   onSelectNego={(listing) => handleOpenNego(listing)}
-                  onSelectBuy={(listing) => handleOpenBuyEscrow(listing)}
+                  onSelectBuy={(listing) => handleOpenNego(listing)}
                 />
               )}
               {activeTab === "pengantaran" && <PengantaranPemasokView />}
@@ -275,7 +274,7 @@ export default function DashboardPemasok() {
                         </div>
 
                         <p className="text-xs text-emerald-100/95 leading-relaxed font-medium drop-shadow-sm">
-                          450 kg pasokan dipesan dari <span className="font-extrabold text-white">12 mitra petani terverifikasi!</span>
+                          450 kg pasokan dipesan dari <span className="font-extrabold text-[#FFFFFF]">12 mitra petani terverifikasi!</span>
                         </p>
 
                         <div className="flex flex-wrap items-center gap-1.5 pt-1">
@@ -318,7 +317,7 @@ export default function DashboardPemasok() {
                     </div>
                   </section>
 
-                  {/* ================= 3. LANGKAH UTAMA WORKFLOW CARDS (Cleaned: No Duplicate Marketplace Card) ================= */}
+                  {/* ================= 3. LANGKAH UTAMA WORKFLOW CARDS (Strict Checkout Flow: No standalone Payment Card) ================= */}
                   <section className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h2 className="text-base sm:text-lg font-black text-[#1A1C19] tracking-tight">
@@ -359,39 +358,7 @@ export default function DashboardPemasok() {
                         </div>
                       </button>
 
-                      {/* Workflow Card 2: Pembayaran Safe Escrow */}
-                      <button
-                        type="button"
-                        onClick={() => setViewMode("pembayaran")}
-                        className="w-full bg-[#EBF7EE] rounded-[28px] p-3.5 pl-20 flex items-center justify-between transition-all active:scale-[0.99] text-left cursor-pointer group relative overflow-hidden min-h-[78px] shadow-sm"
-                      >
-                        <div className="absolute -left-3 -bottom-2.1 z-10 w-24 h-24 sm:w-30 sm:h-30 pointer-events-none">
-                          <Image
-                            src="/assets/bowo-duit.png"
-                            alt="Pembayaran Safe Escrow"
-                            width={100}
-                            height={100}
-                            className="w-full h-full object-contain transition-transform"
-                          />
-                        </div>
-
-                        <div className="space-y-0.5 z-10">
-                          <div className="flex items-center gap-1.5">
-                            <h3 className="text-xs sm:text-sm font-black text-[#111827]">
-                              Pembayaran Safe Escrow
-                            </h3>
-                          </div>
-                          <p className="text-[11px] text-gray-600 font-medium leading-tight">
-                            Bayar aman via Panentra Pay, dana dicairkan setelah barang sesuai
-                          </p>
-                        </div>
-
-                        <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-gray-500 group-hover:text-[#0F4C25] group-hover:bg-white transition-all shrink-0 z-10 ml-2 shadow-sm">
-                          <ChevronRight className="w-5 h-5 stroke-[2.5]" />
-                        </div>
-                      </button>
-
-                      {/* Workflow Card 3: Riwayat Pembelian & Rating Petani */}
+                      {/* Workflow Card 2: Riwayat Pembelian & Rating Petani */}
                       <button
                         type="button"
                         onClick={() => setViewMode("riwayat")}
