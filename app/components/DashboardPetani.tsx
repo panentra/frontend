@@ -276,7 +276,7 @@ export default function DashboardPetani() {
               {activeTab === "kalender" && <KalenderView />}
               {activeTab === "pesanan" && <PesananView />}
               {activeTab === "chat" && <ChatListView onChatRoomStateChange={setIsChatRoomActive} />}
-              {activeTab === "akun" && <AkunKeuanganView />}
+              {activeTab === "akun" && <AkunKeuanganView onSubViewChange={setIsChatRoomActive} />}
 
               {activeTab === "beranda" && (
                 <>

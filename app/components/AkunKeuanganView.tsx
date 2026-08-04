@@ -13,6 +13,7 @@ import {
   MapPin,
   Settings,
   ChevronRight,
+  ChevronLeft,
   HelpCircle,
   FileText,
   DollarSign,
@@ -34,14 +35,19 @@ import {
   Check,
   Building2,
   ExternalLink,
+  Search,
+  Download,
+  Filter,
+  ArrowUpRight,
 } from "lucide-react";
 import Button from "./Button";
 
 // Sample Expense Data (Biaya HPP)
 const INITIAL_EXPENSE_HISTORY = [
-  { id: 1, title: "Bibit Cabai Unggul (10 Pack)", category: "Bibit", amount: "Rp 150.000", date: "25 Juli 2026" },
-  { id: 2, title: "Pupuk NPK 16-16-16 (50kg)", category: "Pupuk", amount: "Rp 480.000", date: "28 Juli 2026" },
-  { id: 3, title: "Pestisida Organik Neem (2L)", category: "Obat", amount: "Rp 120.000", date: "30 Juli 2026" },
+  { id: 1, title: "Bibit Cabai Unggul (10 Pack)", category: "Bibit", amount: "Rp 150.000", rawAmount: 150000, date: "25 Juli 2026", note: "Varietas Red Hot Super" },
+  { id: 2, title: "Pupuk NPK 16-16-16 (50kg)", category: "Pupuk", amount: "Rp 480.000", rawAmount: 480000, date: "28 Juli 2026", note: "Toko Tani Makmur Lembang" },
+  { id: 3, title: "Pestisida Organik Neem (2L)", category: "Obat", amount: "Rp 120.000", rawAmount: 120000, date: "30 Juli 2026", note: "Semprot hama kutu daun" },
+  { id: 4, title: "Upah Buruh Olah Lahan (2 Hari)", category: "Tenaga Kerja", amount: "Rp 300.000", rawAmount: 300000, date: "1 Agustus 2026", note: "2 Orang pekerja harian" },
 ];
 
 // Sample Harvest Sales History (Riwayat Penjualan Hasil Panen)
@@ -49,29 +55,54 @@ const SALES_HISTORY = [
   {
     id: "TRX-901",
     buyer: "Toko Berkah Jaya",
+    buyerType: "Pemasok Pasar Modern",
     item: "Cabai Rawit Merah Super",
     qty: "150 kg",
+    unitPrice: "Rp 35.000 / kg",
     total: "Rp 5.250.000",
-    date: "3 Agustus 2026",
+    date: "3 Agustus 2026, 10:15 WIB",
     status: "Selesai",
+    escrow: "Panentra Secure Escrow",
+    location: "Kec. Lembang, Bandung Barat",
   },
   {
     id: "TRX-882",
     buyer: "Resto Sambal Nusantara",
+    buyerType: "Restoran / Kuliner",
     item: "Pakcoy Hydroponic Grade A",
     qty: "80 kg",
+    unitPrice: "Rp 18.000 / kg",
     total: "Rp 1.440.000",
-    date: "1 Agustus 2026",
+    date: "1 Agustus 2026, 14:30 WIB",
     status: "Selesai",
+    escrow: "Direct Bank Transfer",
+    location: "Kota Bandung",
   },
   {
     id: "TRX-754",
     buyer: "Supermarket Fresh Mart",
+    buyerType: "Retail Modern",
     item: "Tomat Red Super",
     qty: "200 kg",
+    unitPrice: "Rp 12.000 / kg",
     total: "Rp 2.400.000",
-    date: "28 Juli 2026",
+    date: "28 Juli 2026, 09:00 WIB",
     status: "Selesai",
+    escrow: "Panentra Instant Release",
+    location: "Kota Cimahi",
+  },
+  {
+    id: "TRX-620",
+    buyer: "CV Pangan Utama",
+    buyerType: "Distributor Bahan Pokok",
+    item: "Bawang Merah Brebes",
+    qty: "300 kg",
+    unitPrice: "Rp 28.000 / kg",
+    total: "Rp 8.400.000",
+    date: "20 Juli 2026, 11:20 WIB",
+    status: "Selesai",
+    escrow: "Panentra Secure Escrow",
+    location: "Kab. Bandung",
   },
 ];
 
@@ -99,19 +130,29 @@ const FARM_PLOTS = [
   },
 ];
 
-export default function AkunKeuanganView() {
+interface AkunKeuanganViewProps {
+  onSubViewChange?: (isOpen: boolean) => void;
+}
+
+export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewProps) {
   const router = useRouter();
+
+  // Navigation Sub-Page View Mode
+  const [subViewMode, setSubViewMode] = useState<"main" | "sales_history" | "expense_history" | "bank_accounts">("main");
 
   // Multi Lahan State
   const [activePlotId, setActivePlotId] = useState<string>("plot-1");
+
+  // Filter & Search States
+  const [salesSearch, setSalesSearch] = useState("");
+  const [expenseSearch, setExpenseSearch] = useState("");
+  const [expenseCategoryFilter, setExpenseCategoryFilter] = useState("Semua");
 
   // Modals Control States
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
-  const [showAllExpensesModal, setShowAllExpensesModal] = useState(false);
-  const [showSalesModal, setShowSalesModal] = useState(false);
   const [showBankModal, setShowBankModal] = useState(false);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [showNotifModal, setShowNotifModal] = useState(false);
@@ -134,6 +175,16 @@ export default function AkunKeuanganView() {
 
   const currentPlot = FARM_PLOTS.find((p) => p.id === activePlotId) || FARM_PLOTS[0];
 
+  const handleOpenSubView = (mode: "sales_history" | "expense_history" | "bank_accounts") => {
+    setSubViewMode(mode);
+    if (onSubViewChange) onSubViewChange(true);
+  };
+
+  const handleCloseSubView = () => {
+    setSubViewMode("main");
+    if (onSubViewChange) onSubViewChange(false);
+  };
+
   const handleLogout = () => {
     if (confirm("Apakah Anda yakin ingin keluar dari akun Panentra?")) {
       router.push("/login");
@@ -149,7 +200,9 @@ export default function AkunKeuanganView() {
       title: expenseTitle,
       category: expenseCategory,
       amount: `Rp ${parseInt(expenseAmount).toLocaleString("id-ID")}`,
+      rawAmount: parseInt(expenseAmount),
       date: "Hari Ini",
+      note: "Pencatatan langsung HPP",
     };
 
     setExpenses([newExp, ...expenses]);
@@ -159,6 +212,257 @@ export default function AkunKeuanganView() {
     alert("Pengeluaran produksi berhasil dicatat & HPP otomatis diperbarui!");
   };
 
+  const filteredSales = SALES_HISTORY.filter(
+    (s) =>
+      s.buyer.toLowerCase().includes(salesSearch.toLowerCase()) ||
+      s.item.toLowerCase().includes(salesSearch.toLowerCase()) ||
+      s.id.toLowerCase().includes(salesSearch.toLowerCase())
+  );
+
+  const filteredExpenses = expenses.filter((exp) => {
+    const matchesCat = expenseCategoryFilter === "Semua" || exp.category === expenseCategoryFilter;
+    const matchesQuery =
+      exp.title.toLowerCase().includes(expenseSearch.toLowerCase()) ||
+      exp.category.toLowerCase().includes(expenseSearch.toLowerCase());
+    return matchesCat && matchesQuery;
+  });
+
+  // ================= 1. FULL PAGE SUB-VIEW: RIWAYAT PENJUALAN HASIL PANEN =================
+  if (subViewMode === "sales_history") {
+    return (
+      <div className="animate-fade-in -mx-4 sm:-mx-5 -mt-4 sm:-mt-5 pt-[65px] pb-24 bg-[#F4F6F4] min-h-screen flex flex-col relative z-20">
+        {/* Pinned Top Header (Fixed at Top) */}
+        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] z-50 bg-white border-b border-gray-200 shadow-md p-3.5 px-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleCloseSubView}
+              aria-label="Kembali ke Profil"
+              className="w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-[#1A1C19] hover:bg-gray-50 active:scale-95 transition-all cursor-pointer shrink-0"
+            >
+              <ChevronLeft className="w-5 h-5 stroke-[2.5] text-[#1A1C19]" />
+            </button>
+            <div>
+              <h2 className="text-sm font-black text-[#1A1C19] leading-tight">
+                Riwayat Penjualan Hasil Panen
+              </h2>
+              <p className="text-[10px] text-gray-500 font-semibold">
+                Transkrip Lengkap Pembelian dari Pemasok
+              </p>
+            </div>
+          </div>
+
+          <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] font-black text-[10px] rounded-md border border-emerald-200">
+            {SALES_HISTORY.length} Transaksi
+          </span>
+        </div>
+
+        {/* Content Body Container */}
+        <div className="p-4 sm:p-5 space-y-4">
+          {/* Summary Omset Banner */}
+          <div className="bg-gradient-to-br from-[#0F4C25] via-[#1B5E20] to-[#0A381B] rounded-[26px] p-5 text-white shadow-lg space-y-2 relative overflow-hidden">
+            <span className="text-[10px] font-black text-emerald-200 uppercase tracking-wider block">
+              Total Pendapatan Terjual
+            </span>
+            <div className="text-2xl sm:text-3xl font-black tracking-tight">
+              Rp 17.490.000
+            </div>
+            <div className="flex items-center justify-between text-xs pt-1 border-t border-white/15 text-emerald-100">
+              <span>Total Volume Terjual: <strong>730 kg</strong></span>
+              <span className="bg-white/15 px-2 py-0.5 rounded-full text-[10px] font-bold">100% Escrow Aman</span>
+            </div>
+          </div>
+
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Cari nama pembeli, komoditas, ID transaksi..."
+              value={salesSearch}
+              onChange={(e) => setSalesSearch(e.target.value)}
+              className="w-full h-10 pl-10 pr-4 bg-white border border-gray-200 rounded-2xl text-xs font-semibold outline-none focus:border-[#0F4C25] shadow-2xs"
+            />
+          </div>
+
+          {/* Detailed Transaction Cards List */}
+          <div className="space-y-3">
+            {filteredSales.map((sale) => (
+              <div
+                key={sale.id}
+                className="bg-white rounded-[24px] p-4 border border-gray-200 shadow-sm space-y-3 relative overflow-hidden hover:border-emerald-300 transition-all"
+              >
+                {/* Header: ID & Status */}
+                <div className="flex items-center justify-between text-xs pb-2 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-[#0F4C25]">{sale.id}</span>
+                    <span className="text-[10px] font-bold text-gray-400">· {sale.date}</span>
+                  </div>
+                  <span className="px-2.5 py-0.5 bg-emerald-50 text-[#0F4C25] border border-emerald-200 rounded-full text-[10px] font-black">
+                    ✓ {sale.status}
+                  </span>
+                </div>
+
+                {/* Main Content */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="space-y-1 min-w-0">
+                    <h3 className="text-sm font-black text-[#1A1C19] truncate">{sale.item}</h3>
+                    <p className="text-xs font-bold text-[#0F4C25] truncate">
+                      Pembeli: {sale.buyer} <span className="text-gray-400 font-normal">({sale.buyerType})</span>
+                    </p>
+                    <p className="text-[11px] text-gray-500 font-medium">
+                      Kuantitas: <strong>{sale.qty}</strong> ({sale.unitPrice})
+                    </p>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="text-[10px] text-gray-400 font-bold block">Total Diterima</span>
+                    <span className="text-base font-black text-[#0F4C25]">{sale.total}</span>
+                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md inline-block mt-0.5">
+                      {sale.escrow}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Footer Action */}
+                <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs">
+                  <span className="text-[10px] text-gray-500 font-medium flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-[#0F4C25]" /> {sale.location}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => alert(`Mengunduh Invoice Penjualan ${sale.id}...`)}
+                    className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-[11px] rounded-xl border border-gray-200 flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <Download className="w-3 h-3 text-gray-600" />
+                    <span>Cetak Invoice</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ================= 2. FULL PAGE SUB-VIEW: PENCATATAN BIAYA PRODUKSI HPP =================
+  if (subViewMode === "expense_history") {
+    return (
+      <div className="animate-fade-in -mx-4 sm:-mx-5 -mt-4 sm:-mt-5 pt-[65px] pb-24 bg-[#F4F6F4] min-h-screen flex flex-col relative z-20">
+        {/* Pinned Top Header (Fixed at Top) */}
+        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] z-50 bg-white border-b border-gray-200 shadow-md p-3.5 px-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleCloseSubView}
+              aria-label="Kembali ke Profil"
+              className="w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-[#1A1C19] hover:bg-gray-50 active:scale-95 transition-all cursor-pointer shrink-0"
+            >
+              <ChevronLeft className="w-5 h-5 stroke-[2.5] text-[#1A1C19]" />
+            </button>
+            <div>
+              <h2 className="text-sm font-black text-[#1A1C19] leading-tight">
+                Pencatatan Biaya Produksi (HPP)
+              </h2>
+              <p className="text-[10px] text-gray-500 font-semibold">
+                Transkrip Pengeluaran Modal Operasional Tani
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowExpenseModal(true)}
+            className="px-3 py-1.5 bg-[#0F4C25] hover:bg-[#0A381B] text-white rounded-xl text-xs font-black flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Catat
+          </button>
+        </div>
+
+        {/* Content Body Container */}
+        <div className="p-4 sm:p-5 space-y-4">
+          {/* Summary HPP Banner */}
+          <div className="bg-[#FFF5F5] border border-red-200 rounded-[26px] p-5 text-gray-900 shadow-sm space-y-2 relative overflow-hidden">
+            <span className="text-[10px] font-black text-red-700 uppercase tracking-wider block">
+              Total Pengeluaran Produksi (HPP Modal)
+            </span>
+            <div className="text-2xl sm:text-3xl font-black text-red-600 tracking-tight">
+              Rp {expenses.reduce((acc, curr) => acc + (curr.rawAmount || 0), 0).toLocaleString("id-ID")}
+            </div>
+            <p className="text-xs text-gray-600 font-medium leading-relaxed">
+              HPP modal produksi rata-rata Anda: <strong className="text-[#0F4C25]">Rp 7.000 / kg</strong>. Semua penawaran harga pembeli AI disesuaikan agar selalu di atas HPP ini.
+            </p>
+          </div>
+
+          {/* Search Input & Category Filter Pills */}
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Cari pengeluaran, pupuk, bibit, upah..."
+                value={expenseSearch}
+                onChange={(e) => setExpenseSearch(e.target.value)}
+                className="w-full h-10 pl-10 pr-4 bg-white border border-gray-200 rounded-2xl text-xs font-semibold outline-none focus:border-[#0F4C25] shadow-2xs"
+              />
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="relative">
+              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar pr-6">
+                {["Semua", "Pupuk", "Bibit", "Obat", "Tenaga Kerja"].map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setExpenseCategoryFilter(cat)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap border ${
+                      expenseCategoryFilter === cat
+                        ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-[#F4F6F4] via-[#F4F6F4]/80 to-transparent pointer-events-none z-10" />
+            </div>
+          </div>
+
+          {/* Detailed Expense Entries List */}
+          <div className="space-y-2.5">
+            {filteredExpenses.map((exp) => (
+              <div
+                key={exp.id}
+                className="bg-white rounded-[24px] p-4 border border-gray-200 shadow-sm flex items-center justify-between text-xs hover:border-emerald-300 transition-all"
+              >
+                <div className="space-y-1 min-w-0 pr-2">
+                  <h4 className="font-black text-[#1A1C19] leading-tight">{exp.title}</h4>
+                  <div className="flex items-center gap-2 text-[10px] text-gray-500 font-semibold">
+                    <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] rounded-md font-black border border-emerald-100">
+                      {exp.category}
+                    </span>
+                    <span>{exp.date}</span>
+                  </div>
+                  {exp.note && (
+                    <p className="text-[11px] text-gray-400 font-medium italic">"{exp.note}"</p>
+                  )}
+                </div>
+
+                <span className="font-black text-red-600 text-sm shrink-0">
+                  - {exp.amount}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ================= 3. MAIN DASHBOARD VIEW (PROFILE & KEAKUNAN) =================
   return (
     <div className="space-y-5 animate-fade-in pb-8">
       {/* ================= 1. HEADER PROFILE HERO CARD ================= */}
@@ -325,7 +629,7 @@ export default function AkunKeuanganView() {
             </div>
             <div>
               <span className="text-[10px] text-emerald-200 block font-medium">Pendapatan Omset</span>
-              <span className="font-black text-white text-xs">Rp 18.250.000</span>
+              <span className="font-black text-white text-xs">Rp 17.490.000</span>
             </div>
           </div>
 
@@ -341,7 +645,7 @@ export default function AkunKeuanganView() {
         </div>
       </div>
 
-      {/* ================= 4. RINGKASAN PENGELUARAN PRODUKSI (HPP RINGKAS - 2 ITEM) ================= */}
+      {/* ================= 4. RINGKASAN BIAYA PRODUKSI (HPP RINGKAS - 2 ITEM) ================= */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-black text-[#1A1C19]">
@@ -382,15 +686,15 @@ export default function AkunKeuanganView() {
 
         <button
           type="button"
-          onClick={() => setShowAllExpensesModal(true)}
+          onClick={() => handleOpenSubView("expense_history")}
           className="w-full py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl text-xs font-black border border-gray-200 flex items-center justify-center gap-1 transition-all cursor-pointer"
         >
-          <span>Lihat Semua Catatan Keuangan HPP</span>
+          <span>Lihat Halaman Catatan Biaya HPP ({expenses.length})</span>
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </section>
 
-      {/* ================= 5. [BARU] RIWAYAT PENJUALAN HASIL PANEN ================= */}
+      {/* ================= 5. RIWAYAT PENJUALAN HASIL PANEN ================= */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-1.5">
@@ -398,7 +702,7 @@ export default function AkunKeuanganView() {
             Riwayat Penjualan Hasil Panen
           </h3>
           <span className="text-[10px] font-extrabold text-[#0F4C25] bg-emerald-50 px-2 py-0.5 rounded-full">
-            3 Transaksi
+            {SALES_HISTORY.length} Transaksi
           </span>
         </div>
 
@@ -427,10 +731,10 @@ export default function AkunKeuanganView() {
 
         <button
           type="button"
-          onClick={() => setShowSalesModal(true)}
+          onClick={() => handleOpenSubView("sales_history")}
           className="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-[#0F4C25] rounded-2xl text-xs font-black border border-emerald-200 flex items-center justify-center gap-1 transition-all cursor-pointer"
         >
-          <span>Lihat Semua Riwayat Penjualan</span>
+          <span>Lihat Halaman Riwayat Penjualan ({SALES_HISTORY.length})</span>
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </section>
@@ -490,7 +794,7 @@ export default function AkunKeuanganView() {
             </span>
           </button>
 
-          {/* Daftar Sebagai Pemasok [REVISI - BUKAN GANTI PERAN KASAR] */}
+          {/* Daftar Sebagai Pemasok [REVISI] */}
           <button
             type="button"
             onClick={() => setShowSupplierModal(true)}
@@ -518,7 +822,7 @@ export default function AkunKeuanganView() {
             <ChevronRight className="w-4 h-4 text-gray-400" />
           </button>
 
-          {/* Notifikasi & Privasi [BARU] */}
+          {/* Notifikasi & Privasi */}
           <button
             type="button"
             onClick={() => setShowNotifModal(true)}
@@ -531,7 +835,7 @@ export default function AkunKeuanganView() {
             <ChevronRight className="w-4 h-4 text-gray-400" />
           </button>
 
-          {/* Bahasa Aplikasi [BARU] */}
+          {/* Bahasa Aplikasi */}
           <button
             type="button"
             onClick={() => setShowLangModal(true)}
@@ -560,7 +864,7 @@ export default function AkunKeuanganView() {
           </button>
         </div>
 
-        {/* STANDALONE PROMINENT LIGHT RED LOGOUT BUTTON */}
+        {/* LOGOUT BUTTON */}
         <div className="pt-3">
           <button
             type="button"
@@ -975,116 +1279,7 @@ export default function AkunKeuanganView() {
         </div>
       )}
 
-      {/* 8. MODAL LIHAT SEMUA BIAYA PRODUKSI HPP */}
-      {showAllExpensesModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-[420px] max-h-[85vh] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative flex flex-col">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3 shrink-0">
-              <h3 className="text-sm font-black text-[#1A1C19]">
-                Semua Catatan Biaya Produksi (HPP)
-              </h3>
-              <button
-                onClick={() => setShowAllExpensesModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-2 overflow-y-auto pr-1 flex-1">
-              {expenses.map((exp) => (
-                <div
-                  key={exp.id}
-                  className="p-3.5 bg-[#F8FAF8] rounded-2xl border border-gray-200 flex items-center justify-between text-xs"
-                >
-                  <div className="space-y-0.5">
-                    <h4 className="font-black text-[#1A1C19]">{exp.title}</h4>
-                    <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
-                      <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] rounded-md font-extrabold border border-emerald-100">
-                        {exp.category}
-                      </span>
-                      <span>{exp.date}</span>
-                    </div>
-                  </div>
-
-                  <span className="font-black text-red-600 text-xs">
-                    - {exp.amount}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAllExpensesModal(false)}
-              className="w-full justify-center shrink-0 py-2.5 font-bold"
-            >
-              Tutup
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* 9. MODAL LIHAT RIWAYAT PENJUALAN */}
-      {showSalesModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-[420px] max-h-[85vh] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative flex flex-col">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3 shrink-0">
-              <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-2">
-                <ShoppingBag className="w-4 h-4 text-[#0F4C25]" />
-                Semua Riwayat Penjualan Hasil Panen
-              </h3>
-              <button
-                onClick={() => setShowSalesModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-2.5 overflow-y-auto pr-1 flex-1">
-              {SALES_HISTORY.map((sale) => (
-                <div
-                  key={sale.id}
-                  className="p-3.5 bg-[#F8FAF8] rounded-2xl border border-gray-200 flex items-center justify-between text-xs space-y-1"
-                >
-                  <div className="space-y-0.5 min-w-0 pr-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-black text-[#0F4C25] text-[10px]">{sale.id}</span>
-                      <span className="text-[10px] text-gray-400">· {sale.date}</span>
-                    </div>
-                    <h4 className="font-black text-[#1A1C19]">{sale.item}</h4>
-                    <p className="text-[10px] text-gray-500 font-semibold">
-                      Pembeli: {sale.buyer} ({sale.qty})
-                    </p>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    <span className="font-black text-[#0F4C25] block text-xs">{sale.total}</span>
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
-                      ✓ {sale.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSalesModal(false)}
-              className="w-full justify-center shrink-0 py-2.5 font-bold"
-            >
-              Tutup
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* 10. MODAL CATAT BIAYA (HPP FORM MODAL) */}
+      {/* 8. MODAL CATAT BIAYA (HPP FORM MODAL) */}
       {showExpenseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="w-full max-w-[360px] bg-white rounded-[32px] p-5 space-y-4 shadow-2xl border border-gray-100 relative">
