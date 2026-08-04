@@ -781,12 +781,12 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
         </div>
       </section>
 
-      {/* ================= 3. REKAP SALDO & KEUANGAN ================= */}
+      {/* ================= 3. REKAP SALDO & TRACKING PENDAPATAN ================= */}
       <div className="bg-gradient-to-br from-[#0F4C25] via-[#1B5E20] to-[#0A381B] rounded-[28px] p-5 text-white shadow-lg space-y-4 relative overflow-hidden">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <span className="text-[10px] font-black text-emerald-200 uppercase tracking-wider block">
-              Saldo Rekening Panentra Pay
+              Tracking Total Pendapatan Hasil Panen
             </span>
             <div className="text-2xl sm:text-3xl font-black tracking-tight">
               Rp 14.850.000
@@ -797,7 +797,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
             onClick={() => setShowWithdrawModal(true)}
             className="px-3.5 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-black backdrop-blur-md border border-white/20 transition-all cursor-pointer active:scale-95 shadow-xs"
           >
-            Tarik Saldo
+            + Metode Pembayaran
           </button>
         </div>
 
@@ -1393,43 +1393,57 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
         </div>
       )}
 
-      {/* 7. MODAL TARIK SALDO */}
+      {/* 7. MODAL TAMBAH METODE PEMBAYARAN PETANI */}
       {showWithdrawModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="w-full max-w-[380px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <h3 className="text-sm font-black text-[#1A1C19]">
-                Tarik Saldo Panentra Pay
+                Tambah Metode Pembayaran Petani
               </h3>
               <button
                 onClick={() => setShowWithdrawModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-[#0F4C25]">
-              <span className="font-bold block">Saldo Tersedia:</span>
-              <span className="text-lg font-black text-[#0F4C25]">Rp 14.850.000</span>
+              <span className="font-bold block">Penerimaan Pembayaran Jual Panen:</span>
+              <span className="text-xs font-semibold text-[#0F4C25] block">
+                Pembeli/Pemasok akan mentransfer langsung sesuai metode pembayaran yang Anda pilih.
+              </span>
             </div>
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-gray-700 block mb-1">Nominal Penarikan (Rp)</label>
+                <label className="font-bold text-gray-700 block mb-1">Jenis Metode Pembayaran</label>
+                <select className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold cursor-pointer">
+                  <option value="bca">Transfer Bank BCA</option>
+                  <option value="bri">Transfer Bank BRI</option>
+                  <option value="mandiri">Transfer Bank Mandiri</option>
+                  <option value="qris">QRIS / E-Wallet (DANA/OVO/GoPay)</option>
+                  <option value="cod">Tunai Saat Serah Terima (COD)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Nomor Rekening / HP / Link QRIS</label>
                 <input
-                  type="number"
-                  placeholder="Contoh: 1000000"
+                  type="text"
+                  placeholder="Contoh: 8821-4402-192"
                   className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-gray-700 block mb-1">Rekening Tujuan</label>
-                <select className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold">
-                  <option value="bca">BCA • 8821-4402-192 (Bowo Santoso)</option>
-                  <option value="dana">DANA • 0812-3456-7890 (Bowo Santoso)</option>
-                </select>
+                <label className="font-bold text-gray-700 block mb-1">Nama Pemilik Rekening / Toko</label>
+                <input
+                  type="text"
+                  placeholder="Contoh: Pak Andi Sugiharto"
+                  className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                />
               </div>
             </div>
 

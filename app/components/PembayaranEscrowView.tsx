@@ -62,7 +62,7 @@ export default function PembayaranEscrowView({
   const serviceFee = 2500;
   const grandTotal = subtotal + serviceFee;
 
-  const [paymentMethod, setPaymentMethod] = useState<"panentra_pay" | "bca_va" | "qris">("panentra_pay");
+  const [paymentMethod, setPaymentMethod] = useState<"transfer_petani" | "panentra_pay" | "bca_va" | "qris">("transfer_petani");
   const [deliveryOption, setDeliveryOption] = useState<"dikirim_petani" | "diambil_sendiri" | "titik_kumpul">("dikirim_petani");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPaidEscrow, setIsPaidEscrow] = useState(false);
@@ -244,9 +244,9 @@ export default function PembayaranEscrowView({
 
             <div className="space-y-2 text-xs">
               <label
-                onClick={() => setPaymentMethod("panentra_pay")}
+                onClick={() => setPaymentMethod("transfer_petani")}
                 className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
-                  paymentMethod === "panentra_pay"
+                  paymentMethod === "transfer_petani" || paymentMethod === "panentra_pay"
                     ? "bg-emerald-50/60 border-[#0F4C25]"
                     : "bg-white border-gray-200"
                 }`}
@@ -254,15 +254,15 @@ export default function PembayaranEscrowView({
                 <div className="flex items-center gap-2.5">
                   <Wallet className="w-4 h-4 text-[#0F4C25]" />
                   <div>
-                    <span className="font-extrabold text-[#1A1C19] block">Saldo Panentra Pay</span>
-                    <span className="text-[10px] text-[#0F4C25] font-bold">Saldo: Rp 24.500.000</span>
+                    <span className="font-extrabold text-[#1A1C19] block">Transfer Bank Rekening Petani</span>
+                    <span className="text-[10px] text-[#0F4C25] font-bold">BCA 8821-4402-192 (A.n. Petani)</span>
                   </div>
                 </div>
                 <input
                   type="radio"
                   name="payment"
-                  checked={paymentMethod === "panentra_pay"}
-                  onChange={() => setPaymentMethod("panentra_pay")}
+                  checked={paymentMethod === "transfer_petani" || paymentMethod === "panentra_pay"}
+                  onChange={() => setPaymentMethod("transfer_petani")}
                 />
               </label>
 
