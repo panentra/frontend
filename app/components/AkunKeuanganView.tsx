@@ -46,10 +46,10 @@ import Button from "./Button";
 
 // Master Periode Musim Tanam Data
 const PLANTING_SEASONS = [
-  { id: "all", name: "Semua Periode", period: "Semua Musim Tanam", icon: "🌾", status: "" },
-  { id: "season-1", name: "MT-1: Cabai Rawit", period: "Juni - Sept 2026", icon: "🌶️", status: "Aktif" },
-  { id: "season-2", name: "MT-2: Tomat Red", period: "Maret - Mei 2026", icon: "🍅", status: "Selesai" },
-  { id: "season-3", name: "MT-3: Bawang Merah", period: "Jan - Feb 2026", icon: "🧅", status: "Selesai" },
+  { id: "all", name: "Semua Periode", period: "Semua Musim Tanam", status: "" },
+  { id: "season-1", name: "MT-1: Cabai Rawit", period: "Juni - Sept 2026", status: "Aktif" },
+  { id: "season-2", name: "MT-2: Tomat Red", period: "Maret - Mei 2026", status: "Selesai" },
+  { id: "season-3", name: "MT-3: Bawang Merah", period: "Jan - Feb 2026", status: "Selesai" },
 ];
 
 // Sample Expense Data (Biaya HPP) per Periode Musim Tanam
@@ -64,7 +64,6 @@ const INITIAL_EXPENSE_HISTORY = [
     note: "Varietas Red Hot Super",
     seasonId: "season-1",
     seasonName: "MT-1: Cabai Rawit (Juni - Sept 2026)",
-    seasonIcon: "🌶️",
   },
   {
     id: 2,
@@ -76,7 +75,6 @@ const INITIAL_EXPENSE_HISTORY = [
     note: "Toko Tani Makmur Lembang",
     seasonId: "season-1",
     seasonName: "MT-1: Cabai Rawit (Juni - Sept 2026)",
-    seasonIcon: "🌶️",
   },
   {
     id: 3,
@@ -88,7 +86,6 @@ const INITIAL_EXPENSE_HISTORY = [
     note: "Semprot hama kutu daun",
     seasonId: "season-1",
     seasonName: "MT-1: Cabai Rawit (Juni - Sept 2026)",
-    seasonIcon: "🌶️",
   },
   {
     id: 4,
@@ -100,7 +97,6 @@ const INITIAL_EXPENSE_HISTORY = [
     note: "2 Orang pekerja harian",
     seasonId: "season-1",
     seasonName: "MT-1: Cabai Rawit (Juni - Sept 2026)",
-    seasonIcon: "🌶️",
   },
   {
     id: 5,
@@ -112,7 +108,6 @@ const INITIAL_EXPENSE_HISTORY = [
     note: "Varietas Tahan Virus",
     seasonId: "season-2",
     seasonName: "MT-2: Tomat Red (Maret - Mei 2026)",
-    seasonIcon: "🍅",
   },
   {
     id: 6,
@@ -124,7 +119,6 @@ const INITIAL_EXPENSE_HISTORY = [
     note: "Pemasangan bedengan lahan",
     seasonId: "season-2",
     seasonName: "MT-2: Tomat Red (Maret - Mei 2026)",
-    seasonIcon: "🍅",
   },
 ];
 
@@ -200,7 +194,6 @@ const FARM_PLOTS = [
     area: "0.5 Ha",
     location: "Kec. Lembang, Bandung Barat",
     crop: "Cabai Rawit Merah",
-    cropIcon: "🌶️",
     progressDay: 68,
     totalDays: 90,
   },
@@ -210,7 +203,6 @@ const FARM_PLOTS = [
     area: "0.8 Ha",
     location: "Kec. Pasirjambu, Ciwidey",
     crop: "Tomat Red Super",
-    cropIcon: "🍅",
     progressDay: 30,
     totalDays: 80,
   },
@@ -295,7 +287,6 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
       note: "Pencatatan langsung HPP",
       seasonId: targetSeason.id,
       seasonName: `${targetSeason.name} (${targetSeason.period})`,
-      seasonIcon: targetSeason.icon,
     };
 
     setExpenses([newExp, ...expenses]);
@@ -488,9 +479,8 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
               <span className="text-[10px] font-black text-red-700 uppercase tracking-wider block">
                 Total Biaya HPP Modal Produksi
               </span>
-              <span className="px-2.5 py-0.5 bg-red-100 text-red-700 text-[10px] font-black rounded-full border border-red-200 flex items-center gap-1">
-                <span>{currentSelectedSeasonObj.icon}</span>
-                <span>{currentSelectedSeasonObj.name}</span>
+              <span className="px-2.5 py-0.5 bg-red-100 text-red-700 text-[10px] font-black rounded-full border border-red-200">
+                {currentSelectedSeasonObj.name}
               </span>
             </div>
 
@@ -527,7 +517,6 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
                         : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    <span>{season.icon}</span>
                     <span>{season.name}</span>
                     {season.status && (
                       <span
@@ -588,7 +577,6 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
           <div className="space-y-2.5">
             {filteredExpenses.length === 0 ? (
               <div className="p-8 text-center bg-white rounded-3xl border border-gray-200 space-y-2">
-                <span className="text-2xl">🌱</span>
                 <p className="text-xs font-bold text-gray-500">
                   Tidak ada catatan biaya produksi untuk periode/kategori ini.
                 </p>
@@ -601,9 +589,8 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
                 >
                   {/* Top Bar: Season Tag Badge */}
                   <div className="flex items-center justify-between pb-1.5 border-b border-gray-100 text-[10px]">
-                    <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] font-black rounded-lg border border-emerald-200 flex items-center gap-1">
-                      <span>{exp.seasonIcon || "🌱"}</span>
-                      <span>{exp.seasonName}</span>
+                    <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] font-black rounded-lg border border-emerald-200">
+                      {exp.seasonName}
                     </span>
                     <span className="text-gray-400 font-bold">{exp.date}</span>
                   </div>
@@ -733,7 +720,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
                     : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
                 }`}
               >
-                <span>{plot.cropIcon} {plot.name} ({plot.area})</span>
+                <span>{plot.name} ({plot.area})</span>
               </button>
             ))}
           </div>
@@ -744,8 +731,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
           <div className="flex items-start justify-between">
             <div>
               <span className="text-[10px] font-bold text-gray-400 block">{currentPlot.name}</span>
-              <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-1.5">
-                <span>{currentPlot.cropIcon}</span>
+              <h3 className="text-sm font-black text-[#1A1C19]">
                 <span>{currentPlot.crop}</span>
               </h3>
             </div>
@@ -843,9 +829,6 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5">
                   <h4 className="font-black text-[#1A1C19]">{exp.title}</h4>
-                  <span className="text-[9px] font-black text-[#0F4C25] bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-100">
-                    {exp.seasonIcon}
-                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
                   <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] rounded-md font-extrabold border border-emerald-100">
@@ -1483,7 +1466,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
                 >
                   {PLANTING_SEASONS.filter((s) => s.id !== "all").map((season) => (
                     <option key={season.id} value={season.id}>
-                      {season.icon} {season.name} ({season.period}) {season.status === "Aktif" ? "[Aktif]" : ""}
+                      {season.name} ({season.period}) {season.status === "Aktif" ? "[Aktif]" : ""}
                     </option>
                   ))}
                 </select>
