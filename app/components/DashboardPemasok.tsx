@@ -284,14 +284,14 @@ export default function DashboardPemasok() {
                         </div>
                       </div>
 
-                      {/* Enlarged Bowo Mascot */}
-                      <div className="absolute -right-6 -bottom-6 z-0 w-60 h-60 sm:w-68 sm:h-68 pointer-events-none opacity-90">
+                      {/* Enlarged Bowo/Budi Mascot */}
+                      <div className="absolute -right-6 -bottom-12 z-0 w-60 h-60 sm:w-68 sm:h-68 pointer-events-none opacity-90">
                         <Image
                           src="/assets/budi-oke.png"
                           alt="Budi Panentra"
                           width={280}
                           height={280}
-                          className="w-full h-full object-contain drop-shadow-2xl scale-110"
+                          className="w-full h-full object-contain drop-shadow-2xl scale-100 translate-y-2"
                           priority
                         />
                       </div>
