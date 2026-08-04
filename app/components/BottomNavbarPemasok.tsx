@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Home, TrendingUp, ShoppingBag, Truck, User } from "lucide-react";
 
 interface BottomNavbarPemasokProps {
@@ -14,6 +14,21 @@ export default function BottomNavbarPemasok({
   onTabChange,
   onPlusClick,
 }: BottomNavbarPemasokProps) {
+  const [isBodyLocked, setIsBodyLocked] = useState(false);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      setIsBodyLocked(document.body.style.overflow === "hidden");
+    };
+
+    checkOverflow();
+
+    const observer = new MutationObserver(checkOverflow);
+    observer.observe(document.body, { attributes: true, attributeFilter: ["style"] });
+
+    return () => observer.disconnect();
+  }, []);
+
   const handleSelect = (tab: "beranda" | "pasar" | "jualbeli" | "pengantaran" | "akun") => {
     if (tab === "jualbeli" && onPlusClick) {
       onPlusClick();
@@ -23,6 +38,9 @@ export default function BottomNavbarPemasok({
       onTabChange(tab);
     }
   };
+
+  // Hide bottom navbar completely when any modal/popup is open
+  if (isBodyLocked) return null;
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-2xl px-2 py-2 flex justify-between items-center z-30">
@@ -72,7 +90,7 @@ export default function BottomNavbarPemasok({
       >
         <div className="relative">
           <Truck className={`w-5 h-5 ${activeTab === "pengantaran" ? "stroke-[2.5]" : "stroke-[1.8]"}`} />
-          <span className="w-2 h-2 rounded-full bg-emerald-500 absolute -top-0.5 -right-0.5 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-emerald-500 absolute -top-0.5 -right-0.5" />
         </div>
         <span className="text-[9px] font-black uppercase tracking-wider mt-1">Pengantaran</span>
       </button>
