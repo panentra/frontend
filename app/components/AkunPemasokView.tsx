@@ -106,32 +106,32 @@ export default function AkunPemasokView({
 
       {/* ================= 2. REKAPITULASI KEUANGAN & PEMBELIAN ================= */}
       <div className="bg-gradient-to-br from-[#0F4C25] via-[#1B5E20] to-[#0A381B] rounded-[28px] p-5 text-white shadow-lg space-y-4 relative overflow-hidden">
-        <div className="flex items-center justify-between gap-3">
-          <div className="space-y-0.5 min-w-0">
-            <span className="text-[10px] font-extrabold text-emerald-200 uppercase tracking-wider block">
-              Total Anggaran Pembelian Pasokan
-            </span>
-            <div className="text-2xl sm:text-3xl font-black tracking-tight text-white truncate">
-              Rp 24.500.000
-            </div>
+        <div className="space-y-0.5">
+          <span className="text-[10px] font-extrabold text-emerald-200 uppercase tracking-wider block">
+            Anggaran Pembelian Pasokan
+          </span>
+          <div className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            Rp 24.500.000
           </div>
+        </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => alert("Menampilkan Rekapitulasi Keuangan Pembelian...")}
-              className="px-3.5 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-black backdrop-blur-md border border-white/20 transition-all active:scale-95 cursor-pointer"
-            >
-              Rekap Keuangan
-            </button>
-            <button
-              type="button"
-              onClick={() => alert("Fitur Tambah Metode Pembayaran Petani / Pemasok")}
-              className="px-3.5 py-2 bg-emerald-700/80 hover:bg-emerald-700 text-white rounded-xl text-xs font-black backdrop-blur-md border border-white/20 transition-all active:scale-95 cursor-pointer"
-            >
-              Metode Pembayaran
-            </button>
-          </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => alert("Menampilkan Rekapitulasi Keuangan Pembelian...")}
+            className="h-10 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-black backdrop-blur-md border border-white/20 transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Rekap Keuangan</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => alert("Fitur Tambah Metode Pembayaran Petani / Pemasok")}
+            className="h-10 bg-emerald-700/80 hover:bg-emerald-700 text-white rounded-xl text-xs font-black backdrop-blur-md border border-white/20 transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            <span>Metode Pembayaran</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/15 text-xs">
