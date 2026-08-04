@@ -217,13 +217,6 @@ export default function MarketplacePemasokView({
       {/* Top Navigation Bar */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-10 h-10 rounded-2xl bg-white border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 active:scale-95 transition-all shadow-sm cursor-pointer"
-          >
-            <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
-          </button>
           <div>
             <h1 className="text-xl font-black text-[#1A1C19] tracking-tight">
               Pasar Hasil Panen
@@ -330,10 +323,6 @@ export default function MarketplacePemasokView({
         <div className="flex items-center justify-between">
           <span className="text-xs font-black text-[#1A1C19]">
             {filteredListings.length} Produk Pasokan Ditemukan
-          </span>
-          <span className="text-[10px] font-bold text-[#0F4C25] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1">
-            <Lock className="w-3 h-3" />
-            Panentra Secure Escrow
           </span>
         </div>
 

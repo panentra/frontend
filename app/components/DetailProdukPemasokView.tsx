@@ -107,10 +107,6 @@ export default function DetailProdukPemasokView({
           <span className="bg-[#0F4C25]/90 backdrop-blur-md text-white text-xs font-extrabold px-3 py-1 rounded-full border border-white/20 shadow-md">
             {listing.grade}
           </span>
-          <span className="bg-white/90 backdrop-blur-md text-[#0F4C25] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-white/40 shadow-sm flex items-center gap-1">
-            <Lock className="w-3 h-3 text-[#0F4C25]" />
-            Panentra Secure Escrow
-          </span>
         </div>
 
         <div className="absolute top-3 right-3 z-10">
