@@ -7,7 +7,6 @@ import {
   FileText,
   Star,
   CheckCircle2,
-  Lock,
   MapPin,
   RefreshCw,
   X,
@@ -168,7 +167,7 @@ export default function RiwayatPembelianPemasokView({
               </div>
 
               <div className="flex items-center gap-1.5 bg-emerald-50 text-[#0F4C25] border border-emerald-100 px-3 py-1 rounded-full text-[10px] font-extrabold">
-                <Lock className="w-3 h-3 text-[#0F4C25]" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#0F4C25]" />
                 <span>{item.status}</span>
               </div>
             </div>
