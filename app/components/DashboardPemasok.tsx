@@ -281,17 +281,14 @@ export default function DashboardPemasok() {
                           <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white border border-white/20 shadow-sm">
                             450 kg Dipesan
                           </span>
-                          <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white border border-white/20 shadow-sm">
-                            Secure Escrow Active
-                          </span>
                         </div>
                       </div>
 
                       {/* Enlarged Bowo Mascot */}
                       <div className="absolute -right-6 -bottom-6 z-0 w-60 h-60 sm:w-68 sm:h-68 pointer-events-none opacity-90">
                         <Image
-                          src="/assets/bowo-calendar.png"
-                          alt="Bowo Panentra"
+                          src="/assets/budi-oke.png"
+                          alt="Budi Panentra"
                           width={280}
                           height={280}
                           className="w-full h-full object-contain drop-shadow-2xl scale-110"
@@ -366,7 +363,7 @@ export default function DashboardPemasok() {
                       >
                         <div className="absolute -left-2 -bottom-2.1 z-10 w-24 h-24 sm:w-30 sm:h-30 pointer-events-none">
                           <Image
-                            src="/assets/bowo-senang.png"
+                            src="/assets/budi-riwayat.png"
                             alt="Riwayat & Rating"
                             width={100}
                             height={100}
