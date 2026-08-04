@@ -380,49 +380,69 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
             {filteredSales.map((sale) => (
               <div
                 key={sale.id}
-                className="bg-white rounded-[24px] p-4 border border-gray-200 shadow-sm space-y-3 relative overflow-hidden hover:border-emerald-300 transition-all"
+                className="bg-white rounded-[24px] p-4 border border-gray-200 shadow-xs space-y-3 relative overflow-hidden hover:border-emerald-300 transition-all"
               >
-                {/* Header: ID & Status */}
-                <div className="flex items-center justify-between text-xs pb-2 border-b border-gray-100">
+                {/* Header: ID, Date, Status */}
+                <div className="flex items-center justify-between text-xs pb-2.5 border-b border-gray-100">
                   <div className="flex items-center gap-2">
-                    <span className="font-black text-[#0F4C25]">{sale.id}</span>
-                    <span className="text-[10px] font-bold text-gray-400">· {sale.date}</span>
+                    <span className="font-black text-[#0F4C25] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 text-[11px]">
+                      {sale.id}
+                    </span>
+                    <span className="text-[11px] font-bold text-gray-400">· {sale.date}</span>
                   </div>
                   <span className="px-2.5 py-0.5 bg-emerald-50 text-[#0F4C25] border border-emerald-200 rounded-full text-[10px] font-black">
                     ✓ {sale.status}
                   </span>
                 </div>
 
-                {/* Main Content */}
-                <div className="flex items-center justify-between gap-3">
-                  <div className="space-y-1 min-w-0">
-                    <h3 className="text-sm font-black text-[#1A1C19] truncate">{sale.item}</h3>
-                    <p className="text-xs font-bold text-[#0F4C25] truncate">
-                      Pembeli: {sale.buyer} <span className="text-gray-400 font-normal">({sale.buyerType})</span>
-                    </p>
-                    <p className="text-[11px] text-gray-500 font-medium">
-                      Kuantitas: <strong>{sale.qty}</strong> ({sale.unitPrice})
-                    </p>
+                {/* Item Title & Buyer Info */}
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black text-[#1A1C19] leading-snug">
+                    {sale.item}
+                  </h3>
+                  <p className="text-xs font-semibold text-gray-600 flex items-center gap-1 flex-wrap">
+                    <span className="text-gray-400 font-normal">Pembeli:</span>
+                    <strong className="text-[#0F4C25]">{sale.buyer}</strong>
+                    <span className="text-gray-400 text-[10px]">({sale.buyerType})</span>
+                  </p>
+                </div>
+
+                {/* Financial Summary Inner Box (Full Width & Clean Separation) */}
+                <div className="p-3 bg-[#F8FAF8] rounded-2xl border border-gray-200 flex items-center justify-between text-xs">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider block">
+                      Kuantitas & Harga Satuan
+                    </span>
+                    <div className="font-black text-[#1A1C19]">
+                      {sale.qty} <span className="text-gray-400 font-medium text-[11px]">({sale.unitPrice})</span>
+                    </div>
                   </div>
 
-                  <div className="text-right shrink-0">
-                    <span className="text-[10px] text-gray-400 font-bold block">Total Diterima</span>
-                    <span className="text-base font-black text-[#0F4C25]">{sale.total}</span>
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md inline-block mt-0.5">
-                      {sale.escrow}
+                  <div className="text-right space-y-0.5">
+                    <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider block">
+                      Total Diterima
                     </span>
+                    <div className="text-base font-black text-[#0F4C25]">
+                      {sale.total}
+                    </div>
                   </div>
                 </div>
 
-                {/* Footer Action */}
-                <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs">
-                  <span className="text-[10px] text-gray-500 font-medium flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-[#0F4C25]" /> {sale.location}
-                  </span>
+                {/* Footer Action & Escrow Info */}
+                <div className="pt-1 flex items-center justify-between text-xs gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 text-gray-500 text-[10px] font-medium min-w-0 flex-wrap">
+                    <span className="flex items-center gap-1 shrink-0">
+                      <MapPin className="w-3 h-3 text-[#0F4C25]" /> {sale.location}
+                    </span>
+                    <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] rounded-md font-extrabold border border-emerald-100 shrink-0">
+                      {sale.escrow}
+                    </span>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => alert(`Mengunduh Invoice Penjualan ${sale.id}...`)}
-                    className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-[11px] rounded-xl border border-gray-200 flex items-center gap-1 cursor-pointer transition-colors"
+                    className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-[11px] rounded-xl border border-gray-200 flex items-center gap-1 cursor-pointer transition-colors shrink-0 active:scale-95 ml-auto"
                   >
                     <Download className="w-3 h-3 text-gray-600" />
                     <span>Cetak Invoice</span>
