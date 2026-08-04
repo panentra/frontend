@@ -28,6 +28,7 @@ import {
   ArrowUpRight,
   Info,
 } from "lucide-react";
+import { getAuthUser } from "@/lib/api";
 import BottomNavbar from "./BottomNavbar";
 import Button from "./Button";
 import KalenderView from "./KalenderView";
@@ -156,7 +157,15 @@ const AI_CROP_RECOMMENDATIONS = [
 ];
 
 export default function DashboardPetani() {
+  const [userName, setUserName] = useState("Andi");
   const [activeTab, setActiveTab] = useState<"beranda" | "kalender" | "jual" | "pesanan" | "chat" | "akun">("beranda");
+
+  useEffect(() => {
+    const user = getAuthUser();
+    if (user?.name) {
+      setUserName(user.name);
+    }
+  }, []);
   const [viewMode, setViewMode] = useState<"dashboard" | "rekomendasi" | "jual">("dashboard");
   const [isChatRoomActive, setIsChatRoomActive] = useState(false);
   const [selectedCommodity, setSelectedCommodity] = useState<keyof typeof COMMODITY_PRICE_DATA>("Cabai Rawit");
@@ -284,7 +293,7 @@ export default function DashboardPetani() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <h1 className="text-2xl font-black text-[#1A1C19] tracking-tight">
-                    Halo, Andi! 👋
+                    Halo, {userName}! 👋
                   </h1>
                   <p className="text-xs font-bold text-[#0F4C25]/80">
                     Semangat mengelola lahan pertanianmu hari ini

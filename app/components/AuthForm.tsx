@@ -75,7 +75,7 @@ export default function AuthForm({ initialMode = "register" }: AuthFormProps) {
         const targetRoute = role === "petani" ? "/dashboard" : "/pemasok/dashboard";
         setTimeout(() => router.push(targetRoute), 1000);
       } else {
-        const res = await registerUser({ name, email, password });
+        const res = await registerUser({ name, email, password, role });
         setAuthData(res.token, { ...res.user, role });
         setSuccessMessage(`Pendaftaran ${role === "petani" ? "Petani" : "Pemasok"} berhasil!`);
         const targetRoute = role === "petani" ? "/onboarding/problem" : "/onboarding/pemasok/1";
