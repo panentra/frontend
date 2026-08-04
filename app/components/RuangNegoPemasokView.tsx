@@ -578,11 +578,20 @@ export default function RuangNegoPemasokView({
     );
   }
 
-  // ================= VIEW 2: DAFTAR LIST CHAT PEMASOK (MATCHING FARMER UI CHAT LIST) =================
+  // ================= VIEW 2: DAFTAR LIST CHAT PEMASOK =================
   return (
     <div className="space-y-5 animate-fade-in pb-10">
-      {/* Header Title Bar */}
-      <div className="flex items-center justify-between">
+      {/* Header Title Bar (Corrected: Back Button on LEFT side) */}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Kembali ke Beranda"
+          className="w-10 h-10 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-[#1A1C19] hover:bg-gray-50 active:scale-95 transition-all cursor-pointer shrink-0"
+        >
+          <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+        </button>
+
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-[#1A1C19] tracking-tight flex items-center gap-2">
             <MessageSquare className="w-6 h-6 text-[#0F4C25]" />
@@ -592,14 +601,6 @@ export default function RuangNegoPemasokView({
             Daftar Percakapan & Penawaran Nego dengan Mitra Petani
           </p>
         </div>
-
-        <button
-          type="button"
-          onClick={onBack}
-          className="w-9 h-9 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-[#1A1C19] hover:bg-gray-50 active:scale-95 transition-all cursor-pointer"
-        >
-          <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
-        </button>
       </div>
 
       {/* Hero Banner Callout */}
@@ -650,7 +651,7 @@ export default function RuangNegoPemasokView({
           )}
         </div>
 
-        {/* Filter Pills with Soft Left & Right Edge Gradient Fade */}
+        {/* Filter Pills */}
         <div className="relative">
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar pr-6">
             <button
