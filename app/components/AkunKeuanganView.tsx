@@ -39,15 +39,93 @@ import {
   Download,
   Filter,
   ArrowUpRight,
+  Calendar,
+  Layers,
 } from "lucide-react";
 import Button from "./Button";
 
-// Sample Expense Data (Biaya HPP)
+// Master Periode Musim Tanam Data
+const PLANTING_SEASONS = [
+  { id: "all", name: "Semua Periode", period: "Semua Musim Tanam", icon: "🌾", status: "" },
+  { id: "season-1", name: "MT-1: Cabai Rawit", period: "Juni - Sept 2026", icon: "🌶️", status: "Aktif" },
+  { id: "season-2", name: "MT-2: Tomat Red", period: "Maret - Mei 2026", icon: "🍅", status: "Selesai" },
+  { id: "season-3", name: "MT-3: Bawang Merah", period: "Jan - Feb 2026", icon: "🧅", status: "Selesai" },
+];
+
+// Sample Expense Data (Biaya HPP) per Periode Musim Tanam
 const INITIAL_EXPENSE_HISTORY = [
-  { id: 1, title: "Bibit Cabai Unggul (10 Pack)", category: "Bibit", amount: "Rp 150.000", rawAmount: 150000, date: "25 Juli 2026", note: "Varietas Red Hot Super" },
-  { id: 2, title: "Pupuk NPK 16-16-16 (50kg)", category: "Pupuk", amount: "Rp 480.000", rawAmount: 480000, date: "28 Juli 2026", note: "Toko Tani Makmur Lembang" },
-  { id: 3, title: "Pestisida Organik Neem (2L)", category: "Obat", amount: "Rp 120.000", rawAmount: 120000, date: "30 Juli 2026", note: "Semprot hama kutu daun" },
-  { id: 4, title: "Upah Buruh Olah Lahan (2 Hari)", category: "Tenaga Kerja", amount: "Rp 300.000", rawAmount: 300000, date: "1 Agustus 2026", note: "2 Orang pekerja harian" },
+  {
+    id: 1,
+    title: "Bibit Cabai Unggul (10 Pack)",
+    category: "Bibit",
+    amount: "Rp 150.000",
+    rawAmount: 150000,
+    date: "25 Juli 2026",
+    note: "Varietas Red Hot Super",
+    seasonId: "season-1",
+    seasonName: "MT-1: Cabai Rawit (Juni - Sept 2026)",
+    seasonIcon: "🌶️",
+  },
+  {
+    id: 2,
+    title: "Pupuk NPK 16-16-16 (50kg)",
+    category: "Pupuk",
+    amount: "Rp 480.000",
+    rawAmount: 480000,
+    date: "28 Juli 2026",
+    note: "Toko Tani Makmur Lembang",
+    seasonId: "season-1",
+    seasonName: "MT-1: Cabai Rawit (Juni - Sept 2026)",
+    seasonIcon: "🌶️",
+  },
+  {
+    id: 3,
+    title: "Pestisida Organik Neem (2L)",
+    category: "Obat",
+    amount: "Rp 120.000",
+    rawAmount: 120000,
+    date: "30 Juli 2026",
+    note: "Semprot hama kutu daun",
+    seasonId: "season-1",
+    seasonName: "MT-1: Cabai Rawit (Juni - Sept 2026)",
+    seasonIcon: "🌶️",
+  },
+  {
+    id: 4,
+    title: "Upah Buruh Olah Lahan (2 Hari)",
+    category: "Tenaga Kerja",
+    amount: "Rp 300.000",
+    rawAmount: 300000,
+    date: "1 Agustus 2026",
+    note: "2 Orang pekerja harian",
+    seasonId: "season-1",
+    seasonName: "MT-1: Cabai Rawit (Juni - Sept 2026)",
+    seasonIcon: "🌶️",
+  },
+  {
+    id: 5,
+    title: "Bibit Tomat Servo F1 (5 Pack)",
+    category: "Bibit",
+    amount: "Rp 250.000",
+    rawAmount: 250000,
+    date: "10 Maret 2026",
+    note: "Varietas Tahan Virus",
+    seasonId: "season-2",
+    seasonName: "MT-2: Tomat Red (Maret - Mei 2026)",
+    seasonIcon: "🍅",
+  },
+  {
+    id: 6,
+    title: "Mulsa Plastik Hitam Perak 50m",
+    category: "Peralatan",
+    amount: "Rp 350.000",
+    rawAmount: 350000,
+    date: "15 Maret 2026",
+    note: "Pemasangan bedengan lahan",
+    seasonId: "season-2",
+    seasonName: "MT-2: Tomat Red (Maret - Mei 2026)",
+    seasonIcon: "🍅",
+  },
 ];
 
 // Sample Harvest Sales History (Riwayat Penjualan Hasil Panen)
@@ -64,6 +142,8 @@ const SALES_HISTORY = [
     status: "Selesai",
     escrow: "Panentra Secure Escrow",
     location: "Kec. Lembang, Bandung Barat",
+    seasonId: "season-1",
+    seasonName: "MT-1: Cabai Rawit",
   },
   {
     id: "TRX-882",
@@ -77,6 +157,8 @@ const SALES_HISTORY = [
     status: "Selesai",
     escrow: "Direct Bank Transfer",
     location: "Kota Bandung",
+    seasonId: "season-1",
+    seasonName: "MT-1: Cabai Rawit",
   },
   {
     id: "TRX-754",
@@ -90,6 +172,8 @@ const SALES_HISTORY = [
     status: "Selesai",
     escrow: "Panentra Instant Release",
     location: "Kota Cimahi",
+    seasonId: "season-2",
+    seasonName: "MT-2: Tomat Red",
   },
   {
     id: "TRX-620",
@@ -103,6 +187,8 @@ const SALES_HISTORY = [
     status: "Selesai",
     escrow: "Panentra Secure Escrow",
     location: "Kab. Bandung",
+    seasonId: "season-3",
+    seasonName: "MT-3: Bawang Merah",
   },
 ];
 
@@ -147,6 +233,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
   const [salesSearch, setSalesSearch] = useState("");
   const [expenseSearch, setExpenseSearch] = useState("");
   const [expenseCategoryFilter, setExpenseCategoryFilter] = useState("Semua");
+  const [selectedSeasonFilter, setSelectedSeasonFilter] = useState<string>("season-1"); // Defaults to Active Season!
 
   // Modals Control States
   const [showVerifyModal, setShowVerifyModal] = useState(false);
@@ -166,6 +253,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
   const [expenseTitle, setExpenseTitle] = useState("");
   const [expenseCategory, setExpenseCategory] = useState("Pupuk");
   const [expenseAmount, setExpenseAmount] = useState("");
+  const [expenseSeasonId, setExpenseSeasonId] = useState("season-1");
   const [expenses, setExpenses] = useState(INITIAL_EXPENSE_HISTORY);
 
   // Preference Toggles
@@ -195,6 +283,8 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
     e.preventDefault();
     if (!expenseTitle || !expenseAmount) return;
 
+    const targetSeason = PLANTING_SEASONS.find((s) => s.id === expenseSeasonId) || PLANTING_SEASONS[1];
+
     const newExp = {
       id: Date.now(),
       title: expenseTitle,
@@ -203,13 +293,16 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
       rawAmount: parseInt(expenseAmount),
       date: "Hari Ini",
       note: "Pencatatan langsung HPP",
+      seasonId: targetSeason.id,
+      seasonName: `${targetSeason.name} (${targetSeason.period})`,
+      seasonIcon: targetSeason.icon,
     };
 
     setExpenses([newExp, ...expenses]);
     setShowExpenseModal(false);
     setExpenseTitle("");
     setExpenseAmount("");
-    alert("Pengeluaran produksi berhasil dicatat & HPP otomatis diperbarui!");
+    alert(`Pengeluaran produksi berhasil dicatat di ${targetSeason.name} & HPP otomatis diperbarui!`);
   };
 
   const filteredSales = SALES_HISTORY.filter(
@@ -220,12 +313,18 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
   );
 
   const filteredExpenses = expenses.filter((exp) => {
+    const matchesSeason = selectedSeasonFilter === "all" || exp.seasonId === selectedSeasonFilter;
     const matchesCat = expenseCategoryFilter === "Semua" || exp.category === expenseCategoryFilter;
     const matchesQuery =
       exp.title.toLowerCase().includes(expenseSearch.toLowerCase()) ||
-      exp.category.toLowerCase().includes(expenseSearch.toLowerCase());
-    return matchesCat && matchesQuery;
+      exp.category.toLowerCase().includes(expenseSearch.toLowerCase()) ||
+      (exp.seasonName && exp.seasonName.toLowerCase().includes(expenseSearch.toLowerCase()));
+    return matchesSeason && matchesCat && matchesQuery;
   });
+
+  const currentSelectedSeasonObj = PLANTING_SEASONS.find((s) => s.id === selectedSeasonFilter) || PLANTING_SEASONS[0];
+
+  const totalExpenseFiltered = filteredExpenses.reduce((acc, curr) => acc + (curr.rawAmount || 0), 0);
 
   // ================= 1. FULL PAGE SUB-VIEW: RIWAYAT PENJUALAN HASIL PANEN =================
   if (subViewMode === "sales_history") {
@@ -366,7 +465,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
                 Pencatatan Biaya Produksi (HPP)
               </h2>
               <p className="text-[10px] text-gray-500 font-semibold">
-                Transkrip Pengeluaran Modal Operasional Tani
+                Terpisah per Periode Musim Tanam
               </p>
             </div>
           </div>
@@ -383,17 +482,71 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
 
         {/* Content Body Container */}
         <div className="p-4 sm:p-5 space-y-4">
-          {/* Summary HPP Banner */}
+          {/* Summary HPP Banner with Season Context Tag */}
           <div className="bg-[#FFF5F5] border border-red-200 rounded-[26px] p-5 text-gray-900 shadow-sm space-y-2 relative overflow-hidden">
-            <span className="text-[10px] font-black text-red-700 uppercase tracking-wider block">
-              Total Pengeluaran Produksi (HPP Modal)
-            </span>
-            <div className="text-2xl sm:text-3xl font-black text-red-600 tracking-tight">
-              Rp {expenses.reduce((acc, curr) => acc + (curr.rawAmount || 0), 0).toLocaleString("id-ID")}
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-red-700 uppercase tracking-wider block">
+                Total Biaya HPP Modal Produksi
+              </span>
+              <span className="px-2.5 py-0.5 bg-red-100 text-red-700 text-[10px] font-black rounded-full border border-red-200 flex items-center gap-1">
+                <span>{currentSelectedSeasonObj.icon}</span>
+                <span>{currentSelectedSeasonObj.name}</span>
+              </span>
             </div>
+
+            <div className="text-2xl sm:text-3xl font-black text-red-600 tracking-tight">
+              Rp {totalExpenseFiltered.toLocaleString("id-ID")}
+            </div>
+
             <p className="text-xs text-gray-600 font-medium leading-relaxed">
-              HPP modal produksi rata-rata Anda: <strong className="text-[#0F4C25]">Rp 7.000 / kg</strong>. Semua penawaran harga pembeli AI disesuaikan agar selalu di atas HPP ini.
+              Biaya HPP modal untuk <strong>{currentSelectedSeasonObj.name}</strong>. Semua penawaran harga pembeli AI disesuaikan agar selalu di atas modal ini.
             </p>
+          </div>
+
+          {/* PERIODE MUSIM TANAM FILTER HORIZONTAL BAR */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs font-bold text-gray-600">
+              <span className="flex items-center gap-1 text-[11px] font-black text-[#1A1C19]">
+                <Calendar className="w-3.5 h-3.5 text-[#0F4C25]" /> Pilih Periode Musim Tanam:
+              </span>
+              <span className="text-[10px] text-gray-400 font-medium">
+                {filteredExpenses.length} catatan pengeluaran
+              </span>
+            </div>
+
+            <div className="relative">
+              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar pr-6">
+                {PLANTING_SEASONS.map((season) => (
+                  <button
+                    key={season.id}
+                    type="button"
+                    onClick={() => setSelectedSeasonFilter(season.id)}
+                    className={`px-3 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 shrink-0 ${
+                      selectedSeasonFilter === season.id
+                        ? "bg-[#0F4C25] text-white border-[#0F4C25] shadow-xs"
+                        : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <span>{season.icon}</span>
+                    <span>{season.name}</span>
+                    {season.status && (
+                      <span
+                        className={`text-[9px] px-1.5 py-0.2 rounded-md font-extrabold ${
+                          selectedSeasonFilter === season.id
+                            ? "bg-white/20 text-white"
+                            : season.status === "Aktif"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {season.status}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-[#F4F6F4] via-[#F4F6F4]/80 to-transparent pointer-events-none z-10" />
+            </div>
           </div>
 
           {/* Search Input & Category Filter Pills */}
@@ -412,7 +565,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
             {/* Category Filter Pills */}
             <div className="relative">
               <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar pr-6">
-                {["Semua", "Pupuk", "Bibit", "Obat", "Tenaga Kerja"].map((cat) => (
+                {["Semua", "Pupuk", "Bibit", "Obat", "Tenaga Kerja", "Peralatan"].map((cat) => (
                   <button
                     key={cat}
                     type="button"
@@ -433,29 +586,49 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
 
           {/* Detailed Expense Entries List */}
           <div className="space-y-2.5">
-            {filteredExpenses.map((exp) => (
-              <div
-                key={exp.id}
-                className="bg-white rounded-[24px] p-4 border border-gray-200 shadow-sm flex items-center justify-between text-xs hover:border-emerald-300 transition-all"
-              >
-                <div className="space-y-1 min-w-0 pr-2">
-                  <h4 className="font-black text-[#1A1C19] leading-tight">{exp.title}</h4>
-                  <div className="flex items-center gap-2 text-[10px] text-gray-500 font-semibold">
-                    <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] rounded-md font-black border border-emerald-100">
-                      {exp.category}
-                    </span>
-                    <span>{exp.date}</span>
-                  </div>
-                  {exp.note && (
-                    <p className="text-[11px] text-gray-400 font-medium italic">"{exp.note}"</p>
-                  )}
-                </div>
-
-                <span className="font-black text-red-600 text-sm shrink-0">
-                  - {exp.amount}
-                </span>
+            {filteredExpenses.length === 0 ? (
+              <div className="p-8 text-center bg-white rounded-3xl border border-gray-200 space-y-2">
+                <span className="text-2xl">🌱</span>
+                <p className="text-xs font-bold text-gray-500">
+                  Tidak ada catatan biaya produksi untuk periode/kategori ini.
+                </p>
               </div>
-            ))}
+            ) : (
+              filteredExpenses.map((exp) => (
+                <div
+                  key={exp.id}
+                  className="bg-white rounded-[24px] p-4 border border-gray-200 shadow-sm space-y-2 hover:border-emerald-300 transition-all"
+                >
+                  {/* Top Bar: Season Tag Badge */}
+                  <div className="flex items-center justify-between pb-1.5 border-b border-gray-100 text-[10px]">
+                    <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] font-black rounded-lg border border-emerald-200 flex items-center gap-1">
+                      <span>{exp.seasonIcon || "🌱"}</span>
+                      <span>{exp.seasonName}</span>
+                    </span>
+                    <span className="text-gray-400 font-bold">{exp.date}</span>
+                  </div>
+
+                  {/* Body Content */}
+                  <div className="flex items-center justify-between text-xs pt-0.5">
+                    <div className="space-y-1 min-w-0 pr-2">
+                      <h4 className="font-black text-[#1A1C19] leading-tight">{exp.title}</h4>
+                      <div className="flex items-center gap-2 text-[10px] text-gray-500 font-semibold">
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-md font-bold border border-gray-200">
+                          {exp.category}
+                        </span>
+                        {exp.note && (
+                          <span className="text-gray-400 font-medium italic truncate max-w-[160px]">"{exp.note}"</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <span className="font-black text-red-600 text-sm shrink-0">
+                      - {exp.amount}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -668,7 +841,12 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
               className="p-3 bg-white rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between text-xs"
             >
               <div className="space-y-0.5">
-                <h4 className="font-black text-[#1A1C19]">{exp.title}</h4>
+                <div className="flex items-center gap-1.5">
+                  <h4 className="font-black text-[#1A1C19]">{exp.title}</h4>
+                  <span className="text-[9px] font-black text-[#0F4C25] bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-100">
+                    {exp.seasonIcon}
+                  </span>
+                </div>
                 <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
                   <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] rounded-md font-extrabold border border-emerald-100">
                     {exp.category}
@@ -779,7 +957,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
         </h3>
 
         <div className="bg-white rounded-[24px] border border-gray-200 shadow-sm divide-y divide-gray-100 overflow-hidden text-xs">
-          {/* Kelola Rekening Bank [BARU] */}
+          {/* Kelola Rekening Bank */}
           <button
             type="button"
             onClick={() => setShowBankModal(true)}
@@ -794,7 +972,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
             </span>
           </button>
 
-          {/* Daftar Sebagai Pemasok [REVISI] */}
+          {/* Daftar Sebagai Pemasok */}
           <button
             type="button"
             onClick={() => setShowSupplierModal(true)}
@@ -1279,10 +1457,10 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
         </div>
       )}
 
-      {/* 8. MODAL CATAT BIAYA (HPP FORM MODAL) */}
+      {/* 8. MODAL CATAT BIAYA (HPP FORM MODAL WITH SEASON SELECTOR) */}
       {showExpenseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-[360px] bg-white rounded-[32px] p-5 space-y-4 shadow-2xl border border-gray-100 relative">
+          <div className="w-full max-w-[380px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <h3 className="text-sm font-black text-[#1A1C19]">
                 Catat Biaya Produksi (HPP)
@@ -1297,11 +1475,26 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
 
             <form onSubmit={handleAddExpense} className="space-y-3 text-xs">
               <div>
+                <label className="font-bold text-gray-700 block mb-1">Periode / Musim Tanam</label>
+                <select
+                  value={expenseSeasonId}
+                  onChange={(e) => setExpenseSeasonId(e.target.value)}
+                  className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                >
+                  {PLANTING_SEASONS.filter((s) => s.id !== "all").map((season) => (
+                    <option key={season.id} value={season.id}>
+                      {season.icon} {season.name} ({season.period}) {season.status === "Aktif" ? "[Aktif]" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label className="font-bold text-gray-700 block mb-1">Kategori Biaya</label>
                 <select
                   value={expenseCategory}
                   onChange={(e) => setExpenseCategory(e.target.value)}
-                  className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25]"
+                  className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
                 >
                   <option value="Pupuk">Pupuk & Nutrisi</option>
                   <option value="Bibit">Bibit & Benih</option>
@@ -1318,7 +1511,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
                   placeholder="Contoh: Pembelian Pupuk KCL 25kg"
                   value={expenseTitle}
                   onChange={(e) => setExpenseTitle(e.target.value)}
-                  className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25]"
+                  className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
                   required
                 />
               </div>
@@ -1330,7 +1523,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
                   placeholder="Contoh: 250000"
                   value={expenseAmount}
                   onChange={(e) => setExpenseAmount(e.target.value)}
-                  className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25]"
+                  className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
                   required
                 />
               </div>
@@ -1349,7 +1542,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
                   type="submit"
                   variant="primary"
                   size="sm"
-                  className="flex-1 justify-center"
+                  className="flex-1 justify-center py-2.5 font-bold"
                 >
                   Simpan Biaya
                 </Button>
