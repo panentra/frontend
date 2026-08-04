@@ -55,7 +55,7 @@ const SAMPLE_LISTINGS: HarvestListing[] = [
     availableKg: 1280,
     harvestStatus: "Siap Dipetik Besok",
     allowNegotiation: true,
-    productImage: "https://images.unsplash.com/photo-1588252303782-7cc9888970aa?q=80&w=600&auto=format&fit=crop",
+    productImage: "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?q=80&w=600&auto=format&fit=crop",
     farmerAvatar: "/assets/bowo-senang.png",
     farmImage: "/assets/bowo-senang.png",
     harvestCategory: "Bahan-Bahan",

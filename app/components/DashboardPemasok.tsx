@@ -411,100 +411,26 @@ export default function DashboardPemasok() {
                     </div>
                   </section>
 
-                  {/* ================= 5. RADAR PASOKAN TANI TERDEKAT (Shopee/Tokped 2-Column Card Grid Style) ================= */}
-                  <section className="bg-white rounded-[28px] p-4 sm:p-5 shadow-sm border border-gray-200 space-y-3.5">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <h2 className="text-xs sm:text-sm font-black text-[#1A1C19] tracking-tight flex items-center gap-1.5">
-                          <MapPin className="w-4 h-4 text-[#0F4C25]" />
-                          Radar Pasokan Tani Siap Beli
-                        </h2>
-                        <p className="text-[10px] text-gray-500 font-semibold pl-5">
-                          Petani terdekat dengan hasil panen siap kirim minggu ini
-                        </p>
+                  {/* ================= 5. MARKETPLACE CALLOUT BANNER CARD ================= */}
+                  <section
+                    onClick={handleOpenMarketplace}
+                    className="bg-white rounded-[28px] p-5 shadow-sm border border-gray-200 hover:border-[#0F4C25]/40 transition-all cursor-pointer flex items-center justify-between group"
+                  >
+                    <div className="space-y-1 max-w-[72%]">
+                      <div className="flex items-center gap-1.5 text-xs font-black text-[#0F4C25]">
+                        <ShoppingBag className="w-4 h-4" />
+                        <span>Katalog Marketplace Panentra</span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={handleOpenMarketplace}
-                        className="text-[10px] font-bold text-[#0F4C25] hover:underline cursor-pointer shrink-0"
-                      >
-                        Lihat Semua
-                      </button>
+                      <h3 className="text-sm font-black text-[#1A1C19] group-hover:text-[#0F4C25] transition-colors leading-snug">
+                        Eksplor Pasokan Hasil Panen Tani Terdekat
+                      </h3>
+                      <p className="text-[11px] text-gray-500 font-medium leading-relaxed">
+                        Petani Lembang & Bandung dengan Grade SNI terverifikasi & harga HPP transparan.
+                      </p>
                     </div>
 
-                    {/* Filter Pills */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-                      {["Semua", "Bahan-Bahan", "Sayuran"].map((cat) => (
-                        <button
-                          key={cat}
-                          type="button"
-                          onClick={() => setSelectedCategory(cat)}
-                          className={`px-3 py-1 rounded-full text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${
-                            selectedCategory === cat
-                              ? "bg-[#0F4C25] text-white shadow-sm"
-                              : "bg-[#F8FAF8] text-gray-600 hover:bg-gray-100 border border-gray-200"
-                          }`}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* 2-Column Marketplace Cards (Shopee / Tokopedia Style) - Click Opens Product Detail */}
-                    <div className="grid grid-cols-2 gap-3">
-                      {filteredHarvests.map((item) => (
-                        <div
-                          key={item.id}
-                          onClick={() => handleOpenDetail(item)}
-                          className="bg-[#F8FAF8] rounded-[22px] border border-gray-200 overflow-hidden flex flex-col hover:border-[#0F4C25]/40 transition-all cursor-pointer group"
-                        >
-                          {/* Image Thumbnail */}
-                          <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
-                            <Image
-                              src={item.productImage}
-                              alt={item.commodity}
-                              fill
-                              className="object-cover group-hover:scale-105 transition-transform duration-300"
-                              sizes="200px"
-                            />
-                            <span className="absolute top-1.5 left-1.5 bg-[#0F4C25] text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded-full">
-                              {item.grade}
-                            </span>
-                            {item.allowNegotiation && (
-                              <span className="absolute top-1.5 right-1.5 bg-amber-500 text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded-full">
-                                Nego
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Card Text Content */}
-                          <div className="p-2.5 flex-1 flex flex-col justify-between space-y-1.5">
-                            <div className="space-y-0.5">
-                              <h3 className="text-[11px] font-extrabold text-[#1A1C19] line-clamp-2 leading-snug group-hover:text-[#0F4C25] transition-colors">
-                                {item.commodity}
-                              </h3>
-                              <p className="text-[9px] text-gray-500 font-bold flex items-center gap-0.5">
-                                <MapPin className="w-2.5 h-2.5 text-[#0F4C25]" />
-                                {item.farmerName} • {item.distanceKm} km
-                              </p>
-                            </div>
-
-                            <div className="space-y-1 pt-1 border-t border-gray-200/60">
-                              <div className="flex items-baseline gap-0.5">
-                                <span className="text-xs font-black text-[#0F4C25]">
-                                  Rp {item.sellingPrice.toLocaleString("id-ID")}
-                                </span>
-                                <span className="text-[8px] text-gray-400">/kg</span>
-                              </div>
-
-                              <div className="flex items-center justify-between text-[9px] text-gray-500 font-bold">
-                                <span className="text-amber-600 font-black">⭐ {item.farmerRating}</span>
-                                <span>{item.availableKg} kg</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#0F4C25] flex items-center justify-center group-hover:bg-[#0F4C25] group-hover:text-white transition-all shadow-2xs shrink-0">
+                      <ChevronRight className="w-5 h-5 stroke-[2.5]" />
                     </div>
                   </section>
                 </>
