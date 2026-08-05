@@ -677,13 +677,42 @@ export async function getSupplierDeliveries(): Promise<Record<string, unknown>> 
 // 4. SHARED ENDPOINTS (/api/shared/...)
 // ==========================================
 
-export async function getMarketPrices(): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>("/api/shared/market-prices");
+export interface MarketPriceItem {
+  id: number;
+  name: string;
+  category?: string;
+  farmerPrice: number;
+  marketPrice: number;
+  trend?: string;
+  location?: string;
+  status?: string;
+  harvestVol?: string;
+  recordedOn?: string;
 }
 
-export async function getPriceHistory(params?: Record<string, string>): Promise<Record<string, unknown>> {
-  const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-  return fetchWithAuth<Record<string, unknown>>(`/api/shared/price-history${query}`);
+export interface PriceHistoryItem {
+  id: number;
+  commodity_id?: number;
+  commodity: string;
+  date: string;
+  price: number;
+}
+
+export async function getMarketPrices(): Promise<{ data: MarketPriceItem[] }> {
+  try {
+    return await fetchWithAuth<{ data: MarketPriceItem[] }>("/api/shared/market-prices");
+  } catch {
+    return fetchWithAuth<{ data: MarketPriceItem[] }>("/api/prices");
+  }
+}
+
+export async function getPriceHistory(commodity?: string): Promise<{ data: PriceHistoryItem[] }> {
+  const query = commodity ? `?commodity=${encodeURIComponent(commodity)}` : "";
+  try {
+    return await fetchWithAuth<{ data: PriceHistoryItem[] }>(`/api/shared/price-history${query}`);
+  } catch {
+    return fetchWithAuth<{ data: PriceHistoryItem[] }>(`/api/price-history${query}`);
+  }
 }
 
 export interface ApiChatCounterpart {
