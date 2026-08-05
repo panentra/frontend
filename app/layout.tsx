@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import AuthGate from "./components/AuthGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,9 +37,11 @@ export default function RootLayout({
   return (
     <html lang="id" className="h-full antialiased">
       <body className="min-h-full bg-slate-100 flex justify-center items-center">
-        <main className="w-full max-w-[440px] min-h-screen bg-[#F7F9F7] text-[#1A1C19] relative shadow-2xl overflow-x-hidden flex flex-col justify-between">
-          {children}
-        </main>
+        <AuthGate>
+          <main className="w-full max-w-[440px] min-h-screen bg-[#F7F9F7] text-[#1A1C19] relative shadow-2xl overflow-x-hidden flex flex-col justify-between">
+            {children}
+          </main>
+        </AuthGate>
       </body>
     </html>
   );
