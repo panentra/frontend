@@ -471,12 +471,48 @@ export async function deleteListing(id: number | string): Promise<{ message: str
   });
 }
 
-export async function getFarmerOrders(): Promise<Order[]> {
-  return fetchWithAuth<Order[]>("/api/farmer/orders");
+export interface FarmerOrderItem {
+  id: number;
+  order_no: string;
+  commodity: string;
+  grade: string;
+  qtyKg: number;
+  pricePerKg: number;
+  subtotal: number;
+  service_fee?: number;
+  grandTotal: number;
+  status: string;
+  escrowStatus?: string;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  deliveryMethod?: string;
+  deliveryAddress?: string;
+  buyer?: {
+    id: number;
+    name: string;
+    phone?: string | null;
+  };
+  seller?: {
+    id: number;
+    name: string;
+    location?: string | null;
+    rating?: number | null;
+  };
+  createdAt?: string;
+  [key: string]: unknown;
 }
 
-export async function updateOrderStatus(id: number | string, status: string): Promise<Order> {
-  return fetchWithAuth<Order>(`/api/farmer/orders/${id}`, {
+export interface FarmerOrdersResponse {
+  data: FarmerOrderItem[];
+}
+
+export async function getFarmerOrders(status?: string): Promise<FarmerOrdersResponse> {
+  const query = status ? `?status=${status}` : "";
+  return fetchWithAuth<FarmerOrdersResponse>(`/api/farmer/orders${query}`);
+}
+
+export async function updateOrderStatus(id: number | string, status: string): Promise<{ message?: string; data?: FarmerOrderItem }> {
+  return fetchWithAuth<{ message?: string; data?: FarmerOrderItem }>(`/api/farmer/orders/${id}/status`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
   });

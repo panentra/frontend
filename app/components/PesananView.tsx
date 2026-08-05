@@ -26,9 +26,10 @@ import {
   Handshake,
 } from "lucide-react";
 import Button from "./Button";
-import { RecentSale } from "@/lib/api";
+import { RecentSale, getFarmerOrders, updateOrderStatus } from "@/lib/api";
 
 export interface OrderItem {
+  numericId?: number;
   id: string;
   customer: string;
   customerType: string;
@@ -124,8 +125,9 @@ export default function PesananView({
   const [activeFilter, setActiveFilter] = useState<"all" | "incoming" | "shipping" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [orders, setOrders] = useState<OrderItem[]>(() => {
-    if (recentSales !== undefined) {
+    if (recentSales !== undefined && recentSales.length > 0) {
       return recentSales.map((sale) => ({
+        numericId: sale.id,
         id: sale.order_no || `TRX-${sale.id}`,
         customer: sale.delivery_info?.driver_name || `Mitra Pemasok #${sale.buyer_id || sale.id}`,
         customerType: "Pemasok Panentra (Terverifikasi)",
@@ -151,28 +153,69 @@ export default function PesananView({
   const [selectedChatOrder, setSelectedChatOrder] = useState<OrderItem | null>(null);
 
   React.useEffect(() => {
-    if (recentSales !== undefined) {
-      const apiMapped: OrderItem[] = recentSales.map((sale) => ({
-        id: sale.order_no || `TRX-${sale.id}`,
-        customer: sale.delivery_info?.driver_name || `Mitra Pemasok #${sale.buyer_id || sale.id}`,
-        customerType: "Pemasok Panentra (Terverifikasi)",
-        phone: sale.delivery_info?.driver_phone || "081286647521",
-        item: `Tomat Panen Grade ${sale.grade || "B"}`,
-        category: `Grade ${sale.grade || "B"}`,
-        qty: `${sale.qty_kg} kg`,
-        unitPrice: `Rp ${(sale.agreed_price || 12000).toLocaleString("id-ID")} / kg`,
-        total: `Rp ${(sale.grand_total || sale.subtotal).toLocaleString("id-ID")}`,
-        status: (sale.status === "completed" ? "completed" : sale.status === "shipping" ? "shipping" : "incoming") as OrderItem["status"],
-        date: sale.paid_at ? "4 Agustus 2026, 22:51 WIB" : "Hari Ini",
-        location: sale.delivery_address || "Lembang, Bandung Barat",
-        fullAddress: sale.delivery_address || "Jl. Raya Lembang No. 142, Bandung Barat",
-        paymentStatus: `Escrow ${sale.escrow_status || "released"} (Lunas)`,
-        paymentMethod: sale.payment_method === "transfer_petani" ? "Transfer Direct Bank" : "Panentra Escrow",
-        image: "/assets/bowo-duit.png",
-        notes: sale.delivery_info ? `Armada: ${sale.delivery_info.vehicle} (${sale.delivery_info.driver_name}) - ETA: ${sale.delivery_info.eta}` : undefined,
-      }));
-      setOrders(apiMapped);
+    async function loadOrdersData() {
+      try {
+        const res = await getFarmerOrders();
+        if (res && res.data && Array.isArray(res.data)) {
+          const apiMapped: OrderItem[] = res.data.map((order) => {
+            const rawStatus = (order.status || "incoming").toLowerCase();
+            let mappedStatus: OrderItem["status"] = "incoming";
+            if (rawStatus === "shipping" || rawStatus === "dikirim") {
+              mappedStatus = "shipping";
+            } else if (rawStatus === "completed" || rawStatus === "delivered" || rawStatus === "selesai") {
+              mappedStatus = "completed";
+            }
+
+            return {
+              numericId: order.id,
+              id: order.order_no || `TRX-${order.id}`,
+              customer: order.buyer?.name || "Mitra Pembeli",
+              customerType: "Pemasok / Pembeli (Terverifikasi)",
+              phone: order.buyer?.phone || "+62 812-8664-7521",
+              item: `${order.commodity || "Komoditas Panen"} ${order.grade ? `(${order.grade})` : ""}`,
+              category: order.grade || "Grade SNI",
+              qty: `${order.qtyKg || 0} kg`,
+              unitPrice: `Rp ${(order.pricePerKg || 0).toLocaleString("id-ID")} / kg`,
+              total: `Rp ${(order.grandTotal || order.subtotal || 0).toLocaleString("id-ID")}`,
+              status: mappedStatus,
+              date: order.createdAt ? new Date(order.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "5 Agustus 2026",
+              location: typeof order.listingLocation === "string" ? order.listingLocation : (typeof order.deliveryAddress === "string" ? order.deliveryAddress : "Lembang, Bandung Barat"),
+              fullAddress: typeof order.deliveryAddress === "string" ? order.deliveryAddress : "Jl. Raya Lembang No. 142, Kab. Bandung Barat",
+              paymentStatus: order.paymentStatus || "Dana Terkunci di Escrow Panentra",
+              paymentMethod: order.paymentMethod === "transfer_petani" ? "Transfer Direct Bank" : "Panentra Secure Escrow",
+              image: "/assets/bowo-duit.png",
+              notes: order.deliveryInfo ? `Info Pengiriman: ${JSON.stringify(order.deliveryInfo)}` : undefined,
+            };
+          });
+          setOrders(apiMapped);
+        } else if (recentSales !== undefined && recentSales.length > 0) {
+          const apiMapped: OrderItem[] = recentSales.map((sale) => ({
+            numericId: sale.id,
+            id: sale.order_no || `TRX-${sale.id}`,
+            customer: sale.delivery_info?.driver_name || `Mitra Pemasok #${sale.buyer_id || sale.id}`,
+            customerType: "Pemasok Panentra (Terverifikasi)",
+            phone: sale.delivery_info?.driver_phone || "081286647521",
+            item: `Tomat Panen Grade ${sale.grade || "B"}`,
+            category: `Grade ${sale.grade || "B"}`,
+            qty: `${sale.qty_kg} kg`,
+            unitPrice: `Rp ${(sale.agreed_price || 12000).toLocaleString("id-ID")} / kg`,
+            total: `Rp ${(sale.grand_total || sale.subtotal).toLocaleString("id-ID")}`,
+            status: (sale.status === "completed" ? "completed" : sale.status === "shipping" ? "shipping" : "incoming") as OrderItem["status"],
+            date: sale.paid_at ? "4 Agustus 2026, 22:51 WIB" : "Hari Ini",
+            location: sale.delivery_address || "Lembang, Bandung Barat",
+            fullAddress: sale.delivery_address || "Jl. Raya Lembang No. 142, Bandung Barat",
+            paymentStatus: `Escrow ${sale.escrow_status || "released"} (Lunas)`,
+            paymentMethod: sale.payment_method === "transfer_petani" ? "Transfer Direct Bank" : "Panentra Escrow",
+            image: "/assets/bowo-duit.png",
+            notes: sale.delivery_info ? `Armada: ${sale.delivery_info.vehicle} (${sale.delivery_info.driver_name}) - ETA: ${sale.delivery_info.eta}` : undefined,
+          }));
+          setOrders(apiMapped);
+        }
+      } catch (err) {
+        console.warn("Gagal memuat API farmer orders:", err);
+      }
     }
+    loadOrdersData();
   }, [recentSales]);
 
   const filteredOrders = orders.filter((order) => {
@@ -184,7 +227,16 @@ export default function PesananView({
     return matchesFilter && matchesSearch;
   });
 
-  const handleUpdateStatus = (id: string, newStatus: OrderItem["status"]) => {
+  const handleUpdateStatus = async (id: string, newStatus: OrderItem["status"]) => {
+    const targetOrder = orders.find((o) => o.id === id);
+    const targetNumericId = targetOrder?.numericId || parseInt(id.replace("TRX-", "")) || id;
+    const apiStatus = newStatus === "shipping" ? "shipping" : "completed";
+    try {
+      await updateOrderStatus(targetNumericId, apiStatus);
+    } catch (err) {
+      console.warn("Gagal updateOrderStatus API:", err);
+    }
+
     setOrders((prev) =>
       prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o))
     );
