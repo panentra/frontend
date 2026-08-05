@@ -81,12 +81,28 @@ export interface Season {
   [key: string]: unknown;
 }
 
-export interface Expense {
+export interface ExpenseItem {
   id: number;
-  season_id?: number;
+  title: string;
   category: string;
   amount: number;
-  notes?: string;
+  note?: string;
+  incurred_on?: string;
+  season_id?: number;
+  season_name?: string;
+  [key: string]: unknown;
+}
+
+export interface ExpensesResponse {
+  data: ExpenseItem[];
+}
+
+export interface CreateExpensePayload {
+  planting_season_id?: number;
+  title: string;
+  category: string;
+  amount: number;
+  note?: string;
   [key: string]: unknown;
 }
 
@@ -381,12 +397,12 @@ export async function updateSeason(id: number | string, payload: Record<string, 
   });
 }
 
-export async function getExpenses(): Promise<Expense[]> {
-  return fetchWithAuth<Expense[]>("/api/farmer/expenses");
+export async function getExpenses(): Promise<ExpensesResponse> {
+  return fetchWithAuth<ExpensesResponse>("/api/farmer/expenses");
 }
 
-export async function createExpense(payload: Record<string, unknown>): Promise<Expense> {
-  return fetchWithAuth<Expense>("/api/farmer/expenses", {
+export async function createExpense(payload: CreateExpensePayload): Promise<{ data: ExpenseItem }> {
+  return fetchWithAuth<{ data: ExpenseItem }>("/api/farmer/expenses", {
     method: "POST",
     body: JSON.stringify(payload),
   });

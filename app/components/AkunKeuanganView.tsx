@@ -209,7 +209,7 @@ const FARM_PLOTS = [
   },
 ];
 
-import { Land } from "@/lib/api";
+import { Land, getExpenses, createExpense, deleteExpense, ExpenseItem } from "@/lib/api";
 
 interface AkunKeuanganViewProps {
   onSubViewChange?: (isOpen: boolean) => void;
@@ -251,6 +251,31 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseSeasonId, setExpenseSeasonId] = useState("season-1");
   const [expenses, setExpenses] = useState(INITIAL_EXPENSE_HISTORY);
+
+  React.useEffect(() => {
+    async function loadExpensesData() {
+      try {
+        const res = await getExpenses();
+        if (res && res.data && res.data.length > 0) {
+          const mapped = res.data.map((item) => ({
+            id: item.id,
+            title: item.title,
+            category: item.category,
+            amount: `Rp ${item.amount.toLocaleString("id-ID")}`,
+            rawAmount: item.amount,
+            date: "5 Agustus 2026",
+            note: item.note || "Pencatatan HPP API",
+            seasonId: `season-${item.season_id || 3}`,
+            seasonName: item.season_name || "MT-1: Tomat",
+          }));
+          setExpenses(mapped);
+        }
+      } catch (err) {
+        console.warn("Gagal memuat API expenses:", err);
+      }
+    }
+    loadExpensesData();
+  }, []);
 
   // Preference Toggles
   const [waNotify, setWaNotify] = useState(true);
@@ -296,29 +321,56 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
     }
   };
 
-  const handleAddExpense = (e: React.FormEvent) => {
+  const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!expenseTitle || !expenseAmount) return;
 
+    const rawAmt = parseInt(expenseAmount);
     const targetSeason = PLANTING_SEASONS.find((s) => s.id === expenseSeasonId) || PLANTING_SEASONS[1];
 
-    const newExp = {
-      id: Date.now(),
-      title: expenseTitle,
-      category: expenseCategory,
-      amount: `Rp ${parseInt(expenseAmount).toLocaleString("id-ID")}`,
-      rawAmount: parseInt(expenseAmount),
-      date: "Hari Ini",
-      note: "Pencatatan langsung HPP",
-      seasonId: targetSeason.id,
-      seasonName: `${targetSeason.name} (${targetSeason.period})`,
-    };
+    try {
+      await createExpense({
+        planting_season_id: 3,
+        title: expenseTitle,
+        category: expenseCategory,
+        amount: rawAmt,
+        note: "Toko Tani",
+      });
 
-    setExpenses([newExp, ...expenses]);
+      const res = await getExpenses();
+      if (res && res.data) {
+        const mapped = res.data.map((item) => ({
+          id: item.id,
+          title: item.title,
+          category: item.category,
+          amount: `Rp ${item.amount.toLocaleString("id-ID")}`,
+          rawAmount: item.amount,
+          date: "5 Agustus 2026",
+          note: item.note || "Pencatatan HPP API",
+          seasonId: `season-${item.season_id || 3}`,
+          seasonName: item.season_name || "MT-1: Tomat",
+        }));
+        setExpenses(mapped);
+      }
+    } catch (err) {
+      console.warn("Gagal createExpense API:", err);
+      const newExp = {
+        id: Date.now(),
+        title: expenseTitle,
+        category: expenseCategory,
+        amount: `Rp ${rawAmt.toLocaleString("id-ID")}`,
+        rawAmount: rawAmt,
+        date: "Hari Ini",
+        note: "Pencatatan langsung HPP",
+        seasonId: targetSeason.id,
+        seasonName: `${targetSeason.name} (${targetSeason.period})`,
+      };
+      setExpenses([newExp, ...expenses]);
+    }
+
     setShowExpenseModal(false);
     setExpenseTitle("");
     setExpenseAmount("");
-    alert(`Pengeluaran produksi berhasil dicatat di ${targetSeason.name} & HPP otomatis diperbarui!`);
   };
 
   const filteredSales = SALES_HISTORY.filter(
