@@ -51,6 +51,8 @@ export interface OrderItem {
 interface PesananViewProps {
   recentSales?: RecentSale[];
   revenue?: number;
+  activeOrdersCount?: number;
+  completedSalesCount?: number;
 }
 
 const ORDERS_DATA: OrderItem[] = [
@@ -113,15 +115,43 @@ const ORDERS_DATA: OrderItem[] = [
   },
 ];
 
-export default function PesananView({ recentSales, revenue }: PesananViewProps = {}) {
+export default function PesananView({
+  recentSales,
+  revenue,
+  activeOrdersCount,
+  completedSalesCount,
+}: PesananViewProps = {}) {
   const [activeFilter, setActiveFilter] = useState<"all" | "incoming" | "shipping" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [orders, setOrders] = useState<OrderItem[]>(ORDERS_DATA);
+  const [orders, setOrders] = useState<OrderItem[]>(() => {
+    if (recentSales !== undefined) {
+      return recentSales.map((sale) => ({
+        id: sale.order_no || `TRX-${sale.id}`,
+        customer: sale.delivery_info?.driver_name || `Mitra Pemasok #${sale.buyer_id || sale.id}`,
+        customerType: "Pemasok Panentra (Terverifikasi)",
+        phone: sale.delivery_info?.driver_phone || "081286647521",
+        item: `Tomat Panen Grade ${sale.grade || "B"}`,
+        category: `Grade ${sale.grade || "B"}`,
+        qty: `${sale.qty_kg} kg`,
+        unitPrice: `Rp ${(sale.agreed_price || 12000).toLocaleString("id-ID")} / kg`,
+        total: `Rp ${(sale.grand_total || sale.subtotal).toLocaleString("id-ID")}`,
+        status: (sale.status === "completed" ? "completed" : sale.status === "shipping" ? "shipping" : "incoming") as OrderItem["status"],
+        date: sale.paid_at ? "4 Agustus 2026, 22:51 WIB" : "Hari Ini",
+        location: sale.delivery_address || "Lembang, Bandung Barat",
+        fullAddress: sale.delivery_address || "Jl. Raya Lembang No. 142, Bandung Barat",
+        paymentStatus: `Escrow ${sale.escrow_status || "released"} (Lunas)`,
+        paymentMethod: sale.payment_method === "transfer_petani" ? "Transfer Direct Bank" : "Panentra Escrow",
+        image: "/assets/bowo-duit.png",
+        notes: sale.delivery_info ? `Armada: ${sale.delivery_info.vehicle} (${sale.delivery_info.driver_name}) - ETA: ${sale.delivery_info.eta}` : undefined,
+      }));
+    }
+    return ORDERS_DATA;
+  });
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderItem | null>(null);
   const [selectedChatOrder, setSelectedChatOrder] = useState<OrderItem | null>(null);
 
   React.useEffect(() => {
-    if (recentSales && recentSales.length > 0) {
+    if (recentSales !== undefined) {
       const apiMapped: OrderItem[] = recentSales.map((sale) => ({
         id: sale.order_no || `TRX-${sale.id}`,
         customer: sale.delivery_info?.driver_name || `Mitra Pemasok #${sale.buyer_id || sale.id}`,
@@ -141,12 +171,7 @@ export default function PesananView({ recentSales, revenue }: PesananViewProps =
         image: "/assets/bowo-duit.png",
         notes: sale.delivery_info ? `Armada: ${sale.delivery_info.vehicle} (${sale.delivery_info.driver_name}) - ETA: ${sale.delivery_info.eta}` : undefined,
       }));
-
-      setOrders((prev) => {
-        const existingIds = new Set(prev.map((o) => o.id));
-        const newItems = apiMapped.filter((o) => !existingIds.has(o.id));
-        return [...newItems, ...prev];
-      });
+      setOrders(apiMapped);
     }
   }, [recentSales]);
 
@@ -168,9 +193,9 @@ export default function PesananView({ recentSales, revenue }: PesananViewProps =
     }
   };
 
-  const incomingCount = orders.filter((o) => o.status === "incoming").length;
+  const incomingCount = activeOrdersCount !== undefined ? activeOrdersCount : orders.filter((o) => o.status === "incoming").length;
   const shippingCount = orders.filter((o) => o.status === "shipping").length;
-  const completedCount = orders.filter((o) => o.status === "completed").length;
+  const completedCount = completedSalesCount !== undefined ? completedSalesCount : orders.filter((o) => o.status === "completed").length;
 
   return (
     <div className="space-y-5 animate-fade-in pb-10">

@@ -300,6 +300,8 @@ export default function DashboardPetani() {
                 <PesananView
                   recentSales={dashboardData?.recent_sales}
                   revenue={dashboardData?.revenue}
+                  activeOrdersCount={dashboardData?.active_orders_count}
+                  completedSalesCount={dashboardData?.completed_sales_count}
                 />
               )}
               {activeTab === "chat" && <ChatListView onChatRoomStateChange={setIsChatRoomActive} />}
