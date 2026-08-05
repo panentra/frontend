@@ -28,6 +28,13 @@ import {
 import Button from "./Button";
 import { RecentSale, getFarmerOrders, updateOrderStatus } from "@/lib/api";
 
+export interface DeliveryInfo {
+  driver_name?: string;
+  vehicle?: string;
+  driver_phone?: string;
+  eta?: string;
+}
+
 export interface OrderItem {
   numericId?: number;
   id: string;
@@ -46,6 +53,7 @@ export interface OrderItem {
   paymentStatus: string;
   paymentMethod: string;
   image: string;
+  deliveryInfo?: DeliveryInfo;
   notes?: string;
 }
 
@@ -162,7 +170,8 @@ export default function PesananView({
               paymentStatus: order.paymentStatus || "Dana Terkunci di Escrow Panentra",
               paymentMethod: order.paymentMethod === "transfer_petani" ? "Transfer Direct Bank" : "Panentra Secure Escrow",
               image: "/assets/bowo-duit.png",
-              notes: order.deliveryInfo ? `Info Pengiriman: ${JSON.stringify(order.deliveryInfo)}` : undefined,
+              deliveryInfo: (order.deliveryInfo as DeliveryInfo) || undefined,
+              notes: (order as Record<string, unknown>).notes as string || undefined,
             };
           });
           setOrders(apiMapped);
@@ -596,6 +605,39 @@ export default function PesananView({
                   Status: {selectedOrderDetail.paymentStatus}
                 </p>
               </div>
+
+              {/* Informasi Kurir & Armada Pengiriman (deliveryInfo) */}
+              {selectedOrderDetail.deliveryInfo && (
+                <div className="p-3 bg-blue-50/80 rounded-2xl border border-blue-200 space-y-1.5 text-blue-900 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-blue-950 flex items-center gap-1.5 text-xs">
+                      <Truck className="w-4 h-4 text-blue-700" />
+                      Informasi Armada Pengiriman
+                    </span>
+                    {selectedOrderDetail.deliveryInfo.eta && (
+                      <span className="text-[10px] font-black bg-blue-200/80 text-blue-900 px-2 py-0.5 rounded-full border border-blue-300/50">
+                        ETA: {selectedOrderDetail.deliveryInfo.eta}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-0.5 border-t border-blue-200/60">
+                    <div>
+                      <span className="text-blue-700 font-medium block text-[10px]">Driver / Sopir:</span>
+                      <strong className="font-extrabold text-blue-950">{selectedOrderDetail.deliveryInfo.driver_name || "-"}</strong>
+                    </div>
+                    <div>
+                      <span className="text-blue-700 font-medium block text-[10px]">Armada / Kendaraan:</span>
+                      <strong className="font-extrabold text-blue-950">{selectedOrderDetail.deliveryInfo.vehicle || "-"}</strong>
+                    </div>
+                    {selectedOrderDetail.deliveryInfo.driver_phone && (
+                      <div className="col-span-2">
+                        <span className="text-blue-700 font-medium block text-[10px]">No. Telepon Driver:</span>
+                        <strong className="font-extrabold text-blue-950">{selectedOrderDetail.deliveryInfo.driver_phone}</strong>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Catatan Khusus Pembeli */}
               {selectedOrderDetail.notes && (
