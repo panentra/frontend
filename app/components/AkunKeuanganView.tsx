@@ -2164,7 +2164,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
 
       {/* 10. SLIDE-IN / TOAST NOTIFICATION POP-UP */}
       {toast.show && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-[#1A1C19] text-white px-4 py-3 rounded-2xl shadow-2xl border border-gray-800 animate-slide-up max-w-[90vw] sm:max-w-md">
+        <div className="fixed bottom-22 sm:bottom-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 bg-[#1A1C19]/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-gray-700/80 animate-slide-up max-w-[92vw] sm:max-w-md">
           {toast.type === "error" ? (
             <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
           ) : toast.type === "info" ? (
@@ -2176,7 +2176,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
           <button
             type="button"
             onClick={() => setToast({ show: false, message: "", type: "success" })}
-            className="p-1 text-gray-400 hover:text-white rounded-lg ml-auto shrink-0 cursor-pointer"
+            className="p-1 text-gray-400 hover:text-white rounded-lg ml-auto shrink-0 cursor-pointer active:scale-95 transition-all"
           >
             <X className="w-4 h-4" />
           </button>
