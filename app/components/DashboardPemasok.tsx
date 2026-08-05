@@ -44,7 +44,7 @@ import PembayaranEscrowView from "./PembayaranEscrowView";
 import RiwayatPembelianPemasokView from "./RiwayatPembelianPemasokView";
 import ContractView from "./ContractView";
 import Avatar from "./Avatar";
-import { getSupplierDashboard, getAuthUser, SupplierDashboardData, User as AuthUser } from "@/lib/api";
+import { getSupplierDashboard, getAuthUser, SupplierDashboardData } from "@/lib/api";
 
 // Nearby Harvests Sample Data for Radar Pasokan
 const NEARBY_HARVESTS: HarvestListing[] = [
@@ -180,7 +180,12 @@ export default function DashboardPemasok() {
   const [dashboard, setDashboard] = useState<SupplierDashboardData | null>(null);
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
-  const [user] = useState<AuthUser | null>(() => getAuthUser());
+  const [storeName, setStoreName] = useState("Toko Berkah");
+
+  useEffect(() => {
+    const u = getAuthUser();
+    if (u?.name) setStoreName(u.name);
+  }, []);
 
   useEffect(() => {
     getSupplierDashboard()
@@ -200,8 +205,6 @@ export default function DashboardPemasok() {
 
   const formatRupiah = (value: number) =>
     value.toLocaleString("id-ID");
-
-  const storeName = (user?.name as string) || "Toko Berkah";
 
   const filteredHarvests =
     selectedCategory === "Semua"
