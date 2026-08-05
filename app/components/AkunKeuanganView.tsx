@@ -229,7 +229,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
   const [salesSearch, setSalesSearch] = useState("");
   const [expenseSearch, setExpenseSearch] = useState("");
   const [expenseCategoryFilter, setExpenseCategoryFilter] = useState("Semua");
-  const [selectedSeasonFilter, setSelectedSeasonFilter] = useState<string>("season-1"); // Defaults to Active Season!
+  const [selectedSeasonFilter, setSelectedSeasonFilter] = useState<string>("all"); // Defaults to All Seasons so API data displays immediately!
 
   // Modals Control States
   const [showVerifyModal, setShowVerifyModal] = useState(false);
@@ -380,8 +380,53 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
       s.id.toLowerCase().includes(salesSearch.toLowerCase())
   );
 
+  const plantingSeasons = React.useMemo(() => {
+    const seasonMap = new Map<string, { id: string; name: string; period: string; status: string }>();
+    seasonMap.set("all", { id: "all", name: "Semua Periode", period: "Semua Musim Tanam", status: "" });
+
+    if (lands && lands.length > 0) {
+      lands.forEach((l) => {
+        if (l.seasons && l.seasons.length > 0) {
+          l.seasons.forEach((s) => {
+            const id = `season-${s.id}`;
+            const cropName = s.commodity?.name || s.name || l.commodity?.name || "Tomat";
+            seasonMap.set(id, {
+              id,
+              name: s.name || `MT-${s.id}: ${cropName}`,
+              period: "Musim Tanam Aktif",
+              status: s.status === "active" ? "Aktif" : "Selesai",
+            });
+          });
+        }
+      });
+    }
+
+    if (expenses && expenses.length > 0) {
+      expenses.forEach((exp) => {
+        if (exp.seasonId && !seasonMap.has(exp.seasonId)) {
+          seasonMap.set(exp.seasonId, {
+            id: exp.seasonId,
+            name: exp.seasonName || "MT-1: Tomat",
+            period: "Musim Tanam Aktif",
+            status: "Aktif",
+          });
+        }
+      });
+    }
+
+    if (seasonMap.size <= 1) {
+      return PLANTING_SEASONS;
+    }
+    return Array.from(seasonMap.values());
+  }, [lands, expenses]);
+
+  const currentSelectedSeasonObj = plantingSeasons.find((s) => s.id === selectedSeasonFilter) || plantingSeasons[0];
+
   const filteredExpenses = expenses.filter((exp) => {
-    const matchesSeason = selectedSeasonFilter === "all" || exp.seasonId === selectedSeasonFilter;
+    const matchesSeason =
+      selectedSeasonFilter === "all" ||
+      exp.seasonId === selectedSeasonFilter ||
+      (exp.seasonName && currentSelectedSeasonObj && exp.seasonName.toLowerCase().includes(currentSelectedSeasonObj.name.toLowerCase()));
     const matchesCat = expenseCategoryFilter === "Semua" || exp.category === expenseCategoryFilter;
     const matchesQuery =
       exp.title.toLowerCase().includes(expenseSearch.toLowerCase()) ||
@@ -389,8 +434,6 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
       (exp.seasonName && exp.seasonName.toLowerCase().includes(expenseSearch.toLowerCase()));
     return matchesSeason && matchesCat && matchesQuery;
   });
-
-  const currentSelectedSeasonObj = PLANTING_SEASONS.find((s) => s.id === selectedSeasonFilter) || PLANTING_SEASONS[0];
 
   const totalExpenseFiltered = filteredExpenses.reduce((acc, curr) => acc + (curr.rawAmount || 0), 0);
 
@@ -603,7 +646,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
 
             <div className="relative">
               <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar pr-6">
-                {PLANTING_SEASONS.map((season) => (
+                {plantingSeasons.map((season) => (
                   <button
                     key={season.id}
                     type="button"
