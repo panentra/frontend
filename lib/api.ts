@@ -625,18 +625,59 @@ export async function getPriceHistory(params?: Record<string, string>): Promise<
   return fetchWithAuth<Record<string, unknown>>(`/api/shared/price-history${query}`);
 }
 
-export async function getChats(): Promise<ChatItem[]> {
-  return fetchWithAuth<ChatItem[]>("/api/shared/chats");
+export interface ApiChatCounterpart {
+  id: number;
+  name: string;
+  location?: string;
+  avatar?: string | null;
 }
 
-export async function getChatMessages(chatId: number | string): Promise<ChatMessage[]> {
-  return fetchWithAuth<ChatMessage[]>(`/api/shared/chats/${chatId}/messages`);
+export interface ApiChatListItem {
+  id: number;
+  counterpart: ApiChatCounterpart;
+  item: string;
+  grade?: string;
+  last_message: string;
+  last_message_time: string;
+  offer_price?: number | null;
+  offer_qty?: number | null;
+  unread_count?: number;
+  order_id?: number | null;
+  listing_id?: number | null;
 }
 
-export async function sendChatMessage(chatId: number | string, message: string): Promise<ChatMessage> {
-  return fetchWithAuth<ChatMessage>(`/api/shared/chats/${chatId}/messages`, {
+export interface ApiChatMessageItem {
+  id: number;
+  conversation_id: number;
+  sender_id: number;
+  sender_name: string;
+  text: string;
+  offer_price?: number | null;
+  offer_qty?: number | null;
+  created_at: string;
+  read_at?: string | null;
+}
+
+export async function getChats(): Promise<{ data: ApiChatListItem[] }> {
+  return fetchWithAuth<{ data: ApiChatListItem[] }>("/api/chats");
+}
+
+export async function getChatMessages(chatId: number | string): Promise<{ data: ApiChatMessageItem[] }> {
+  return fetchWithAuth<{ data: ApiChatMessageItem[] }>(`/api/chats/${chatId}/messages`);
+}
+
+export async function sendChatMessage(
+  chatId: number | string,
+  payload: { text: string; conversation_id?: number | string; offer_price?: number; offer_qty?: number }
+): Promise<{ data: ApiChatMessageItem }> {
+  return fetchWithAuth<{ data: ApiChatMessageItem }>(`/api/chats/${chatId}/messages`, {
     method: "POST",
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({
+      conversation_id: chatId,
+      text: payload.text,
+      offer_price: payload.offer_price,
+      offer_qty: payload.offer_qty,
+    }),
   });
 }
 

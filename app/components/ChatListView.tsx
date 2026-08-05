@@ -24,7 +24,10 @@ import {
 } from "lucide-react";
 import Button from "./Button";
 
+import { getChats, getChatMessages, sendChatMessage, ApiChatListItem, ApiChatMessageItem } from "@/lib/api";
+
 export interface ChatConversation {
+  numericChatId?: number;
   id: string;
   customer: string;
   customerType: string;
@@ -38,78 +41,11 @@ export interface ChatConversation {
   image: string;
   unitPrice: string;
   offeredPrice: string;
+  rawOfferPrice?: number;
+  rawOfferQty?: number;
   total: string;
   notes?: string;
 }
-
-const CHAT_LIST_DATA: ChatConversation[] = [
-  {
-    id: "ORD-8821",
-    customer: "Toko Berkah Jaya",
-    customerType: "Pemasok Pasar Modern",
-    item: "Cabai Rawit Merah Super",
-    qty: "150 kg",
-    lastMessage: "Bagaimana Pak Bowo? Jika sepakat Rp 34.000/kg, dana langsung dikunci aman...",
-    time: "10:22 WIB",
-    unreadCount: 1,
-    statusBadge: "Nego Rp 34.000/kg",
-    statusType: "nego",
-    image: "/assets/bowo-senang.png",
-    unitPrice: "Rp 35.000 / kg",
-    offeredPrice: "Rp 34.000 / kg",
-    total: "Rp 5.100.000",
-    notes: "Mohon dipack rapi dalam keranjang plastik per 25 kg.",
-  },
-  {
-    id: "ORD-8819",
-    customer: "Resto Sambal Nusantara",
-    customerType: "Restoran / Kuliner",
-    item: "Pakcoy Hydroponic Grade A",
-    qty: "80 kg",
-    lastMessage: "Terima kasih Pak Bowo, barang Pakcoy Hydro 80 kg sudah dalam perjalanan...",
-    time: "Kemarin",
-    unreadCount: 0,
-    statusBadge: "Dalam Pengiriman",
-    statusType: "shipping",
-    image: "/assets/bowo-checklist.png",
-    unitPrice: "Rp 18.000 / kg",
-    offeredPrice: "Rp 18.000 / kg",
-    total: "Rp 1.440.000",
-    notes: "Kirim sebelum jam 06:00 pagi.",
-  },
-  {
-    id: "ORD-8815",
-    customer: "Supermarket Fresh Mart",
-    customerType: "Retail Modern",
-    item: "Tomat Red Super",
-    qty: "200 kg",
-    lastMessage: "Transaksi Rp 2.400.000 selesai & dana dicairkan ke rekening utama.",
-    time: "1 Agu",
-    unreadCount: 0,
-    statusBadge: "Selesai",
-    statusType: "completed",
-    image: "/assets/bowo-duit.png",
-    unitPrice: "Rp 12.000 / kg",
-    offeredPrice: "Rp 12.000 / kg",
-    total: "Rp 2.400.000",
-  },
-  {
-    id: "ORD-8802",
-    customer: "CV Pangan Lestari",
-    customerType: "Distributor Bahan Pokok",
-    item: "Cabai Rawit Red Grade A",
-    qty: "500 kg",
-    lastMessage: "Halo Pak Bowo, apakah stok Cabai Rawit Red grade A masih ready 500 kg?",
-    time: "31 Jul",
-    unreadCount: 0,
-    statusBadge: "Tanya Stok",
-    statusType: "inquiry",
-    image: "/assets/budi-kaget.png",
-    unitPrice: "Rp 36.000 / kg",
-    offeredPrice: "Rp 36.000 / kg",
-    total: "Rp 18.000.000",
-  },
-];
 
 interface ChatListViewProps {
   onChatRoomStateChange?: (isOpen: boolean) => void;
@@ -118,8 +54,115 @@ interface ChatListViewProps {
 export default function ChatListView({ onChatRoomStateChange }: ChatListViewProps) {
   const [activeFilter, setActiveFilter] = useState<"all" | "nego" | "unread" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [chatList, setChatList] = useState<ChatConversation[]>(CHAT_LIST_DATA);
+  const [chatList, setChatList] = useState<ChatConversation[]>([]);
   const [selectedChat, setSelectedChat] = useState<ChatConversation | null>(null);
+  const [messages, setMessages] = useState<ApiChatMessageItem[]>([]);
+  const [inputText, setInputText] = useState("");
+
+  React.useEffect(() => {
+    async function loadChatsData() {
+      try {
+        const res = await getChats();
+        if (res && res.data && Array.isArray(res.data)) {
+          const mapped: ChatConversation[] = res.data.map((c) => ({
+            id: `ORD-${c.order_id || c.id}`,
+            numericChatId: c.id,
+            customer: c.counterpart?.name || "Mitra Pembeli",
+            customerType: c.counterpart?.location || "Pembeli (Terverifikasi)",
+            item: `${c.item || "Komoditas"} ${c.grade ? `(${c.grade})` : ""}`,
+            qty: c.offer_qty ? `${c.offer_qty} kg` : "Pasokan Panen",
+            lastMessage: c.last_message || "Belum ada pesan",
+            time: c.last_message_time ? new Date(c.last_message_time).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "Hari ini",
+            unreadCount: c.unread_count || 0,
+            statusBadge: c.offer_price ? `Nego Rp ${c.offer_price.toLocaleString("id-ID")}/kg` : "Chat Aktif",
+            statusType: c.offer_price ? "nego" : "inquiry",
+            image: "/assets/bowo-senang.png",
+            unitPrice: c.offer_price ? `Rp ${c.offer_price.toLocaleString("id-ID")} / kg` : "Rp 0 / kg",
+            offeredPrice: c.offer_price ? `Rp ${c.offer_price.toLocaleString("id-ID")} / kg` : "Rp 0 / kg",
+            rawOfferPrice: c.offer_price || 0,
+            rawOfferQty: c.offer_qty || 0,
+            total: c.offer_price && c.offer_qty ? `Rp ${(c.offer_price * c.offer_qty).toLocaleString("id-ID")}` : "Rp 0",
+          }));
+          setChatList(mapped);
+        } else {
+          setChatList([]);
+        }
+      } catch (err) {
+        console.warn("Gagal memuat API chats:", err);
+        setChatList([]);
+      }
+    }
+    loadChatsData();
+  }, []);
+
+  React.useEffect(() => {
+    if (!selectedChat) return;
+    const targetChatId = selectedChat.numericChatId || selectedChat.id;
+    async function loadMessages() {
+      try {
+        const res = await getChatMessages(targetChatId);
+        if (res && res.data && Array.isArray(res.data)) {
+          setMessages(res.data);
+        } else {
+          setMessages([]);
+        }
+      } catch (err) {
+        console.warn("Gagal memuat API chat messages:", err);
+        setMessages([]);
+      }
+    }
+    loadMessages();
+  }, [selectedChat]);
+
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!inputText.trim() || !selectedChat) return;
+
+    const textToSend = inputText;
+    setInputText("");
+
+    const targetChatId = selectedChat.numericChatId || selectedChat.id;
+    const offerPrice = selectedChat.rawOfferPrice;
+    const offerQty = selectedChat.rawOfferQty;
+
+    try {
+      const res = await sendChatMessage(targetChatId, {
+        text: textToSend,
+        conversation_id: targetChatId,
+        offer_price: offerPrice || undefined,
+        offer_qty: offerQty || undefined,
+      });
+
+      if (res && res.data) {
+        setMessages((prev) => [...prev, res.data]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            conversation_id: Number(targetChatId),
+            sender_id: 6,
+            sender_name: "Pak Budi Santoso",
+            text: textToSend,
+            created_at: new Date().toISOString(),
+          },
+        ]);
+      }
+    } catch (err) {
+      console.warn("Gagal kirim chat message API:", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          conversation_id: Number(targetChatId),
+          sender_id: 6,
+          sender_name: "Pak Budi Santoso",
+          text: textToSend,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    }
+  };
 
   const filteredChats = chatList.filter((chat) => {
     const matchesFilter =
@@ -231,102 +274,64 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
             </span>
           </div>
 
-          {/* Message 1 from Buyer */}
-          <div className="flex items-start gap-2 max-w-[85%]">
-            <div className="space-y-1">
-              <div className="p-3 bg-white border border-gray-200/80 rounded-2xl rounded-tl-xs shadow-2xs text-gray-800 space-y-1">
-                <p className="leading-relaxed">
-                  Halo Pak Bowo! Mengenai pesanan <strong>{selectedChat.item} ({selectedChat.qty})</strong>, apakah bisa tawar harga Rp 33.000/kg kalau saya ambil langsung di kebun?
-                </p>
-              </div>
-              <span className="text-[9px] text-gray-400 font-medium pl-1 block">10:18 WIB</span>
+          {/* Real Dynamic Messages from API */}
+          {messages.length === 0 ? (
+            <div className="text-center py-6 text-xs text-gray-500 font-medium bg-white rounded-2xl p-4 border border-gray-200">
+              Belum ada riwayat pesan. Mulai percakapan di bawah.
             </div>
-          </div>
-
-          {/* Message 2 Response from Farmer */}
-          <div className="flex items-start gap-2 max-w-[85%] ml-auto justify-end">
-            <div className="space-y-1 text-right">
-              <div className="p-3 bg-[#0F4C25] text-white rounded-2xl rounded-tr-xs shadow-2xs space-y-1 text-left">
-                <p className="leading-relaxed">
-                  Halo Pak! Berdasarkan HPP modal saya & analisis AI harga pasar terdekat Lembang (Rp 35.000/kg), harga penawaran terbaik saya <strong>Rp 34.000/kg</strong> sudah gratis penataan armada.
-                </p>
-              </div>
-              <span className="text-[9px] text-gray-400 font-medium pr-1 block">10:20 WIB · Dibaca</span>
-            </div>
-          </div>
-
-          {/* Shopee/Tokopedia Style Interactive Nego Offer Card */}
-          <div className="max-w-[90%] space-y-1">
-            <div className="bg-white border-2 border-emerald-500 rounded-2xl p-3.5 space-y-2.5 shadow-sm">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                <span className="font-black text-[#0F4C25] text-xs flex items-center gap-1.5">
-                  <Handshake className="w-4 h-4 text-emerald-600" />
-                  Penawaran Nego Pembeli
-                </span>
-                <span className="text-[9px] bg-amber-100 text-amber-800 font-black px-2 py-0.5 rounded-full">
-                  Menunggu Keputusan
-                </span>
-              </div>
-
-              <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 text-[#0F4C25] font-black text-base flex justify-between items-center">
-                <span>{selectedChat.offeredPrice}</span>
-                <span className="text-xs text-gray-500 font-semibold">(Total {selectedChat.total})</span>
-              </div>
-
-              <p className="text-[11px] text-gray-600 font-medium leading-relaxed">
-                Bagaimana Pak Bowo? Jika sepakat, dana langsung dikunci aman di Panentra Escrow.
-              </p>
-
-              {/* Action Buttons Inside Chat Stream Card */}
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    alert(`Penawaran nego ${selectedChat.offeredPrice} disetujui! Transaksi ${selectedChat.id} diperbarui.`);
-                    setSelectedChat(null);
-                  }}
-                  className="flex-1 py-2.5 bg-[#0F4C25] hover:bg-[#0A381B] text-white rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
+          ) : (
+            messages.map((msg) => {
+              const isMe = msg.sender_id === 6 || (msg.sender_name && msg.sender_name.toLowerCase().includes("budi"));
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex items-start gap-2 max-w-[85%] ${isMe ? "ml-auto justify-end text-right" : ""}`}
                 >
-                  <Handshake className="w-3.5 h-3.5 text-amber-300" />
-                  Setujui Nego {selectedChat.offeredPrice}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => alert("Kirim harga tawar balik ke pembeli.")}
-                  className="px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-[#0F4C25] border border-emerald-200 rounded-xl font-bold text-xs cursor-pointer transition-colors"
-                >
-                  Tawar Balik
-                </button>
-              </div>
-            </div>
-            <span className="text-[9px] text-gray-400 font-medium pl-1 block">10:22 WIB</span>
-          </div>
+                  <div className={`space-y-1 ${isMe ? "text-right" : ""}`}>
+                    <div
+                      className={`p-3 rounded-2xl shadow-2xs space-y-1 text-left ${
+                        isMe
+                          ? "bg-[#0F4C25] text-white rounded-tr-xs"
+                          : "bg-white border border-gray-200/80 rounded-tl-xs text-gray-800"
+                      }`}
+                    >
+                      <p className="leading-relaxed font-medium">{msg.text}</p>
+                      {msg.offer_price && (
+                        <div className="pt-1 mt-1 border-t border-emerald-400/30 text-[11px] font-bold">
+                          Penawaran: Rp {msg.offer_price.toLocaleString("id-ID")} / kg
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[9px] text-gray-400 font-medium px-1 block">
+                      {msg.created_at ? new Date(msg.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "Hari ini"}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
 
         {/* Native Fixed Bottom Input Bar (Full Width WA / Tokped Style) */}
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] z-50 bg-white border-t border-gray-200 p-2.5 px-3.5 flex items-center gap-2 shadow-2xl">
-          <button
-            type="button"
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 cursor-pointer shrink-0"
-          >
-            <Plus className="w-5 h-5" />
-          </button>
-
+        <form
+          onSubmit={handleSendMessage}
+          className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] z-50 bg-white border-t border-gray-200 p-2.5 px-3.5 flex items-center gap-2 shadow-2xl"
+        >
           <input
             type="text"
             placeholder="Tulis pesan..."
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
             className="flex-1 h-10 px-4 bg-[#F3F4F6] border border-gray-200 rounded-full text-xs outline-none focus:border-[#0F4C25] focus:bg-white font-medium transition-all"
           />
 
           <button
-            type="button"
-            onClick={() => alert("Pesan terkirim ke pembeli!")}
+            type="submit"
             className="w-10 h-10 bg-[#0F4C25] hover:bg-[#0A381B] text-[#FFFFFF] rounded-full flex items-center justify-center cursor-pointer shrink-0 shadow-xs active:scale-95 transition-all"
           >
             <Send className="w-4 h-4" />
           </button>
-        </div>
+        </form>
       </div>
     );
   }
