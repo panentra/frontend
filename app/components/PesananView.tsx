@@ -136,9 +136,9 @@ export default function PesananView({
           const apiMapped: OrderItem[] = res.data.map((order) => {
             const rawStatus = (order.status || "incoming").toLowerCase();
             let mappedStatus: OrderItem["status"] = "incoming";
-            if (rawStatus === "shipping" || rawStatus === "dikirim") {
+            if (rawStatus === "shipping" || rawStatus === "delivered" || rawStatus === "dikirim") {
               mappedStatus = "shipping";
-            } else if (rawStatus === "completed" || rawStatus === "delivered" || rawStatus === "selesai") {
+            } else if (rawStatus === "completed" || rawStatus === "selesai") {
               mappedStatus = "completed";
             }
 
