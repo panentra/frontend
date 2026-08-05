@@ -135,6 +135,40 @@ export default function DashboardPemasok() {
   // Sub-view Mode: "dashboard" | "marketplace" | "detail" | "nego" | "pembayaran" | "riwayat"
   const [viewMode, setViewMode] = useState<"dashboard" | "marketplace" | "detail" | "nego" | "pembayaran" | "riwayat" | "kontrak">("dashboard");
 
+  // URL-driven navigation so refresh keeps the page and browser back returns to the previous menu
+  const syncSkipRef = React.useRef(true);
+  const VALID_VIEWS = ["dashboard", "marketplace", "detail", "nego", "pembayaran", "riwayat", "kontrak"];
+  const VALID_TABS = ["beranda", "pasar", "jualbeli", "pengantaran", "akun"];
+
+  const applyUrlState = React.useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("view");
+    const t = params.get("tab");
+    if (v && VALID_VIEWS.includes(v)) setViewMode(v as typeof viewMode);
+    if (t && VALID_TABS.includes(t)) setActiveTab(t as typeof activeTab);
+  }, []);
+
+  useEffect(() => {
+    applyUrlState();
+  }, [applyUrlState]);
+
+  useEffect(() => {
+    window.addEventListener("popstate", applyUrlState);
+    return () => window.removeEventListener("popstate", applyUrlState);
+  }, [applyUrlState]);
+
+  useEffect(() => {
+    if (syncSkipRef.current) {
+      syncSkipRef.current = false;
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const same = params.get("view") === viewMode && params.get("tab") === activeTab;
+    if (!same) {
+      router.push(`/pemasok/dashboard?view=${viewMode}&tab=${activeTab}`, { scroll: false });
+    }
+  }, [viewMode, activeTab, router]);
+
   // Selected Listing & Deal state for sub-views
   const [selectedListing, setSelectedListing] = useState<HarvestListing | null>(null);
   const [agreedDeal, setAgreedDeal] = useState<{ price: number; qty: number } | null>(null);
@@ -272,7 +306,6 @@ export default function DashboardPemasok() {
               {activeTab === "akun" && (
                 <AkunPemasokView
                   onNavigateToHistory={() => setViewMode("riwayat")}
-                  onNavigateToPetani={() => router.push("/dashboard")}
                 />
               )}
 

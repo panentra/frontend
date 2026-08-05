@@ -26,7 +26,7 @@ import { HarvestListing } from "./MarketplacePemasokView";
 import Snackbar, { useSnackbar } from "./Snackbar";
 import Avatar from "./Avatar";
 import { getCommodityImage } from "./commodityImage";
-import { getListingDetail, getFavorites, addFavorite, removeFavorite, FarmerListingItem } from "@/lib/api";
+import { getListingDetail, getFavorites, addFavorite, removeFavorite, getSupplierOrders, FarmerListingItem, SupplierOrderItem } from "@/lib/api";
 
 function toHarvestListing(item: FarmerListingItem): HarvestListing {
   return {
@@ -69,7 +69,27 @@ export default function DetailProdukPemasokView({
   const [detail, setDetail] = useState<HarvestListing | null>(null);
   const [favoriteSellerId, setFavoriteSellerId] = useState<number | null>(null);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [paidListingIds, setPaidListingIds] = useState<Set<string>>(new Set());
   const { snackbar, showSnackbar, dismissSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    let cancelled = false;
+    getSupplierOrders()
+      .then((res) => {
+        if (cancelled) return;
+        const ids = new Set<string>();
+        (res?.data || []).forEach((o: SupplierOrderItem) => {
+          if (o.listing_id != null) ids.add(String(o.listing_id));
+        });
+        setPaidListingIds(ids);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const isAlreadyBought = paidListingIds.has(String(listing.id));
 
   // Sync heart button with favorites API (match by farmer name)
   useEffect(() => {
@@ -379,14 +399,25 @@ export default function DetailProdukPemasokView({
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={() => onSelectBuy(data)}
-          className="flex-1 h-12 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all cursor-pointer"
-        >
-          <ShoppingBag className="w-4 h-4 text-emerald-300" />
-          <span>Beli Escrow</span>
-        </button>
+        {isAlreadyBought ? (
+          <button
+            type="button"
+            disabled
+            className="flex-1 h-12 bg-gray-100 border border-gray-200 text-gray-400 font-black rounded-2xl text-xs flex items-center justify-center gap-2 cursor-not-allowed"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>Sudah Dibeli</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onSelectBuy(data)}
+            className="flex-1 h-12 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all cursor-pointer"
+          >
+            <ShoppingBag className="w-4 h-4 text-emerald-300" />
+            <span>Beli Escrow</span>
+          </button>
+        )}
       </div>
 
       <Snackbar snackbar={snackbar} onDismiss={dismissSnackbar} />

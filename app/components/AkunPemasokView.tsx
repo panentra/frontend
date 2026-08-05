@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { logoutUser, getFavorites, getBankAccounts, createBankAccount, deleteBankAccount, setPrimaryBankAccount, getAuthUser, getSupplierOrders, getSupplierDashboard, BankAccount, SupplierOrderItem, SupplierDashboardData } from "@/lib/api";
+import { logoutUser, getFavorites, getBankAccounts, createBankAccount, deleteBankAccount, setPrimaryBankAccount, getAuthUser, getCurrentUser, getSupplierOrders, getSupplierDashboard, BankAccount, SupplierOrderItem, SupplierDashboardData } from "@/lib/api";
 import Avatar from "./Avatar";
 import {
   User,
@@ -34,7 +34,6 @@ import {
 
 interface AkunPemasokViewProps {
   onNavigateToHistory?: () => void;
-  onNavigateToPetani?: () => void;
 }
 
 export interface PaymentAccount {
@@ -67,10 +66,25 @@ interface FavoriteFarmer {
 
 export default function AkunPemasokView({
   onNavigateToHistory,
-  onNavigateToPetani,
 }: AkunPemasokViewProps) {
   const router = useRouter();
-  const storeName = (getAuthUser()?.name as string) || "Toko Sembako Berkah Jaya";
+  const [storeName, setStoreName] = useState<string>(
+    (getAuthUser()?.name as string) || "Toko Sembako Berkah Jaya"
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    getCurrentUser()
+      .then((user) => {
+        if (cancelled) return;
+        const name = (user?.name as string) || (user?.store_name as string);
+        if (name) setStoreName(name);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Favorite Farmers List (from API)
   const [favoriteFarmers, setFavoriteFarmers] = useState<FavoriteFarmer[]>([]);
@@ -278,14 +292,6 @@ export default function AkunPemasokView({
     }
   };
 
-  const handleSwitchToPetani = () => {
-    if (onNavigateToPetani) {
-      onNavigateToPetani();
-    } else {
-      router.push("/dashboard");
-    }
-  };
-
   return (
     <div className="space-y-5 animate-fade-in pb-10">
       {/* Header Title */}
@@ -304,7 +310,7 @@ export default function AkunPemasokView({
 
         <div className="space-y-1 flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <h2 className="text-base font-black text-[#1A1C19] truncate">Toko Sembako Berkah Jaya</h2>
+            <h2 className="text-base font-black text-[#1A1C19] truncate">{storeName}</h2>
             <ShieldCheck className="w-4 h-4 text-[#0F4C25] shrink-0" />
           </div>
           <p className="text-xs text-[#0F4C25] font-bold">Terverifikasi (NIB / KTP Panentra Verified)</p>
@@ -477,76 +483,16 @@ export default function AkunPemasokView({
         )}
       </div>
 
-      {/* ================= 5. PENGATURAN & AKSES PERAN ================= */}
-      <div className="space-y-3 pt-1">
-        <h3 className="text-xs font-black text-gray-500 uppercase tracking-wider">
-          Pengaturan & Akses Peran
-        </h3>
-
-        <div className="bg-white rounded-[28px] border border-gray-200 shadow-sm divide-y divide-gray-100 overflow-hidden text-xs">
-          {/* Dual Role Switcher Button */}
-          <button
-            type="button"
-            onClick={handleSwitchToPetani}
-            className="w-full p-4 flex items-center justify-between hover:bg-emerald-50/50 text-left cursor-pointer transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Sprout className="w-4 h-4 text-[#0F4C25]" />
-              <span className="font-black text-[#1A1C19]">Daftar / Masuk Sebagai Petani</span>
-            </div>
-            <span className="text-[10px] font-black bg-emerald-100 text-[#0F4C25] px-2.5 py-1 rounded-full border border-emerald-200">
-              Switch Role
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowPaymentModal(true)}
-            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <CreditCard className="w-4 h-4 text-[#0F4C25]" />
-              <span className="font-extrabold text-[#1A1C19]">Kelola Rekening Bank & E-Wallet</span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => showSnackbar("Unduh Rekap Laporan Pembelian Pasokan (PDF/Excel) diproses...", "info")}
-            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Download className="w-4 h-4 text-[#0F4C25]" />
-              <span className="font-extrabold text-[#1A1C19]">Unduh Laporan Pembelian (PDF)</span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => showSnackbar("Menghubungi Pusat Bantuan AI Panentra 24/7...", "info")}
-            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <HelpCircle className="w-4 h-4 text-[#0F4C25]" />
-              <span className="font-extrabold text-[#1A1C19]">Pusat Bantuan & Support AI 24/7</span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-          </button>
-        </div>
-
-        {/* ================= 6. LOGOUT ================= */}
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full h-12 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-black rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer shadow-2xs text-xs"
-          >
-            <LogOut className="w-4 h-4 text-red-600" />
-            <span>Keluar Akun Pemasok (Logout)</span>
-          </button>
-        </div>
+      {/* ================= LOGOUT ================= */}
+      <div className="pt-2">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full h-12 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-black rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer shadow-2xs text-xs"
+        >
+          <LogOut className="w-4 h-4 text-red-600" />
+          <span>Keluar Akun Pemasok (Logout)</span>
+        </button>
       </div>
 
       {/* ================= MODAL KELOLA REKENING BANK & METODE PEMBAYARAN ================= */}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Menu,
   Bell,
@@ -265,6 +266,42 @@ export default function DashboardPetani() {
   const [isChatRoomActive, setIsChatRoomActive] = useState(false);
   const [selectedCommodity, setSelectedCommodity] = useState<keyof typeof COMMODITY_PRICE_DATA>("Cabai Rawit");
   const [selectedDate, setSelectedDate] = useState<number>(3);
+
+  // URL-driven navigation so refresh keeps the page and browser back returns to the previous menu
+  const router = useRouter();
+  const syncSkipRef = React.useRef(true);
+  const VALID_VIEWS = ["dashboard", "rekomendasi", "jual", "kontrak"];
+  const VALID_TABS = ["beranda", "kalender", "jual", "pesanan", "chat", "akun"];
+
+  const applyUrlState = React.useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("view");
+    const t = params.get("tab");
+    if (v && VALID_VIEWS.includes(v)) setViewMode(v as typeof viewMode);
+    if (t && VALID_TABS.includes(t)) setActiveTab(t as typeof activeTab);
+  }, []);
+
+  useEffect(() => {
+    applyUrlState();
+  }, [applyUrlState]);
+
+  useEffect(() => {
+    window.addEventListener("popstate", applyUrlState);
+    return () => window.removeEventListener("popstate", applyUrlState);
+  }, [applyUrlState]);
+
+  useEffect(() => {
+    if (syncSkipRef.current) {
+      syncSkipRef.current = false;
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const same =
+      params.get("view") === viewMode && params.get("tab") === activeTab;
+    if (!same) {
+      router.push(`/dashboard?view=${viewMode}&tab=${activeTab}`, { scroll: false });
+    }
+  }, [viewMode, activeTab, router]);
 
   // Workflow Modal Control States
   const [showExpenseModal, setShowExpenseModal] = useState(false);

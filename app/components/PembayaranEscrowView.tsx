@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   ChevronLeft,
@@ -20,7 +20,7 @@ import {
 import { HarvestListing } from "./MarketplacePemasokView";
 import Snackbar, { useSnackbar } from "./Snackbar";
 import { getCommodityImage } from "./commodityImage";
-import { createSupplierOrder, payOrder, getAuthUser } from "@/lib/api";
+import { createSupplierOrder, payOrder, getAuthUser, getSupplierOrders, SupplierOrderItem } from "@/lib/api";
 
 const DEFAULT_DELIVERY_ADDRESS = "Jl. Raya Lembang No. 142, Bandung Barat";
 
@@ -72,13 +72,37 @@ export default function PembayaranEscrowView({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPaidEscrow, setIsPaidEscrow] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paidListingIds, setPaidListingIds] = useState<Set<string>>(new Set());
   const { snackbar, dismissSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    let cancelled = false;
+    getSupplierOrders()
+      .then((res) => {
+        if (cancelled) return;
+        const ids = new Set<string>();
+        (res?.data || []).forEach((o: SupplierOrderItem) => {
+          if (o.listing_id != null) ids.add(String(o.listing_id));
+        });
+        setPaidListingIds(ids);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const isAlreadyPaid = paidListingIds.has(String(currentListing.id));
 
   const deliveryAddress =
     (getAuthUser()?.address as string) || DEFAULT_DELIVERY_ADDRESS;
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isAlreadyPaid) {
+      setPaymentError("Pesanan untuk hasil panen ini sudah dibayar sebelumnya.");
+      return;
+    }
     setIsProcessing(true);
     setPaymentError(null);
 
@@ -199,7 +223,23 @@ export default function PembayaranEscrowView({
         </div>
       </div>
 
-      {!isPaidEscrow ? (
+      {isAlreadyPaid && !isPaidEscrow ? (
+        <div className="bg-white rounded-[28px] p-5 border border-gray-200 shadow-sm space-y-4 text-xs">
+          <p className="font-black text-[#0F4C25] text-sm">
+            Pesanan ini sudah dibayar sebelumnya.
+          </p>
+          <p className="text-gray-600 font-medium leading-relaxed">
+            Anda sudah memiliki pesanan {currentListing.commodity} dari {currentListing.farmerName}. Pantau status pengiriman di menu <strong className="text-[#0F4C25]">Pesanan &amp; Pengantaran</strong> atau <strong className="text-[#0F4C25]">Riwayat Pembelian</strong>.
+          </p>
+          <button
+            type="button"
+            onClick={onPaymentSuccess}
+            className="w-full h-12 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all text-xs cursor-pointer active:scale-95"
+          >
+            Lihat Riwayat Pesanan
+          </button>
+        </div>
+      ) : !isPaidEscrow ? (
         <form onSubmit={handlePay} className="space-y-4">
           {/* Delivery Method Selection */}
           <div className="bg-white rounded-[24px] p-4 border border-gray-200 shadow-sm space-y-2.5">

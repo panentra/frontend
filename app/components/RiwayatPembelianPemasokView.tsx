@@ -72,6 +72,28 @@ function toPurchaseItem(o: SupplierOrderItem): PurchaseHistoryItem {
   };
 }
 
+const REVIEWED_KEY = "panentra_reviewed";
+
+function readReviewed(): Record<string, { rating: number; review: string }> {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(REVIEWED_KEY) || "{}") as Record<string, { rating: number; review: string }>;
+  } catch {
+    return {};
+  }
+}
+
+function withReviewedState(list: PurchaseHistoryItem[]): PurchaseHistoryItem[] {
+  const reviewed = readReviewed();
+  return list.map((item) => {
+    const rec = reviewed[String(item.orderId)];
+    if (rec) {
+      return { ...item, isReviewed: true, userRating: rec.rating, userReview: rec.review };
+    }
+    return item;
+  });
+}
+
 interface RiwayatPembelianPemasokViewProps {
   onBack: () => void;
   onBuyAgain: (farmerName: string) => void;
@@ -95,7 +117,7 @@ export default function RiwayatPembelianPemasokView({
     setError(null);
     getSupplierOrders()
       .then((res) => {
-        setPurchases((res?.data || []).map(toPurchaseItem));
+        setPurchases(withReviewedState((res?.data || []).map(toPurchaseItem)));
       })
       .catch((err: Error) => {
         setError(err.message);
@@ -109,7 +131,7 @@ export default function RiwayatPembelianPemasokView({
     getSupplierOrders()
       .then((res) => {
         if (cancelled) return;
-        setPurchases((res?.data || []).map(toPurchaseItem));
+        setPurchases(withReviewedState((res?.data || []).map(toPurchaseItem)));
       })
       .catch((err: Error) => {
         if (cancelled) return;
@@ -176,6 +198,14 @@ export default function RiwayatPembelianPemasokView({
             : item
         )
       );
+      if (selectedForReview.orderId != null) {
+        const stored = readReviewed();
+        stored[String(selectedForReview.orderId)] = {
+          rating: ratingStars,
+          review: reviewComment || "Kualitas pasokan sangat baik!",
+        };
+        localStorage.setItem(REVIEWED_KEY, JSON.stringify(stored));
+      }
 
       showSnackbar(`Terima kasih! Rating ⭐ ${ratingStars} dan ulasan berhasil ditambahkan untuk ${selectedForReview.farmerName}. Reputasi petani telah diperbarui.`, "success");
     } catch (err) {
