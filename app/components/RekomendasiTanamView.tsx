@@ -275,7 +275,7 @@ export default function RekomendasiTanamView({
         <div className="grid grid-cols-3 gap-2 text-xs">
           <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-2xs space-y-1 text-center flex flex-col justify-center items-center min-h-[76px]">
             <span className="text-[10px] font-bold text-gray-500 block">Lokasi Lahan</span>
-            <span className="text-xs font-black text-[#1A1C19]">{farmerLocationName} ({farmerLandDetail})</span>
+            <span className="text-xs font-black text-[#1A1C19]">{farmerLocationName}</span>
           </div>
 
           <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-2xs space-y-1 text-center flex flex-col justify-center items-center min-h-[76px]">
@@ -382,7 +382,7 @@ export default function RekomendasiTanamView({
                 <span className="font-black text-[#0F4C25] flex items-center gap-1 text-[11px]">
                   Analisis AI Panentra:
                 </span>
-                <p>{crop.reason.replaceAll("Lembang", farmerLocationName)}</p>
+                <p>{crop.reason.replaceAll(" (1.200 mdpl)", "").replaceAll("Lembang", farmerLocationName)}</p>
               </div>
 
               {/* Key Metrics Grid */}
