@@ -1091,28 +1091,37 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
         </div>
 
         <div className="space-y-2">
-          {expenses.slice(0, 2).map((exp) => (
-            <div
-              key={exp.id}
-              className="p-3 bg-white rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between text-xs"
-            >
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5">
-                  <h4 className="font-black text-[#1A1C19]">{exp.title}</h4>
-                </div>
-                <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
-                  <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] rounded-md font-extrabold border border-emerald-100">
-                    {exp.category}
-                  </span>
-                  <span>{exp.date}</span>
-                </div>
-              </div>
-
-              <span className="font-black text-red-600 text-xs">
-                - {exp.amount}
-              </span>
+          {expenses.length === 0 ? (
+            <div className="p-4 bg-white rounded-2xl border border-gray-200 text-center space-y-1">
+              <p className="text-xs font-bold text-gray-700">Belum Ada Catatan Biaya Produksi (HPP)</p>
+              <p className="text-[11px] text-gray-500 font-medium">
+                Tekan tombol <span className="font-extrabold text-[#0F4C25]">+ Catat Biaya</span> di atas untuk mendaftarkan pengeluaran bibit, pupuk, atau upah kerja.
+              </p>
             </div>
-          ))}
+          ) : (
+            expenses.slice(0, 2).map((exp) => (
+              <div
+                key={exp.id}
+                className="p-3 bg-white rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between text-xs"
+              >
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="font-black text-[#1A1C19]">{exp.title}</h4>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+                    <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] rounded-md font-extrabold border border-emerald-100">
+                      {exp.category}
+                    </span>
+                    <span>{exp.date}</span>
+                  </div>
+                </div>
+
+                <span className="font-black text-red-600 text-xs">
+                  - {exp.amount}
+                </span>
+              </div>
+            ))
+          )}
         </div>
 
         <button
