@@ -698,13 +698,18 @@ export async function startNegotiation(payload: StartNegotiationPayload): Promis
   });
 }
 
-export async function respondFarmerNegotiation(payload: {
-  order_id: number | string;
-  action: "accept" | "counter" | "reject";
+export interface RespondNegotiationPayload {
+  action: "approve" | "reject" | "counter";
   counter_price?: number;
+  counter_qty?: number;
   message?: string;
-}): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>("/api/farmer/negotiations/respond", {
+}
+
+export async function respondFarmerNegotiation(
+  id: number | string,
+  payload: RespondNegotiationPayload
+): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>(`/api/farmer/negotiations/${id}/respond`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -808,6 +813,7 @@ export interface ApiChatListItem {
   last_message_time: string;
   offer_price?: number | null;
   offer_qty?: number | null;
+  negotiation_id?: number | null;
   unread_count?: number;
   order_id?: number | null;
   listing_id?: number | null;
@@ -821,6 +827,7 @@ export interface ApiChatMessageItem {
   text: string;
   offer_price?: number | null;
   offer_qty?: number | null;
+  negotiation_id?: number | null;
   created_at: string;
   read_at?: string | null;
 }

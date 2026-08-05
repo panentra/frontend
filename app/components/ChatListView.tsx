@@ -28,13 +28,15 @@ import {
 import Button from "./Button";
 import Avatar from "./Avatar";
 
-import { getChats, getChatMessages, sendChatMessage, getAuthUser, ApiChatListItem, ApiChatMessageItem } from "@/lib/api";
+import { getChats, getChatMessages, sendChatMessage, respondFarmerNegotiation, getListingDetail, getAuthUser, ApiChatListItem, ApiChatMessageItem, FarmerListingItem } from "@/lib/api";
 
 type OfferStatus = "pending" | "accepted" | "countered";
 
 export interface ChatConversation {
   numericChatId?: number;
   id: string;
+  listingId?: number;
+  negotiationId?: number;
   customer: string;
   customerType: string;
   item: string;
@@ -74,6 +76,18 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
   const [counterChatId, setCounterChatId] = useState<number | null>(null);
   const [counterPrice, setCounterPrice] = useState("30000");
   const [counterQty, setCounterQty] = useState("150");
+  const [listingDetail, setListingDetail] = useState<FarmerListingItem | null>(null);
+
+  // Persist accepted offers so they survive refresh (chat API has no offer-status field)
+  const ACCEPTED_KEY = "panentra_offer_accepted";
+  const readAccepted = (): Record<string, true> => {
+    if (typeof window === "undefined") return {};
+    try {
+      return JSON.parse(localStorage.getItem(ACCEPTED_KEY) || "{}") as Record<string, true>;
+    } catch {
+      return {};
+    }
+  };
   const [snackbar, setSnackbar] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
     show: false,
     message: "",
@@ -95,10 +109,16 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
     showSnackbar("Penawaran harga disetujui. Menunggu pembayaran escrow dari mitra.");
 
     try {
+      if (msg.negotiation_id != null) {
+        await respondFarmerNegotiation(msg.negotiation_id, { action: "approve" });
+      }
       if (chatId) {
         await sendChatMessage(chatId, {
           text: `Saya setuju dengan penawaran Rp ${msg.offer_price.toLocaleString("id-ID")}/kg untuk ${msg.offer_qty} kg. Mohon segera selesaikan pembayaran escrow.`,
         });
+        const stored = readAccepted();
+        stored[`${chatId}:${msg.id}`] = true;
+        localStorage.setItem(ACCEPTED_KEY, JSON.stringify(stored));
       }
     } catch {
       // Optimistic acceptance; konfirmasi tetap tampil walau API gagal
@@ -125,6 +145,14 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
     showSnackbar("Tawaran balik terkirim. Menunggu respon mitra.");
 
     try {
+      const offerMsg = messages.find((m) => m.id === counterChatId);
+      if (offerMsg?.negotiation_id != null) {
+        await respondFarmerNegotiation(offerMsg.negotiation_id, {
+          action: "counter",
+          counter_price: priceNum,
+          counter_qty: qtyNum,
+        });
+      }
       if (chatId) {
         const res = await sendChatMessage(chatId, {
           text: `Tawaran balik saya: Rp ${priceNum.toLocaleString("id-ID")}/kg untuk ${qtyNum} kg. Apakah bisa?`,
@@ -148,6 +176,8 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
           const mapped: ChatConversation[] = res.data.map((c) => ({
             id: `ORD-${c.order_id || c.id}`,
             numericChatId: c.id,
+            listingId: c.listing_id ?? undefined,
+            negotiationId: c.negotiation_id ?? undefined,
             customer: c.counterpart?.name || "Mitra Pembeli",
             customerType: c.counterpart?.location || "Pembeli (Terverifikasi)",
             item: `${c.item || "Komoditas"} ${c.grade ? `(${c.grade})` : ""}`,
@@ -185,7 +215,14 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
       getChatMessages(targetChatId)
         .then((res) => {
           if (cancelled) return;
-          setMessages(res && res.data && Array.isArray(res.data) ? res.data : []);
+          const list = res && res.data && Array.isArray(res.data) ? res.data : [];
+          setMessages(list);
+          const stored = readAccepted();
+          const restored: Record<number, OfferStatus> = {};
+          list.forEach((m) => {
+            if (stored[`${targetChatId}:${m.id}`]) restored[m.id] = "accepted";
+          });
+          if (Object.keys(restored).length) setOfferStatus((prev) => ({ ...prev, ...restored }));
         })
         .catch(() => {
           if (!cancelled) setMessages([]);
@@ -199,6 +236,22 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
       clearInterval(interval);
     };
   }, [selectedChat]);
+
+  React.useEffect(() => {
+    const lid = selectedChat?.listingId;
+    if (lid == null) return;
+    let cancelled = false;
+    getListingDetail(lid)
+      .then((res) => {
+        if (!cancelled) setListingDetail(res?.data || null);
+      })
+      .catch(() => {
+        if (!cancelled) setListingDetail(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedChat?.id]);
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ block: "end" });
@@ -333,7 +386,18 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
                   {selectedChat.item} ({selectedChat.qty})
                 </h4>
                 <p className="text-[10px] text-gray-500 font-semibold">
-                  Penawaran: <span className="text-[#0F4C25] font-bold">{selectedChat.unitPrice}</span>
+                  {selectedChat.rawOfferPrice ? (
+                    <>
+                      Penawaran: <span className="text-[#0F4C25] font-bold">{selectedChat.unitPrice}</span>
+                    </>
+                  ) : (
+                    <>
+                      Harga Listing:{" "}
+                      <span className="text-[#0F4C25] font-bold">
+                        Rp {(listingDetail?.sellingPrice || 0).toLocaleString("id-ID")} / kg
+                      </span>
+                    </>
+                  )}
                 </p>
               </div>
             </div>

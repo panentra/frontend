@@ -26,10 +26,12 @@ import {
   sendChatMessage,
   startNegotiation,
   getSupplierOrders,
+  getListingDetail,
   getAuthUser,
   ApiChatListItem,
   ApiChatMessageItem,
   SupplierOrderItem,
+  FarmerListingItem,
 } from "@/lib/api";
 
 function formatChatTime(iso?: string | null): string {
@@ -190,9 +192,13 @@ export default function RuangNegoPemasokView({
     }
 
     autoStartedRef.current = true;
+    const offerPriceNum = Math.max(1, (listing.sellingPrice || 0) - 3500);
+    const offerQtyNum = Math.min(100, listing.availableKg || 100);
     startNegotiation({
       listing_id: listing.id,
-      message: `Halo ${listing.farmerName}, saya tertarik mengajukan penawaran pasokan ${listing.commodity}.`,
+      offer_price: offerPriceNum,
+      offer_qty: offerQtyNum,
+      message: `Halo ${listing.farmerName}, saya tertarik mengajukan penawaran pasokan ${listing.commodity} sebesar ${offerQtyNum} kg di harga Rp ${offerPriceNum.toLocaleString("id-ID")}/kg.`,
     })
       .then((res) => {
         const data = res as { data?: { id?: number; conversation_id?: number; chat_id?: number } };
@@ -278,19 +284,68 @@ export default function RuangNegoPemasokView({
   const [chatRoomMessages, setChatRoomMessages] = useState<ChatRoomMessage[]>([]);
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
+  // Real listing detail (chat payload only carries the offer, not the listing price)
+  const [listingDetail, setListingDetail] = useState<FarmerListingItem | null>(null);
+
+  useEffect(() => {
+    const lid = selectedChat?.listingId;
+    if (lid == null) return;
+    let cancelled = false;
+    getListingDetail(lid)
+      .then((res) => {
+        if (!cancelled) setListingDetail(res?.data || null);
+      })
+      .catch(() => {
+        if (!cancelled) setListingDetail(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedChat?.id]);
+
+  const safeListingDetail =
+    listingDetail && selectedChat && String(listingDetail.id) === String(selectedChat.listingId)
+      ? listingDetail
+      : null;
+
+  // Persist approved negotiation so it survives refresh (chat API has no offer-status field)
+  const APPROVED_KEY = "panentra_nego_approved";
+  const readApproved = (): Record<string, boolean> => {
+    if (typeof window === "undefined") return {};
+    try {
+      return JSON.parse(localStorage.getItem(APPROVED_KEY) || "{}") as Record<string, boolean>;
+    } catch {
+      return {};
+    }
+  };
+  const persistApproved = (key: string | number) => {
+    const k = String(key);
+    const stored = readApproved();
+    if (!stored[k]) {
+      stored[k] = true;
+      localStorage.setItem(APPROVED_KEY, JSON.stringify(stored));
+    }
+  };
+
   // Derive negotiation status from the actual message stream (farmer's reply decides)
   const negoStatus = React.useMemo<"draft" | "pending" | "approved" | "counter">(() => {
-    if (chatRoomMessages.length === 0) return "pending";
-    const lastMsg = chatRoomMessages[chatRoomMessages.length - 1];
-    if (lastMsg.sender === "petani") {
-      const t = lastMsg.text.toLowerCase();
-      if (t.includes("setuju") || t.includes("disetujui") || t.includes("selesaikan pembayaran") || t.includes("segera selesaikan")) {
-        return "approved";
-      }
-      if (lastMsg.offerData) return "counter";
-    }
+    const key = selectedChat ? String(selectedChat.apiChatId ?? selectedChat.id) : "";
+    if (key && readApproved()[key]) return "approved";
+    const farmerMsgs = chatRoomMessages.filter((m) => m.sender === "petani");
+    const approvedInChat = farmerMsgs.some((m) => {
+      const t = m.text.toLowerCase();
+      return (
+        t.includes("setuju") ||
+        t.includes("disetujui") ||
+        t.includes("selesaikan pembayaran") ||
+        t.includes("segera selesaikan")
+      );
+    });
+    if (approvedInChat) return "approved";
+    const lastFarmer = farmerMsgs[farmerMsgs.length - 1];
+    if (lastFarmer?.offerData) return "counter";
     return "pending";
-  }, [chatRoomMessages]);
+  }, [chatRoomMessages, selectedChat]);
 
   // Load messages when a real chat is selected (with live polling)
   useEffect(() => {
@@ -314,6 +369,16 @@ export default function RuangNegoPemasokView({
                 : undefined,
           }));
           setChatRoomMessages(msgs);
+          const approvedInChat = msgs.some((m) => {
+            const t = m.text.toLowerCase();
+            return (
+              t.includes("setuju") ||
+              t.includes("disetujui") ||
+              t.includes("selesaikan pembayaran") ||
+              t.includes("segera selesaikan")
+            );
+          });
+          if (approvedInChat) persistApproved(cid);
         })
         .catch(() => {
           if (!cancelled) setChatRoomMessages([]);
@@ -419,6 +484,8 @@ export default function RuangNegoPemasokView({
 
   const handleAcceptCounter = () => {
     if (!selectedChat) return;
+    const cid = selectedChat.apiChatId ?? selectedChat.id;
+    if (cid != null) persistApproved(cid);
     const lastCounter = chatRoomMessages.find((m) => m.sender === "petani" && m.offerData);
     const agreedP = lastCounter?.offerData?.price || parseInt(offerPrice);
     const agreedQ = lastCounter?.offerData?.qty || parseInt(offerQty);
@@ -505,7 +572,7 @@ export default function RuangNegoPemasokView({
                   {selectedChat.item} ({selectedChat.qty})
                 </h4>
                 <p className="text-[10px] text-gray-500 font-semibold">
-                  Listing: <span className="text-[#0F4C25] font-bold">Rp {selectedChat.listingPrice.toLocaleString("id-ID")}/kg</span> • {selectedChat.grade}
+                  Listing: <span className="text-[#0F4C25] font-bold">Rp {(safeListingDetail?.sellingPrice || selectedChat.listingRef?.sellingPrice || selectedChat.listingPrice || 0).toLocaleString("id-ID")}/kg</span> • {safeListingDetail?.grade || selectedChat.grade}
                 </p>
               </div>
             </div>

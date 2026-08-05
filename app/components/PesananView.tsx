@@ -157,14 +157,13 @@ export default function PesananView({
   const handleAcceptNegotiation = async () => {
     if (!selectedChatOrder) return;
     try {
-      await respondFarmerNegotiation({
-        order_id: selectedChatOrder.numericId || selectedChatOrder.id,
-        action: "accept",
+      await respondFarmerNegotiation(selectedChatOrder.numericId || selectedChatOrder.id, {
+        action: "approve",
         message: "Penawaran nego disetujui",
       });
       showToast(`Penawaran nego disetujui! Transaksi ${selectedChatOrder.id} diperbarui.`);
       setSelectedChatOrder(null);
-    } catch (err: any) {
+    } catch {
       showToast(`Penawaran nego disetujui! Transaksi ${selectedChatOrder.id} diperbarui.`);
       setSelectedChatOrder(null);
     }
@@ -173,14 +172,13 @@ export default function PesananView({
   const handleCounterNegotiation = async () => {
     if (!selectedChatOrder) return;
     try {
-      await respondFarmerNegotiation({
-        order_id: selectedChatOrder.numericId || selectedChatOrder.id,
+      await respondFarmerNegotiation(selectedChatOrder.numericId || selectedChatOrder.id, {
         action: "counter",
         counter_price: 34500,
         message: "Tawar balik Rp 34.500/kg",
       });
       showToast("Harga tawar balik Rp 34.500/kg berhasil dikirim ke pembeli.");
-    } catch (err: any) {
+    } catch {
       showToast("Harga tawar balik Rp 34.500/kg berhasil dikirim ke pembeli.");
     }
   };
