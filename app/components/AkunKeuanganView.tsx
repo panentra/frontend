@@ -50,6 +50,8 @@ import {
   ShoppingBag,
   Check,
   Trash2,
+  AlertCircle,
+  Info,
   Building2,
   ExternalLink,
   Search,
@@ -267,6 +269,21 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
   const [expenses, setExpenses] = useState<any[]>([]);
   const [salesHistory, setSalesHistory] = useState<any[]>([]);
 
+  // Custom Toast Notification & Delete Confirmation Modal State
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "error" | "info" }>({
+    show: false,
+    message: "",
+    type: "success",
+  });
+  const [deleteBankId, setDeleteBankId] = useState<number | null>(null);
+
+  const showToast = React.useCallback((message: string, type: "success" | "error" | "info" = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast((prev) => ({ ...prev, show: false }));
+    }, 4000);
+  }, []);
+
   // Bank Accounts State & Actions
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [isLoadingBanks, setIsLoadingBanks] = useState(false);
@@ -297,7 +314,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
   const handleAddBankAccountSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAccountNumber || !newAccountHolder) {
-      alert("Harap isi nomor rekening dan nama pemilik rekening.");
+      showToast("Harap isi nomor rekening dan nama pemilik rekening.", "error");
       return;
     }
     try {
@@ -310,9 +327,9 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
       setNewAccountNumber("");
       setNewAccountHolder("");
       await refreshBankAccounts();
-      alert("Rekening bank berhasil ditambahkan!");
+      showToast("Rekening bank berhasil ditambahkan!");
     } catch (err: any) {
-      alert(err.message || "Gagal menambahkan rekening bank.");
+      showToast(err.message || "Gagal menambahkan rekening bank.", "error");
     }
   };
 
@@ -320,19 +337,26 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
     try {
       await setPrimaryBankAccount(id);
       await refreshBankAccounts();
+      showToast("Rekening utama berhasil diperbarui!");
     } catch (err: any) {
-      alert(err.message || "Gagal mengubah rekening utama.");
+      showToast(err.message || "Gagal mengubah rekening utama.", "error");
     }
   };
 
-  const handleDeleteBankAction = async (id: number) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus rekening bank ini?")) return;
+  const handleDeleteBankAction = (id: number) => {
+    setDeleteBankId(id);
+  };
+
+  const confirmDeleteBank = async () => {
+    if (deleteBankId === null) return;
+    const id = deleteBankId;
+    setDeleteBankId(null);
     try {
       await deleteBankAccount(id);
       await refreshBankAccounts();
-      alert("Rekening bank berhasil dihapus.");
+      showToast("Rekening bank berhasil dihapus.");
     } catch (err: any) {
-      alert(err.message || "Gagal menghapus rekening bank.");
+      showToast(err.message || "Gagal menghapus rekening bank.", "error");
     }
   };
 
@@ -1120,7 +1144,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
           </h2>
           <button
             type="button"
-            onClick={() => alert("Tambah Lahan Tanam Baru")}
+            onClick={() => showToast("Fitur Tambah Lahan Tanam Baru", "info")}
             className="text-xs font-black text-[#0F4C25] hover:underline flex items-center gap-1 cursor-pointer bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -1346,7 +1370,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
         {/* Reset / Adjust Goals Card */}
         <button
           type="button"
-          onClick={() => alert("Atur Ulang Target & Musim Tanam Baru")}
+          onClick={() => showToast("Fitur Atur Ulang Target & Musim Tanam Baru", "info")}
           className="w-full bg-[#EBF7EE] border border-emerald-200/80 hover:border-emerald-400 rounded-[28px] p-4 flex items-center justify-between text-left cursor-pointer group relative overflow-hidden transition-all shadow-sm"
         >
           <div className="space-y-0.5 max-w-[68%] z-10">
@@ -1410,7 +1434,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
           {/* Unduh Laporan PDF */}
           <button
             type="button"
-            onClick={() => alert("Unduh Rekap Laporan Keuangan HPP (PDF/Excel)")}
+            onClick={() => showToast("Unduh Rekap Laporan Keuangan HPP (PDF/Excel) diproses...", "info")}
             className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -1451,7 +1475,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
           {/* Pusat Bantuan AI */}
           <button
             type="button"
-            onClick={() => alert("Menghubungi Pusat Bantuan Panentra AI 24/7")}
+            onClick={() => showToast("Menghubungi Pusat Bantuan Panentra AI 24/7...", "info")}
             className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -1546,7 +1570,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
               onSubmit={(e) => {
                 e.preventDefault();
                 setShowEditProfileModal(false);
-                alert("Profil berhasil diperbarui!");
+                showToast("Profil berhasil diperbarui!");
               }}
               className="space-y-3 text-xs"
             >
@@ -1631,7 +1655,8 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
             ) : (
               <div className="space-y-2 text-xs">
                 {bankAccounts.map((account, index) => {
-                  const isPrimary = account.is_default || index === 0;
+                  const hasExplicitDefault = bankAccounts.some((acc) => acc.is_default === true || acc.is_primary === true);
+                  const isPrimary = account.is_default === true || account.is_primary === true || (!hasExplicitDefault && index === 0);
                   const bankBadge = (account.bank_name || "BANK").substring(0, 4).toUpperCase();
                   return (
                     <div
@@ -1994,7 +2019,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
                 size="sm"
                 onClick={() => {
                   setShowWithdrawModal(false);
-                  alert("Permintaan penarikan saldo berhasil diproses ke rekening Bank BCA!");
+                  showToast("Permintaan penarikan saldo berhasil diproses ke rekening Bank BCA!");
                 }}
                 className="flex-1 justify-center py-2.5 font-bold"
               >
@@ -2097,6 +2122,64 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* 9. LIGHTBOX MODAL CONFIRMATION HAPUS REKENING BANK */}
+      {deleteBankId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-[340px] bg-white rounded-[28px] p-5 space-y-4 shadow-2xl border border-gray-100 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto border border-red-100">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-black text-[#1A1C19]">Hapus Rekening Bank?</h4>
+              <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                Apakah Anda yakin ingin menghapus rekening ini dari metode pencairan saldo?
+              </p>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setDeleteBankId(null)}
+                className="flex-1 justify-center"
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => confirmDeleteBank()}
+                className="flex-1 justify-center bg-red-600 hover:bg-red-700 text-white border-red-600"
+              >
+                Ya, Hapus
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 10. SLIDE-IN / TOAST NOTIFICATION POP-UP */}
+      {toast.show && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-[#1A1C19] text-white px-4 py-3 rounded-2xl shadow-2xl border border-gray-800 animate-slide-up max-w-[90vw] sm:max-w-md">
+          {toast.type === "error" ? (
+            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+          ) : toast.type === "info" ? (
+            <Info className="w-5 h-5 text-blue-400 shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          )}
+          <span className="text-xs font-bold leading-tight">{toast.message}</span>
+          <button
+            type="button"
+            onClick={() => setToast({ show: false, message: "", type: "success" })}
+            className="p-1 text-gray-400 hover:text-white rounded-lg ml-auto shrink-0 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
     </div>
