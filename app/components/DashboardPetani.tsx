@@ -319,7 +319,7 @@ export default function DashboardPetani() {
                 />
               )}
               {activeTab === "chat" && <ChatListView onChatRoomStateChange={setIsChatRoomActive} />}
-              {activeTab === "akun" && <AkunKeuanganView onSubViewChange={setIsChatRoomActive} />}
+              {activeTab === "akun" && <AkunKeuanganView onSubViewChange={setIsChatRoomActive} lands={landsData?.data} />}
 
               {activeTab === "beranda" && (
                 <>

@@ -127,6 +127,43 @@ const TYPE_CONFIG = {
 export default function KalenderView({ lands }: KalenderViewProps = {}) {
   const [selectedCrop, setSelectedCrop] = useState("semua");
   const [scheduleList, setScheduleList] = useState<ScheduleItem[]>(INITIAL_SCHEDULE);
+
+  const seasonalCrops = React.useMemo(() => {
+    if (lands && lands.length > 0) {
+      const cropSet = new Set<string>();
+      lands.forEach((l) => {
+        if (l.seasons && l.seasons.length > 0) {
+          l.seasons.forEach((s) => {
+            const name = s.commodity?.name || s.name || l.commodity?.name || l.name;
+            if (name) cropSet.add(name);
+          });
+        } else if (l.commodity?.name) {
+          cropSet.add(l.commodity.name);
+        } else if (l.name) {
+          cropSet.add(l.name);
+        }
+      });
+      const list = Array.from(cropSet).map((c) => ({ id: c, name: c }));
+      return [{ id: "semua", name: "Semua Komoditas" }, ...list];
+    }
+    return SEASONAL_CROPS;
+  }, [lands]);
+
+  const activeLandCrop = React.useMemo(() => {
+    return lands?.[0]?.seasons?.[0]?.commodity?.name || lands?.[0]?.commodity?.name || lands?.[0]?.name || "Tomat";
+  }, [lands]);
+
+  React.useEffect(() => {
+    if (lands && lands.length > 0) {
+      setScheduleList((prev) =>
+        prev.map((item) => ({
+          ...item,
+          crop: activeLandCrop,
+        }))
+      );
+      setNewCrop(activeLandCrop);
+    }
+  }, [lands, activeLandCrop]);
   
   // Selected date on calendar (1-31)
   const [selectedDay, setSelectedDay] = useState<number>(3); // Default today (3 Aug)
@@ -141,7 +178,7 @@ export default function KalenderView({ lands }: KalenderViewProps = {}) {
   
   // New activity form inputs
   const [newTitle, setNewTitle] = useState("");
-  const [newCrop, setNewCrop] = useState("Cabai Rawit Red");
+  const [newCrop, setNewCrop] = useState("Tomat");
   const [newType, setNewType] = useState<ScheduleItem["type"]>("fertilizer");
   const [newTime, setNewTime] = useState("08:00 WIB");
   const [newDesc, setNewDesc] = useState("");
@@ -239,7 +276,7 @@ export default function KalenderView({ lands }: KalenderViewProps = {}) {
         <div className="flex items-center justify-between relative z-10 gap-3">
           <div className="space-y-1.5 max-w-[60%] sm:max-w-[65%]">
             <h2 className="text-base sm:text-lg font-black tracking-tight leading-snug">
-              Cuaca Cerah: Saat Terbaik Pemupukan Cabai!
+              Cuaca Cerah: Saat Terbaik Pemupukan {activeLandCrop}!
             </h2>
             <p className="text-xs text-emerald-100/90 leading-relaxed font-medium">
               Kelembapan udara 68%. Lakukan pemupukan cair sebelum pukul 10.00 WIB untuk penyerapan nutrisi 40% lebih maksimal.
@@ -269,7 +306,7 @@ export default function KalenderView({ lands }: KalenderViewProps = {}) {
           <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-[#F7F9F7] via-[#F7F9F7]/80 to-transparent pointer-events-none z-10" />
 
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar pr-6">
-            {SEASONAL_CROPS.map((crop) => (
+            {seasonalCrops.map((crop) => (
               <button
                 key={crop.id}
                 type="button"

@@ -209,11 +209,14 @@ const FARM_PLOTS = [
   },
 ];
 
+import { Land } from "@/lib/api";
+
 interface AkunKeuanganViewProps {
   onSubViewChange?: (isOpen: boolean) => void;
+  lands?: Land[];
 }
 
-export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewProps) {
+export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanganViewProps) {
   const router = useRouter();
 
   // Navigation Sub-Page View Mode
@@ -254,7 +257,27 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
   const [pushNotify, setPushNotify] = useState(true);
   const [selectedLang, setSelectedLang] = useState("Bahasa Indonesia");
 
-  const currentPlot = FARM_PLOTS.find((p) => p.id === activePlotId) || FARM_PLOTS[0];
+  const plots = React.useMemo(() => {
+    if (lands && lands.length > 0) {
+      return lands.map((l, index) => {
+        const season = l.seasons?.[0];
+        const cropName = season?.commodity?.name || season?.name || l.commodity?.name || "Tomat";
+        const areaStr = `${l.area} ${l.area_unit || "ha"}`;
+        return {
+          id: `plot-${l.id || index + 1}`,
+          name: l.name || `Plot ${index + 1}: Kebun Petani`,
+          area: areaStr,
+          location: l.address || "Pangalengan, Kab. Bandung",
+          crop: cropName,
+          progressDay: 68,
+          totalDays: 90,
+        };
+      });
+    }
+    return FARM_PLOTS;
+  }, [lands]);
+
+  const currentPlot = plots.find((p) => p.id === activePlotId) || plots[0];
 
   const handleOpenSubView = (mode: "sales_history" | "expense_history" | "bank_accounts") => {
     setSubViewMode(mode);
@@ -731,7 +754,7 @@ export default function AkunKeuanganView({ onSubViewChange }: AkunKeuanganViewPr
         {/* Plot Selector Tabs */}
         <div className="relative">
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar pr-6">
-            {FARM_PLOTS.map((plot) => (
+            {plots.map((plot) => (
               <button
                 key={plot.id}
                 type="button"
