@@ -28,7 +28,7 @@ import {
   ArrowUpRight,
   Info,
 } from "lucide-react";
-import { getAuthUser } from "@/lib/api";
+import { getAuthUser, getFarmerDashboard, FarmerDashboardData } from "@/lib/api";
 import BottomNavbar from "./BottomNavbar";
 import Button from "./Button";
 import KalenderView from "./KalenderView";
@@ -159,12 +159,25 @@ const AI_CROP_RECOMMENDATIONS = [
 export default function DashboardPetani() {
   const [userName, setUserName] = useState("Andi");
   const [activeTab, setActiveTab] = useState<"beranda" | "kalender" | "jual" | "pesanan" | "chat" | "akun">("beranda");
+  const [dashboardData, setDashboardData] = useState<FarmerDashboardData | null>(null);
 
   useEffect(() => {
     const user = getAuthUser();
     if (user?.name) {
       setUserName(user.name);
     }
+
+    async function loadDashboard() {
+      try {
+        const data = await getFarmerDashboard();
+        if (data) {
+          setDashboardData(data);
+        }
+      } catch (err) {
+        console.warn("Gagal memuat farmer dashboard API:", err);
+      }
+    }
+    loadDashboard();
   }, []);
   const [viewMode, setViewMode] = useState<"dashboard" | "rekomendasi" | "jual">("dashboard");
   const [isChatRoomActive, setIsChatRoomActive] = useState(false);
@@ -313,6 +326,101 @@ export default function DashboardPetani() {
                   />
                 </button>
               </div>
+
+              {/* ================= API DASHBOARD STATS SUMMARY ================= */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-sm space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                    <Coins className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Total Pendapatan</span>
+                  </div>
+                  <div className="text-sm sm:text-base font-black text-[#0F4C25]">
+                    Rp {(dashboardData?.revenue ?? 2402500).toLocaleString("id-ID")}
+                  </div>
+                </div>
+
+                <div className="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-sm space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Penjualan Selesai</span>
+                  </div>
+                  <div className="text-sm sm:text-base font-black text-gray-900">
+                    {dashboardData?.completed_sales_count ?? 1} Transaksi
+                  </div>
+                </div>
+
+                <div className="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-sm space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                    <Sprout className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Lahan Aktif</span>
+                  </div>
+                  <div className="text-sm sm:text-base font-black text-gray-900">
+                    {dashboardData?.active_lands_count ?? 1} Lahan
+                  </div>
+                </div>
+
+                <div className="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-sm space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                    <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Musim Tanam</span>
+                  </div>
+                  <div className="text-sm font-black text-gray-900 truncate">
+                    {dashboardData?.active_seasons?.[0]?.name || "MT-1: Tomat"}
+                  </div>
+                </div>
+              </div>
+
+              {/* ================= RECENT SALES & ESCROW STATUS (FROM API) ================= */}
+              {dashboardData?.recent_sales && dashboardData.recent_sales.length > 0 && (
+                <section className="bg-white rounded-3xl p-4 sm:p-5 border border-emerald-900/10 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShoppingBag className="w-4 h-4 text-[#0F4C25]" />
+                      <h3 className="text-xs sm:text-sm font-black text-[#1A1C19]">
+                        Penjualan Terbaru & Escrow
+                      </h3>
+                    </div>
+                    <span className="text-[10px] font-extrabold bg-emerald-100 text-[#0F4C25] px-2 py-0.5 rounded-full">
+                      Status: {dashboardData.recent_sales[0].status.toUpperCase()}
+                    </span>
+                  </div>
+
+                  <div className="bg-[#F8FAF9] p-3.5 rounded-2xl border border-gray-100 space-y-2">
+                    <div className="flex justify-between items-start text-xs">
+                      <div>
+                        <div className="font-extrabold text-gray-900">
+                          {dashboardData.recent_sales[0].order_no}
+                        </div>
+                        <div className="text-gray-500 text-[11px]">
+                          {dashboardData.recent_sales[0].qty_kg} kg · Grade {dashboardData.recent_sales[0].grade} @ Rp {dashboardData.recent_sales[0].agreed_price.toLocaleString("id-ID")}/kg
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-black text-[#0F4C25]">
+                          Rp {dashboardData.recent_sales[0].grand_total.toLocaleString("id-ID")}
+                        </div>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                          Escrow {dashboardData.recent_sales[0].escrow_status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {dashboardData.recent_sales[0].delivery_info && (
+                      <div className="pt-2 border-t border-gray-200/80 flex items-center justify-between text-[11px] text-gray-600">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-[#0F4C25] shrink-0" />
+                          <span className="font-medium truncate max-w-[200px]">
+                            {dashboardData.recent_sales[0].delivery_info.driver_name} ({dashboardData.recent_sales[0].delivery_info.vehicle})
+                          </span>
+                        </div>
+                        <span className="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full text-[10px]">
+                          ETA: {dashboardData.recent_sales[0].delivery_info.eta}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
 
               {/* ================= 2. HERO CARD (STREAK / TANAMAN AKTIF PROGRESS) ================= */}
               <section className="rounded-[32px] overflow-hidden shadow-xl border border-emerald-900/10 bg-white">
