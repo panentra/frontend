@@ -674,22 +674,6 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
                         {sale.escrow}
                       </span>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          await downloadSalesInvoice(sale.numericId);
-                        } catch (err) {
-                          console.warn("Gagal unduh invoice sales order API:", err);
-                          alert(`Mengunduh dokumen Invoice Penjualan ${sale.id}...`);
-                        }
-                      }}
-                      className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-[11px] rounded-xl border border-gray-200 flex items-center gap-1 cursor-pointer transition-colors shrink-0 active:scale-95 ml-auto"
-                    >
-                      <Download className="w-3 h-3 text-gray-600" />
-                      <span>Cetak Invoice</span>
-                    </button>
                   </div>
                 </div>
               ))
