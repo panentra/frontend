@@ -313,15 +313,12 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
       try {
         const res = await getFarmerOrders();
         if (res && res.data && Array.isArray(res.data)) {
-          const mapped = res.data.map((order) => {
-            const rawStatus = (order.status || "incoming").toLowerCase();
-            let statusLabel = "Dalam Proses";
-            if (rawStatus === "completed" || rawStatus === "delivered" || rawStatus === "selesai") {
-              statusLabel = "Selesai";
-            } else if (rawStatus === "shipping" || rawStatus === "dikirim") {
-              statusLabel = "Dikirim";
-            }
+          const completedOrders = res.data.filter((order) => {
+            const rawStatus = (order.status || "").toLowerCase();
+            return rawStatus === "completed" || rawStatus === "selesai";
+          });
 
+          const mapped = completedOrders.map((order) => {
             const totalVal = order.grandTotal || order.subtotal || (order.qtyKg && order.pricePerKg ? order.qtyKg * order.pricePerKg : 0);
             const qtyVal = order.qtyKg || 0;
             const priceVal = order.pricePerKg || 0;
@@ -338,7 +335,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
               total: `Rp ${totalVal.toLocaleString("id-ID")}`,
               rawTotal: totalVal,
               date: order.createdAt ? new Date(order.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "5 Agustus 2026",
-              status: statusLabel,
+              status: "Selesai",
               escrow: order.paymentStatus || "Panentra Secure Escrow",
               location: typeof order.deliveryAddress === "string" ? order.deliveryAddress : (typeof order.listingLocation === "string" ? order.listingLocation : "Lembang, Bandung Barat"),
             };
