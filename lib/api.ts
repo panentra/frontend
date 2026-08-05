@@ -518,19 +518,48 @@ export async function updateOrderStatus(id: number | string, status: string): Pr
   });
 }
 
-export async function getFarmerTasks(): Promise<FarmerTask[]> {
-  return fetchWithAuth<FarmerTask[]>("/api/farmer/tasks");
+export interface FarmerTaskItem {
+  id: number;
+  day: number;
+  month_year: string;
+  title: string;
+  crop?: string;
+  time?: string;
+  status: "pending" | "completed" | string;
+  type: "fertilizer" | "water" | "harvest" | "pest" | "care" | string;
+  desc?: string;
 }
 
-export async function createTask(payload: Record<string, unknown>): Promise<FarmerTask> {
-  return fetchWithAuth<FarmerTask>("/api/farmer/tasks", {
+export interface FarmerTasksResponse {
+  data: FarmerTaskItem[];
+}
+
+export async function getFarmerTasks(): Promise<FarmerTasksResponse> {
+  return fetchWithAuth<FarmerTasksResponse>("/api/farmer/tasks");
+}
+
+export async function createTask(payload: {
+  day: number;
+  month_year: string;
+  title: string;
+  type: string;
+  crop?: string;
+  time?: string;
+  desc?: string;
+  land_id?: number;
+  status?: string;
+}): Promise<{ data: FarmerTaskItem }> {
+  return fetchWithAuth<{ data: FarmerTaskItem }>("/api/farmer/tasks", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function updateTask(id: number | string, payload: Record<string, unknown>): Promise<FarmerTask> {
-  return fetchWithAuth<FarmerTask>(`/api/farmer/tasks/${id}`, {
+export async function updateTask(
+  id: number | string,
+  payload: { status?: string; title?: string; time?: string; desc?: string }
+): Promise<{ data: FarmerTaskItem }> {
+  return fetchWithAuth<{ data: FarmerTaskItem }>(`/api/farmer/tasks/${id}`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });

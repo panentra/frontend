@@ -15,7 +15,7 @@ import {
   Check,
 } from "lucide-react";
 import Button from "./Button";
-import { Land } from "@/lib/api";
+import { Land, getFarmerTasks, createTask, updateTask } from "@/lib/api";
 
 interface KalenderViewProps {
   lands?: Land[];
@@ -32,75 +32,6 @@ export interface ScheduleItem {
   type: "fertilizer" | "water" | "harvest" | "pest" | "care";
   desc: string;
 }
-
-const INITIAL_SCHEDULE: ScheduleItem[] = [
-  {
-    id: 1,
-    day: 3,
-    monthYear: "Agustus 2026",
-    title: "Pemupukan Susulan NPK Presisi",
-    crop: "Cabai Rawit Red",
-    time: "08:00 WIB",
-    status: "completed",
-    type: "fertilizer",
-    desc: "Gunakan 15kg NPK 16-16-16 + 2kg Kalsium Nitrate disiram ke perakaran.",
-  },
-  {
-    id: 2,
-    day: 4,
-    monthYear: "Agustus 2026",
-    title: "Pengecekan Kelembapan & PH Tanah",
-    crop: "Pakcoy Hydro",
-    time: "07:00 WIB",
-    status: "pending",
-    type: "water",
-    desc: "Target PH 6.0 - 6.5, atur debit air nutrisi AB Mix 1.200 PPM.",
-  },
-  {
-    id: 3,
-    day: 6,
-    monthYear: "Agustus 2026",
-    title: "Estimasi Panen Raya Tahap 1",
-    crop: "Cabai Rawit Red",
-    time: "06:30 WIB",
-    status: "pending",
-    type: "harvest",
-    desc: "Estimasi 450 kg siap petik grade A. Hubungi mitra pembeli H-1 panen.",
-  },
-  {
-    id: 4,
-    day: 8,
-    monthYear: "Agustus 2026",
-    title: "Penyemprotan Pestisida Organik Neem",
-    crop: "Tomat Super",
-    time: "16:00 WIB",
-    status: "pending",
-    type: "pest",
-    desc: "Pencegahan ulat buah dan kutu kebul secara alami saat sore hari.",
-  },
-  {
-    id: 5,
-    day: 15,
-    monthYear: "Agustus 2026",
-    title: "Pemangkasan Tunas Air & Daun Tua",
-    crop: "Cabai Rawit Red",
-    time: "07:30 WIB",
-    status: "pending",
-    type: "care",
-    desc: "Pangkas cabang bawah untuk memaksimalkan sirkulasi udara & pembentukan buah.",
-  },
-  {
-    id: 6,
-    day: 22,
-    monthYear: "Agustus 2026",
-    title: "Pemberian Nutrisi AB Mix Tahap 2",
-    crop: "Pakcoy Hydro",
-    time: "08:00 WIB",
-    status: "pending",
-    type: "fertilizer",
-    desc: "Tambah kepekatan nutrisi menjadi 1.400 PPM menjelang panen.",
-  },
-];
 
 const MONTH_NAMES = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -126,7 +57,7 @@ const TYPE_CONFIG = {
 
 export default function KalenderView({ lands }: KalenderViewProps = {}) {
   const [selectedCrop, setSelectedCrop] = useState("semua");
-  const [scheduleList, setScheduleList] = useState<ScheduleItem[]>(INITIAL_SCHEDULE);
+  const [scheduleList, setScheduleList] = useState<ScheduleItem[]>([]);
 
   const seasonalCrops = React.useMemo(() => {
     if (lands && lands.length > 0) {
@@ -154,16 +85,32 @@ export default function KalenderView({ lands }: KalenderViewProps = {}) {
   }, [lands]);
 
   React.useEffect(() => {
-    if (lands && lands.length > 0) {
-      setScheduleList((prev) =>
-        prev.map((item) => ({
-          ...item,
-          crop: activeLandCrop,
-        }))
-      );
-      setNewCrop(activeLandCrop);
+    async function loadTasksData() {
+      try {
+        const res = await getFarmerTasks();
+        if (res && res.data && Array.isArray(res.data)) {
+          const mapped: ScheduleItem[] = res.data.map((t) => ({
+            id: t.id,
+            day: t.day,
+            monthYear: t.month_year || "Agustus 2026",
+            title: t.title,
+            crop: t.crop || activeLandCrop,
+            time: t.time || "08:00 WIB",
+            status: (t.status === "completed" ? "completed" : "pending") as ScheduleItem["status"],
+            type: (t.type || "fertilizer") as ScheduleItem["type"],
+            desc: t.desc || "Kegiatan rutin perawatan lahan panen.",
+          }));
+          setScheduleList(mapped);
+        } else {
+          setScheduleList([]);
+        }
+      } catch (err) {
+        console.warn("Gagal memuat API farmer tasks:", err);
+        setScheduleList([]);
+      }
     }
-  }, [lands, activeLandCrop]);
+    loadTasksData();
+  }, [activeLandCrop]);
   
   // Selected date on calendar (1-31)
   const [selectedDay, setSelectedDay] = useState<number>(3); // Default today (3 Aug)
@@ -213,14 +160,20 @@ export default function KalenderView({ lands }: KalenderViewProps = {}) {
     return item.crop === selectedCrop;
   });
 
-  const toggleTaskStatus = (id: number) => {
+  const toggleTaskStatus = async (id: number) => {
+    const target = scheduleList.find((item) => item.id === id);
+    if (!target) return;
+
+    const newStatus = target.status === "completed" ? "pending" : "completed";
     setScheduleList((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, status: item.status === "completed" ? "pending" : "completed" }
-          : item
-      )
+      prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
     );
+
+    try {
+      await updateTask(id, { status: newStatus });
+    } catch (err) {
+      console.warn("Gagal update task status API:", err);
+    }
   };
 
   const handleOpenAddModal = (day: number) => {
@@ -228,23 +181,69 @@ export default function KalenderView({ lands }: KalenderViewProps = {}) {
     setShowAddModal(true);
   };
 
-  const handleCreateActivity = (e: React.FormEvent) => {
+  const handleCreateActivity = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    const newItem: ScheduleItem = {
-      id: Date.now(),
+    const monthYearStr = `${MONTH_NAMES[selectedMonthIndex]} ${selectedYear}`;
+    const payload = {
       day: modalTargetDay,
-      monthYear: `${MONTH_NAMES[selectedMonthIndex]} ${selectedYear}`,
+      month_year: monthYearStr,
       title: newTitle.trim(),
-      crop: newCrop,
+      crop: newCrop || activeLandCrop,
       time: newTime || "08:00 WIB",
       status: "pending",
       type: newType,
       desc: newDesc.trim() || "Kegiatan rutin perawatan lahan panen.",
+      land_id: lands?.[0]?.id,
     };
 
-    setScheduleList((prev) => [...prev, newItem]);
+    try {
+      const res = await createTask(payload);
+      if (res && res.data) {
+        const t = res.data;
+        const newItem: ScheduleItem = {
+          id: t.id,
+          day: t.day || modalTargetDay,
+          monthYear: t.month_year || monthYearStr,
+          title: t.title || newTitle.trim(),
+          crop: t.crop || newCrop || activeLandCrop,
+          time: t.time || newTime || "08:00 WIB",
+          status: (t.status === "completed" ? "completed" : "pending") as ScheduleItem["status"],
+          type: (t.type || newType) as ScheduleItem["type"],
+          desc: t.desc || newDesc.trim() || "Kegiatan rutin perawatan lahan panen.",
+        };
+        setScheduleList((prev) => [...prev, newItem]);
+      } else {
+        const newItem: ScheduleItem = {
+          id: Date.now(),
+          day: modalTargetDay,
+          monthYear: monthYearStr,
+          title: newTitle.trim(),
+          crop: newCrop || activeLandCrop,
+          time: newTime || "08:00 WIB",
+          status: "pending",
+          type: newType,
+          desc: newDesc.trim() || "Kegiatan rutin perawatan lahan panen.",
+        };
+        setScheduleList((prev) => [...prev, newItem]);
+      }
+    } catch (err) {
+      console.warn("Gagal create task API:", err);
+      const newItem: ScheduleItem = {
+        id: Date.now(),
+        day: modalTargetDay,
+        monthYear: monthYearStr,
+        title: newTitle.trim(),
+        crop: newCrop || activeLandCrop,
+        time: newTime || "08:00 WIB",
+        status: "pending",
+        type: newType,
+        desc: newDesc.trim() || "Kegiatan rutin perawatan lahan panen.",
+      };
+      setScheduleList((prev) => [...prev, newItem]);
+    }
+
     setSelectedDay(modalTargetDay);
     setShowAddModal(false);
 
