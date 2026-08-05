@@ -347,6 +347,13 @@ export default function DashboardPetani() {
     loadPriceHistoryData();
   }, [selectedCommodity]);
 
+  // Interactive Chart Point Selection State
+  const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    setSelectedPointIndex(null);
+  }, [selectedCommodity]);
+
   const currentCommodityMarketInfo = React.useMemo(() => {
     return marketPricesList.find(
       (m) => m.name.toLowerCase().includes(selectedCommodity.toLowerCase())
@@ -361,13 +368,13 @@ export default function DashboardPetani() {
       const range = maxP - minP || 1;
 
       return priceHistoryData.map((item, index) => {
-        const normalizedY = 115 - ((item.price - minP) / range) * 85;
+        const normalizedY = 115 - ((item.price - minP) / range) * 80;
         const formattedDate = new Date(item.date).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
         return {
           date: formattedDate,
           rawDate: item.date,
           price: item.price,
-          y: normalizedY,
+          y: Math.max(25, Math.min(115, normalizedY)),
           active: index === priceHistoryData.length - 1,
         };
       });
@@ -375,34 +382,46 @@ export default function DashboardPetani() {
     return COMMODITY_PRICE_DATA[selectedCommodity]?.points || [];
   }, [priceHistoryData, selectedCommodity]);
 
-  const latestPrice = React.useMemo(() => {
-    if (activePoints.length > 0) {
-      return activePoints[activePoints.length - 1].price;
-    }
-    return currentCommodityMarketInfo?.farmerPrice || 35000;
-  }, [activePoints, currentCommodityMarketInfo]);
-
-  const chartPathData = React.useMemo(() => {
-    if (!activePoints || activePoints.length === 0) {
-      return {
-        path: "M 15,100 C 60,95 100,110 140,70 C 180,40 210,85 245,60 C 280,40 310,60 340,30",
-        area: "M 15,100 C 60,95 100,110 140,70 C 180,40 210,85 245,60 C 280,40 310,60 340,30 L 340,125 L 15,125 Z",
-        activePointCoord: { x: 340, y: 30 },
-      };
-    }
+  const chartCoords = React.useMemo(() => {
+    if (!activePoints || activePoints.length === 0) return [];
     const width = 350;
-    const padding = 20;
+    const padding = 25;
     const step = (width - padding * 2) / Math.max(1, activePoints.length - 1);
-
-    const coords = activePoints.map((pt, i) => ({
+    return activePoints.map((pt, i) => ({
+      index: i,
       x: padding + i * step,
       y: pt.y,
+      price: pt.price,
+      date: ((pt as Record<string, unknown>).rawDate as string) || pt.date,
+      formattedDate: pt.date,
     }));
+  }, [activePoints]);
 
-    let path = `M ${coords[0].x},${coords[0].y}`;
-    for (let i = 1; i < coords.length; i++) {
-      const prev = coords[i - 1];
-      const curr = coords[i];
+  const activeIndex = selectedPointIndex !== null && selectedPointIndex < chartCoords.length
+    ? selectedPointIndex
+    : Math.max(0, chartCoords.length - 1);
+
+  const activePoint = chartCoords[activeIndex] || chartCoords[chartCoords.length - 1] || {
+    index: 0,
+    x: 325,
+    y: 30,
+    price: 35000,
+    date: "2026-08-05",
+    formattedDate: "5 Agu",
+  };
+
+  const chartPathData = React.useMemo(() => {
+    if (!chartCoords || chartCoords.length === 0) {
+      return {
+        path: "M 25,100 C 60,95 100,110 140,70 C 180,40 210,85 245,60 C 280,40 310,60 325,30",
+        area: "M 25,100 C 60,95 100,110 140,70 C 180,40 210,85 245,60 C 280,40 310,60 325,30 L 325,125 L 25,125 Z",
+      };
+    }
+
+    let path = `M ${chartCoords[0].x},${chartCoords[0].y}`;
+    for (let i = 1; i < chartCoords.length; i++) {
+      const prev = chartCoords[i - 1];
+      const curr = chartCoords[i];
       const cp1x = prev.x + (curr.x - prev.x) / 2;
       const cp1y = prev.y;
       const cp2x = prev.x + (curr.x - prev.x) / 2;
@@ -410,10 +429,10 @@ export default function DashboardPetani() {
       path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${curr.x},${curr.y}`;
     }
 
-    const lastCoord = coords[coords.length - 1];
-    const area = `${path} L ${lastCoord.x},125 L ${coords[0].x},125 Z`;
-    return { path, area, activePointCoord: lastCoord };
-  }, [activePoints]);
+    const lastCoord = chartCoords[chartCoords.length - 1];
+    const area = `${path} L ${lastCoord.x},125 L ${chartCoords[0].x},125 Z`;
+    return { path, area };
+  }, [chartCoords]);
 
   const activeData = COMMODITY_PRICE_DATA[selectedCommodity];
 
@@ -757,72 +776,147 @@ export default function DashboardPetani() {
                 </div>
 
                 {/* Price AI Banner */}
-                <div className={`p-3 rounded-2xl flex items-start gap-2 text-xs ${currentCommodityMarketInfo?.status?.toLowerCase().includes("oversupply") || activeData?.isOverSupply
-                    ? "bg-red-50 border border-red-200 text-red-800"
-                    : "bg-emerald-50 border border-emerald-200 text-[#0F4C25]"
-                  }`}>
-                  {currentCommodityMarketInfo?.status?.toLowerCase().includes("oversupply") || activeData?.isOverSupply ? (
-                    <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                  ) : (
-                    <Sparkles className="w-4 h-4 text-[#0F4C25] shrink-0 mt-0.5" />
-                  )}
-                  <div className="flex-1 text-[11px] leading-relaxed font-medium">
-                    <span className="font-black">
-                      {currentCommodityMarketInfo?.status ? `${currentCommodityMarketInfo.status}: ` : "Transparansi Harga AI: "}
-                    </span>
-                    Harga Petani Rp {currentCommodityMarketInfo?.farmerPrice ? currentCommodityMarketInfo.farmerPrice.toLocaleString("id-ID") : latestPrice.toLocaleString("id-ID")}/kg · Harga Pasar Rp {currentCommodityMarketInfo?.marketPrice ? currentCommodityMarketInfo.marketPrice.toLocaleString("id-ID") : (latestPrice * 1.3).toLocaleString("id-ID")}/kg
-                  </div>
-                </div>
+                {(() => {
+                  const statusText = currentCommodityMarketInfo?.status || "Harga Stabil";
+                  const isWarning = statusText.toLowerCase().includes("oversupply") || statusText.toLowerCase().includes("melimpah");
+                  return (
+                    <div className={`p-3 rounded-2xl flex items-start gap-2 text-xs transition-colors ${
+                      isWarning
+                        ? "bg-amber-50 border border-amber-200 text-amber-900"
+                        : "bg-[#EBF7EE] border border-emerald-200 text-[#0F4C25]"
+                    }`}>
+                      {isWarning ? (
+                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      ) : (
+                        <Sparkles className="w-4 h-4 text-[#0F4C25] shrink-0 mt-0.5" />
+                      )}
+                      <div className="flex-1 text-[11px] leading-relaxed font-medium">
+                        <span className="font-black">{statusText}: </span>
+                        Harga Petani Rp {currentCommodityMarketInfo?.farmerPrice ? currentCommodityMarketInfo.farmerPrice.toLocaleString("id-ID") : activePoint.price.toLocaleString("id-ID")}/kg · Harga Pasar Rp {currentCommodityMarketInfo?.marketPrice ? currentCommodityMarketInfo.marketPrice.toLocaleString("id-ID") : Math.round(activePoint.price * 1.3).toLocaleString("id-ID")}/kg
+                      </div>
+                    </div>
+                  );
+                })()}
 
-                {/* Interactive SVG Curve Chart (100% Real API Data) */}
-                <div className="relative pt-6 pb-2">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-white rounded-2xl px-3 py-1.5 shadow-lg border border-gray-100 flex flex-col items-center z-10">
-                    <span className="text-xs font-black text-[#1A1C19]">
-                      Rp {latestPrice.toLocaleString("id-ID")} <span className="text-[9px] font-normal text-gray-500">/kg</span>
+                {/* Interactive SVG Curve Chart (Hover & Move Circle to View Price) */}
+                <div className="relative pt-8 pb-2 select-none">
+                  {/* Dynamic Tooltip Bubble Floating Directly Above Active Point Circle */}
+                  <div
+                    className="absolute top-0 transition-all duration-200 -translate-x-1/2 bg-white rounded-2xl px-3 py-1.5 shadow-xl border border-emerald-100 flex flex-col items-center z-20 pointer-events-none"
+                    style={{
+                      left: `${Math.min(88, Math.max(12, (activePoint.x / 350) * 100))}%`,
+                    }}
+                  >
+                    <span className="text-xs font-black text-[#1A1C19] whitespace-nowrap">
+                      Rp {activePoint.price.toLocaleString("id-ID")} <span className="text-[9px] font-normal text-gray-500">/kg</span>
                     </span>
-                    <span className="text-[9px] font-medium text-gray-400">
-                      {currentCommodityMarketInfo?.recordedOn || "5 Agustus 2026"}
+                    <span className="text-[9px] font-bold text-emerald-800 whitespace-nowrap">
+                      {activePoint.date}
                     </span>
-                    <div className="w-2 h-2 bg-white border-r border-b border-gray-100 rotate-45 -mb-2 -mt-1" />
+                    <div className="w-2 h-2 bg-white border-r border-b border-emerald-100 rotate-45 -mb-2 -mt-1" />
                   </div>
 
                   <div className="w-full h-36 relative">
                     <svg className="w-full h-full overflow-visible" viewBox="0 0 350 140">
                       <defs>
                         <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#0F4C25" stopOpacity="0.35" />
+                          <stop offset="0%" stopColor="#0F4C25" stopOpacity="0.3" />
                           <stop offset="100%" stopColor="#0F4C25" stopOpacity="0.0" />
                         </linearGradient>
                       </defs>
 
-                      <line x1="0" y1="20" x2="350" y2="20" stroke="#E2E8F0" strokeDasharray="3 3" />
-                      <line x1="0" y1="50" x2="350" y2="50" stroke="#E2E8F0" strokeDasharray="3 3" />
-                      <line x1="0" y1="80" x2="350" y2="80" stroke="#E2E8F0" strokeDasharray="3 3" />
+                      {/* Dashed Grid Lines */}
+                      <line x1="0" y1="25" x2="350" y2="25" stroke="#E2E8F0" strokeDasharray="3 3" />
+                      <line x1="0" y1="65" x2="350" y2="65" stroke="#E2E8F0" strokeDasharray="3 3" />
+                      <line x1="0" y1="105" x2="350" y2="105" stroke="#E2E8F0" strokeDasharray="3 3" />
 
+                      {/* Active Point Vertical Guide Line */}
+                      <line
+                        x1={activePoint.x}
+                        y1="15"
+                        x2={activePoint.x}
+                        y2="125"
+                        stroke="#0F4C25"
+                        strokeDasharray="2 2"
+                        strokeOpacity="0.3"
+                        className="transition-all duration-200"
+                      />
+
+                      {/* Gradient Area Fill */}
                       <path
                         d={chartPathData.area}
                         fill="url(#greenGradient)"
+                        className="transition-all duration-300"
                       />
 
+                      {/* Curve Line */}
                       <path
                         d={chartPathData.path}
                         fill="none"
                         stroke="#0F4C25"
                         strokeWidth="3"
                         strokeLinecap="round"
+                        className="transition-all duration-300"
                       />
 
-                      <circle cx={chartPathData.activePointCoord.x} cy={chartPathData.activePointCoord.y} r="6" fill="#0F4C25" />
-                      <circle cx={chartPathData.activePointCoord.x} cy={chartPathData.activePointCoord.y} r="10" fill="#2E7D32" fillOpacity="0.3" />
+                      {/* Interactive Hover & Click Points */}
+                      {chartCoords.map((pt, idx) => {
+                        const isActive = idx === activeIndex;
+                        return (
+                          <g
+                            key={idx}
+                            className="cursor-pointer"
+                            onClick={() => setSelectedPointIndex(idx)}
+                            onMouseEnter={() => setSelectedPointIndex(idx)}
+                            onTouchStart={() => setSelectedPointIndex(idx)}
+                          >
+                            {/* Hitbox target */}
+                            <circle cx={pt.x} cy={pt.y} r="18" fill="transparent" />
+                            {/* Inner Dot */}
+                            <circle
+                              cx={pt.x}
+                              cy={pt.y}
+                              r={isActive ? "6" : "3.5"}
+                              fill={isActive ? "#0F4C25" : "#64748B"}
+                              className="transition-all duration-200"
+                            />
+                            {/* Outer Pulsing Ring for Active Point */}
+                            {isActive && (
+                              <circle
+                                cx={pt.x}
+                                cy={pt.y}
+                                r="11"
+                                fill="#2E7D32"
+                                fillOpacity="0.25"
+                                className="transition-all duration-200 animate-pulse"
+                              />
+                            )}
+                          </g>
+                        );
+                      })}
                     </svg>
                   </div>
 
-                  <div className="flex justify-between text-[10px] font-semibold text-gray-400 px-1 mt-1">
-                    {activePoints.map((pt, idx) => (
-                      <span key={idx} className={pt.active ? "text-[#0F4C25] font-black" : ""}>
-                        {pt.date}
-                      </span>
-                    ))}
+                  {/* Interactive Date Pill Buttons */}
+                  <div className="flex justify-between text-[10px] font-semibold text-gray-400 px-1 mt-2">
+                    {chartCoords.map((pt, idx) => {
+                      const isActive = idx === activeIndex;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setSelectedPointIndex(idx)}
+                          onMouseEnter={() => setSelectedPointIndex(idx)}
+                          className={`cursor-pointer transition-all px-1.5 py-0.5 rounded-lg text-[10px] ${
+                            isActive
+                              ? "text-[#0F4C25] font-black bg-emerald-100/80 border border-emerald-300 shadow-2xs scale-105"
+                              : "hover:text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          {pt.formattedDate}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </section>
