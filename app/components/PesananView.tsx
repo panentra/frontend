@@ -39,7 +39,7 @@ export interface OrderItem {
   qty: string;
   unitPrice: string;
   total: string;
-  status: "incoming" | "shipping" | "completed";
+  status: "incoming" | "shipping" | "delivered" | "completed";
   date: string;
   location: string;
   fullAddress: string;
@@ -136,8 +136,10 @@ export default function PesananView({
           const apiMapped: OrderItem[] = res.data.map((order) => {
             const rawStatus = (order.status || "incoming").toLowerCase();
             let mappedStatus: OrderItem["status"] = "incoming";
-            if (rawStatus === "shipping" || rawStatus === "delivered" || rawStatus === "dikirim") {
+            if (rawStatus === "shipping" || rawStatus === "dikirim") {
               mappedStatus = "shipping";
+            } else if (rawStatus === "delivered" || rawStatus === "terkirim" || rawStatus === "sampai") {
+              mappedStatus = "delivered";
             } else if (rawStatus === "completed" || rawStatus === "selesai") {
               mappedStatus = "completed";
             }
@@ -176,7 +178,10 @@ export default function PesananView({
   }, []);
 
   const filteredOrders = orders.filter((order) => {
-    const matchesFilter = activeFilter === "all" || order.status === activeFilter;
+    const matchesFilter =
+      activeFilter === "all" ||
+      order.status === activeFilter ||
+      (activeFilter === "shipping" && order.status === "delivered");
     const matchesSearch =
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -203,7 +208,7 @@ export default function PesananView({
   };
 
   const incomingCount = orders.filter((o) => o.status === "incoming").length;
-  const shippingCount = orders.filter((o) => o.status === "shipping").length;
+  const shippingCount = orders.filter((o) => o.status === "shipping" || o.status === "delivered").length;
   const completedCount = orders.filter((o) => o.status === "completed").length;
 
   const calculatedRevenue = React.useMemo(() => {
@@ -402,13 +407,17 @@ export default function PesananView({
                       ? "bg-amber-50 text-amber-800 border-amber-200"
                       : order.status === "shipping"
                       ? "bg-blue-50 text-blue-800 border-blue-200"
+                      : order.status === "delivered"
+                      ? "bg-indigo-50 text-indigo-800 border-indigo-200"
                       : "bg-emerald-50 text-[#0F4C25] border-emerald-200"
                   }`}
                 >
                   {order.status === "incoming"
                     ? "Pesanan Baru"
                     : order.status === "shipping"
-                    ? "Dikirim"
+                    ? "Dalam Pengiriman"
+                    : order.status === "delivered"
+                    ? "Tiba di Tujuan"
                     : "Selesai"}
                 </span>
               </div>
@@ -458,12 +467,18 @@ export default function PesananView({
                 {order.status === "shipping" && (
                   <button
                     type="button"
-                    onClick={() => handleUpdateStatus(order.id, "completed")}
+                    onClick={() => handleUpdateStatus(order.id, "delivered")}
                     className="flex-1 py-2 bg-[#0F4C25] hover:bg-[#0A381B] text-white rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    Tandai Selesai
+                    Konfirmasi Sampai
                   </button>
+                )}
+
+                {order.status === "delivered" && (
+                  <div className="flex-1 py-1.5 text-center text-[11px] font-extrabold text-indigo-900 bg-indigo-50 rounded-xl border border-indigo-200">
+                    Tiba di Tujuan (Menunggu Konfirmasi Pembeli)
+                  </div>
                 )}
 
                 {order.status === "completed" && (
