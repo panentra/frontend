@@ -704,8 +704,36 @@ export async function setPrimaryBankAccount(id: number | string): Promise<BankAc
   });
 }
 
-export async function createReview(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>("/api/shared/reviews", {
+export interface FarmerOnboardingPayload {
+  role?: "petani";
+  display_name: string;
+  farming_system: "konvensional" | "organik" | "semi_organik";
+  land?: {
+    name?: string;
+    area?: number;
+    area_unit?: "ha" | "are" | "m2";
+    address?: string;
+    lat?: number;
+    lng?: number;
+    commodity_id?: number;
+    commodity_ids?: number[];
+  };
+}
+
+export interface SupplierOnboardingPayload {
+  role?: "pemasok";
+  store_name: string;
+  store_type: "modern" | "pasar" | "distributor" | "horeka" | "industri";
+  purchase_volume: "kecil" | "sedang" | "besar" | "grosir";
+  address?: string;
+  lat?: number;
+  lng?: number;
+}
+
+export async function completeOnboarding(
+  payload: FarmerOnboardingPayload | SupplierOnboardingPayload
+): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>("/api/onboarding", {
     method: "POST",
     body: JSON.stringify(payload),
   });

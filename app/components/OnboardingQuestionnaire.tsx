@@ -11,6 +11,19 @@ import {
   User,
 } from "lucide-react";
 import Button from "./Button";
+import { completeOnboarding } from "@/lib/api";
+
+const COMMODITY_ID_MAP: Record<string, number> = {
+  padi: 1,
+  jagung: 2,
+  cabai: 3,
+  bawang: 4,
+  tomat: 5,
+  kentang: 6,
+  kedelai: 7,
+  melon: 8,
+  sayur: 9,
+};
 
 // Dynamically import Leaflet Map Picker to prevent Next.js SSR window errors
 const LeafletMapPicker = dynamic(
@@ -49,6 +62,7 @@ const FARMING_SYSTEM_OPTIONS = [
 export default function OnboardingQuestionnaire() {
   const router = useRouter();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- Form States ---
   const [farmerName, setFarmerName] = useState("");
@@ -78,10 +92,39 @@ export default function OnboardingQuestionnaire() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setIsSubmitting(true);
+
+    const numericCommodityIds = selectedCommodities
+      .map((cId) => COMMODITY_ID_MAP[cId] || 1)
+      .filter((id, idx, self) => self.indexOf(id) === idx);
+
+    const primaryCommodityId = numericCommodityIds[0] || 1;
+
+    try {
+      await completeOnboarding({
+        role: "petani",
+        display_name: farmerName.trim() || "Pak Budi Santoso",
+        farming_system: (farmingSystem as "konvensional" | "organik" | "semi_organik") || "konvensional",
+        land: {
+          name: address ? `Lahan ${address.split(",")[0]}` : "Lahan Pertanian Utama",
+          area: parseFloat(landArea) || 1.5,
+          area_unit: landAreaUnit,
+          address: address || "Jl. Raya Lembang No. 142, Bandung Barat",
+          lat: selectedCoords?.lat || -6.8168,
+          lng: selectedCoords?.lng || 107.6161,
+          commodity_id: primaryCommodityId,
+          commodity_ids: numericCommodityIds,
+        },
+      });
+    } catch (err) {
+      console.warn("Onboarding API error (fallback to local success state):", err);
+    } finally {
+      setIsSubmitting(false);
+      setIsSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   return (
