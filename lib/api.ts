@@ -167,6 +167,40 @@ export interface FarmerDashboardData {
   [key: string]: unknown;
 }
 
+export interface BankAccount {
+  id: number;
+  bank_name: string;
+  account_number: string;
+  account_holder: string;
+  is_primary?: boolean;
+  [key: string]: unknown;
+}
+
+export interface ChatMessage {
+  id: number;
+  sender_id: number;
+  message: string;
+  created_at: string;
+  [key: string]: unknown;
+}
+
+export interface ChatItem {
+  id: number;
+  participant_name?: string;
+  last_message?: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}
+
+export interface NotificationItem {
+  id: number;
+  title: string;
+  body: string;
+  is_read: boolean;
+  created_at: string;
+  [key: string]: unknown;
+}
+
 // Helper to save authentication data in localStorage
 export function setAuthData(token: string, user: User) {
   if (typeof window !== "undefined") {
@@ -245,10 +279,10 @@ async function fetchWithAuth<T>(
   return data as T;
 }
 
-/**
- * Register a new user
- * POST /api/register
- */
+// ==========================================
+// 1. AUTH ENDPOINTS (/api/...)
+// ==========================================
+
 export async function registerUser(payload: RegisterPayload): Promise<AuthResponse> {
   const response = await fetch(`${API_BASE_URL}/api/register`, {
     method: "POST",
@@ -258,23 +292,14 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthRespon
     },
     body: JSON.stringify(payload),
   });
-
   const data = await response.json();
-
   if (!response.ok) {
-    const errorMsg =
-      data?.message ||
-      (data?.errors ? Object.values(data.errors).flat().join(", ") : "Pendaftaran gagal.");
+    const errorMsg = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Pendaftaran gagal.");
     throw new Error(errorMsg);
   }
-
   return data as AuthResponse;
 }
 
-/**
- * Login user
- * POST /api/login
- */
 export async function loginUser(payload: LoginPayload): Promise<AuthResponse> {
   const response = await fetch(`${API_BASE_URL}/api/login`, {
     method: "POST",
@@ -284,31 +309,18 @@ export async function loginUser(payload: LoginPayload): Promise<AuthResponse> {
     },
     body: JSON.stringify(payload),
   });
-
   const data = await response.json();
-
   if (!response.ok) {
-    const errorMsg =
-      data?.message ||
-      (data?.errors ? Object.values(data.errors).flat().join(", ") : "Login gagal.");
+    const errorMsg = data?.message || (data?.errors ? Object.values(data.errors).flat().join(", ") : "Login gagal.");
     throw new Error(errorMsg);
   }
-
   return data as AuthResponse;
 }
 
-/**
- * Get current user info
- * GET /api/user
- */
 export async function getCurrentUser(token?: string): Promise<User> {
   return fetchWithAuth<User>("/api/user", token ? { headers: { Authorization: `Bearer ${token}` } } : {});
 }
 
-/**
- * Logout current user
- * POST /api/logout
- */
 export async function logoutUser(): Promise<{ message: string }> {
   try {
     await fetchWithAuth<{ message: string }>("/api/logout", { method: "POST" });
@@ -320,26 +332,17 @@ export async function logoutUser(): Promise<{ message: string }> {
 }
 
 // ==========================================
-// FARMER ENDPOINTS (/api/farmer/...)
+// 2. FARMER ENDPOINTS (/api/farmer/...)
 // ==========================================
 
-/**
- * GET /api/farmer/dashboard
- */
 export async function getFarmerDashboard(): Promise<FarmerDashboardData> {
   return fetchWithAuth<FarmerDashboardData>("/api/farmer/dashboard");
 }
 
-/**
- * GET /api/farmer/lands
- */
 export async function getLands(): Promise<LandsResponse> {
   return fetchWithAuth<LandsResponse>("/api/farmer/lands");
 }
 
-/**
- * POST /api/farmer/lands
- */
 export async function createLand(payload: CreateLandPayload): Promise<Land> {
   return fetchWithAuth<Land>("/api/farmer/lands", {
     method: "POST",
@@ -347,9 +350,6 @@ export async function createLand(payload: CreateLandPayload): Promise<Land> {
   });
 }
 
-/**
- * PUT /api/farmer/lands/{id}
- */
 export async function updateLand(id: number | string, payload: Partial<CreateLandPayload>): Promise<Land> {
   return fetchWithAuth<Land>(`/api/farmer/lands/${id}`, {
     method: "PUT",
@@ -357,25 +357,16 @@ export async function updateLand(id: number | string, payload: Partial<CreateLan
   });
 }
 
-/**
- * DELETE /api/farmer/lands/{id}
- */
 export async function deleteLand(id: number | string): Promise<{ message: string }> {
   return fetchWithAuth<{ message: string }>(`/api/farmer/lands/${id}`, {
     method: "DELETE",
   });
 }
 
-/**
- * GET /api/farmer/seasons
- */
 export async function getSeasons(): Promise<Season[]> {
   return fetchWithAuth<Season[]>("/api/farmer/seasons");
 }
 
-/**
- * POST /api/farmer/seasons
- */
 export async function createSeason(payload: Record<string, unknown>): Promise<Season> {
   return fetchWithAuth<Season>("/api/farmer/seasons", {
     method: "POST",
@@ -383,9 +374,6 @@ export async function createSeason(payload: Record<string, unknown>): Promise<Se
   });
 }
 
-/**
- * PUT /api/farmer/seasons/{id}
- */
 export async function updateSeason(id: number | string, payload: Record<string, unknown>): Promise<Season> {
   return fetchWithAuth<Season>(`/api/farmer/seasons/${id}`, {
     method: "PUT",
@@ -393,16 +381,10 @@ export async function updateSeason(id: number | string, payload: Record<string, 
   });
 }
 
-/**
- * GET /api/farmer/expenses
- */
 export async function getExpenses(): Promise<Expense[]> {
   return fetchWithAuth<Expense[]>("/api/farmer/expenses");
 }
 
-/**
- * POST /api/farmer/expenses
- */
 export async function createExpense(payload: Record<string, unknown>): Promise<Expense> {
   return fetchWithAuth<Expense>("/api/farmer/expenses", {
     method: "POST",
@@ -410,25 +392,16 @@ export async function createExpense(payload: Record<string, unknown>): Promise<E
   });
 }
 
-/**
- * DELETE /api/farmer/expenses/{id}
- */
 export async function deleteExpense(id: number | string): Promise<{ message: string }> {
   return fetchWithAuth<{ message: string }>(`/api/farmer/expenses/${id}`, {
     method: "DELETE",
   });
 }
 
-/**
- * GET /api/farmer/listings
- */
 export async function getFarmerListings(): Promise<Listing[]> {
   return fetchWithAuth<Listing[]>("/api/farmer/listings");
 }
 
-/**
- * POST /api/farmer/listings
- */
 export async function createListing(payload: Record<string, unknown>): Promise<Listing> {
   return fetchWithAuth<Listing>("/api/farmer/listings", {
     method: "POST",
@@ -436,9 +409,6 @@ export async function createListing(payload: Record<string, unknown>): Promise<L
   });
 }
 
-/**
- * PUT /api/farmer/listings/{id}
- */
 export async function updateListing(id: number | string, payload: Record<string, unknown>): Promise<Listing> {
   return fetchWithAuth<Listing>(`/api/farmer/listings/${id}`, {
     method: "PUT",
@@ -446,25 +416,16 @@ export async function updateListing(id: number | string, payload: Record<string,
   });
 }
 
-/**
- * DELETE /api/farmer/listings/{id}
- */
 export async function deleteListing(id: number | string): Promise<{ message: string }> {
   return fetchWithAuth<{ message: string }>(`/api/farmer/listings/${id}`, {
     method: "DELETE",
   });
 }
 
-/**
- * GET /api/farmer/orders
- */
 export async function getFarmerOrders(): Promise<Order[]> {
   return fetchWithAuth<Order[]>("/api/farmer/orders");
 }
 
-/**
- * PATCH /api/farmer/orders/{id}
- */
 export async function updateOrderStatus(id: number | string, status: string): Promise<Order> {
   return fetchWithAuth<Order>(`/api/farmer/orders/${id}`, {
     method: "PATCH",
@@ -472,16 +433,10 @@ export async function updateOrderStatus(id: number | string, status: string): Pr
   });
 }
 
-/**
- * GET /api/farmer/tasks
- */
 export async function getFarmerTasks(): Promise<FarmerTask[]> {
   return fetchWithAuth<FarmerTask[]>("/api/farmer/tasks");
 }
 
-/**
- * POST /api/farmer/tasks
- */
 export async function createTask(payload: Record<string, unknown>): Promise<FarmerTask> {
   return fetchWithAuth<FarmerTask>("/api/farmer/tasks", {
     method: "POST",
@@ -489,9 +444,6 @@ export async function createTask(payload: Record<string, unknown>): Promise<Farm
   });
 }
 
-/**
- * PUT /api/farmer/tasks/{id}
- */
 export async function updateTask(id: number | string, payload: Record<string, unknown>): Promise<FarmerTask> {
   return fetchWithAuth<FarmerTask>(`/api/farmer/tasks/${id}`, {
     method: "PUT",
@@ -499,12 +451,251 @@ export async function updateTask(id: number | string, payload: Record<string, un
   });
 }
 
-/**
- * POST /api/farmer/negotiations/respond
- */
 export async function respondNegotiation(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
   return fetchWithAuth<Record<string, unknown>>("/api/farmer/negotiations/respond", {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+// ==========================================
+// 3. SUPPLIER ENDPOINTS (/api/supplier/...)
+// ==========================================
+
+export async function getSupplierDashboard(): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>("/api/supplier/dashboard");
+}
+
+export async function getMarketplace(params?: Record<string, string>): Promise<Record<string, unknown>> {
+  const query = params ? `?${new URLSearchParams(params).toString()}` : "";
+  return fetchWithAuth<Record<string, unknown>>(`/api/supplier/marketplace${query}`);
+}
+
+export async function getListingDetail(id: number | string): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>(`/api/supplier/listings/${id}`);
+}
+
+export async function getPurchaseHistory(): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>("/api/supplier/purchases");
+}
+
+export async function createSupplierOrder(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>("/api/supplier/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function payOrder(id: number | string, payload?: Record<string, unknown>): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>(`/api/supplier/orders/${id}/pay`, {
+    method: "PATCH",
+    body: payload ? JSON.stringify(payload) : undefined,
+  });
+}
+
+export async function confirmOrderReceived(id: number | string): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>(`/api/supplier/orders/${id}/confirm-received`, {
+    method: "PATCH",
+  });
+}
+
+export async function startNegotiation(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>("/api/supplier/negotiations/start", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getFavorites(): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>("/api/supplier/favorites");
+}
+
+export async function addFavorite(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>("/api/supplier/favorites", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function removeFavorite(id: number | string): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>(`/api/supplier/favorites/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getSupplierDeliveries(): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>("/api/supplier/deliveries");
+}
+
+// ==========================================
+// 4. SHARED ENDPOINTS (/api/shared/...)
+// ==========================================
+
+export async function getMarketPrices(): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>("/api/shared/market-prices");
+}
+
+export async function getPriceHistory(params?: Record<string, string>): Promise<Record<string, unknown>> {
+  const query = params ? `?${new URLSearchParams(params).toString()}` : "";
+  return fetchWithAuth<Record<string, unknown>>(`/api/shared/price-history${query}`);
+}
+
+export async function getChats(): Promise<ChatItem[]> {
+  return fetchWithAuth<ChatItem[]>("/api/shared/chats");
+}
+
+export async function getChatMessages(chatId: number | string): Promise<ChatMessage[]> {
+  return fetchWithAuth<ChatMessage[]>(`/api/shared/chats/${chatId}/messages`);
+}
+
+export async function sendChatMessage(chatId: number | string, message: string): Promise<ChatMessage> {
+  return fetchWithAuth<ChatMessage>(`/api/shared/chats/${chatId}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ message }),
+  });
+}
+
+export async function getBankAccounts(): Promise<BankAccount[]> {
+  return fetchWithAuth<BankAccount[]>("/api/shared/bank-accounts");
+}
+
+export async function createBankAccount(payload: Record<string, unknown>): Promise<BankAccount> {
+  return fetchWithAuth<BankAccount>("/api/shared/bank-accounts", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteBankAccount(id: number | string): Promise<{ message: string }> {
+  return fetchWithAuth<{ message: string }>(`/api/shared/bank-accounts/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function setPrimaryBankAccount(id: number | string): Promise<BankAccount> {
+  return fetchWithAuth<BankAccount>(`/api/shared/bank-accounts/${id}/primary`, {
+    method: "PATCH",
+  });
+}
+
+export async function createReview(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>("/api/shared/reviews", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+// ==========================================
+// 5. NOTIFICATIONS ENDPOINTS (/api/notifications/...)
+// ==========================================
+
+export async function getNotifications(): Promise<NotificationItem[]> {
+  return fetchWithAuth<NotificationItem[]>("/api/notifications");
+}
+
+export async function markNotificationRead(id: number | string): Promise<NotificationItem> {
+  return fetchWithAuth<NotificationItem>(`/api/notifications/${id}/read`, {
+    method: "PATCH",
+  });
+}
+
+export async function markAllNotificationsRead(): Promise<{ message: string }> {
+  return fetchWithAuth<{ message: string }>("/api/notifications/read-all", {
+    method: "PATCH",
+  });
+}
+
+export async function deleteNotification(id: number | string): Promise<{ message: string }> {
+  return fetchWithAuth<{ message: string }>(`/api/notifications/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// ==========================================
+// 6. ADMIN ENDPOINTS (/api/admin/...)
+// ==========================================
+
+export async function getAdminUsers(): Promise<User[]> {
+  return fetchWithAuth<User[]>("/api/admin/users");
+}
+
+export async function assignUserRole(id: number | string, role: string): Promise<User> {
+  return fetchWithAuth<User>(`/api/admin/users/${id}/role`, {
+    method: "PATCH",
+    body: JSON.stringify({ role }),
+  });
+}
+
+export async function verifyUser(id: number | string): Promise<User> {
+  return fetchWithAuth<User>(`/api/admin/users/${id}/verify`, {
+    method: "PATCH",
+  });
+}
+
+export async function deleteAdminUser(id: number | string): Promise<{ message: string }> {
+  return fetchWithAuth<{ message: string }>(`/api/admin/users/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getAdminCommodities(): Promise<Commodity[]> {
+  return fetchWithAuth<Commodity[]>("/api/admin/commodities");
+}
+
+export async function createAdminCommodity(payload: Record<string, unknown>): Promise<Commodity> {
+  return fetchWithAuth<Commodity>("/api/admin/commodities", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateAdminCommodity(id: number | string, payload: Record<string, unknown>): Promise<Commodity> {
+  return fetchWithAuth<Commodity>(`/api/admin/commodities/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteAdminCommodity(id: number | string): Promise<{ message: string }> {
+  return fetchWithAuth<{ message: string }>(`/api/admin/commodities/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getAdminPrices(): Promise<Record<string, unknown>[]> {
+  return fetchWithAuth<Record<string, unknown>[]>("/api/admin/prices");
+}
+
+export async function createAdminPrice(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>("/api/admin/prices", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateAdminPrice(id: number | string, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>(`/api/admin/prices/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteAdminPrice(id: number | string): Promise<{ message: string }> {
+  return fetchWithAuth<{ message: string }>(`/api/admin/prices/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getAdminListings(): Promise<Listing[]> {
+  return fetchWithAuth<Listing[]>("/api/admin/listings");
+}
+
+export async function deleteAdminListing(id: number | string): Promise<{ message: string }> {
+  return fetchWithAuth<{ message: string }>(`/api/admin/listings/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getAdminOrders(): Promise<Order[]> {
+  return fetchWithAuth<Order[]>("/api/admin/orders");
 }
