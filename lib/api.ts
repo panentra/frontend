@@ -189,6 +189,7 @@ export interface BankAccount {
   account_number: string;
   account_holder: string;
   is_primary?: boolean;
+  is_default?: boolean;
   [key: string]: unknown;
 }
 
@@ -729,27 +730,52 @@ export async function sendChatMessage(
   });
 }
 
-export async function getBankAccounts(): Promise<BankAccount[]> {
-  return fetchWithAuth<BankAccount[]>("/api/shared/bank-accounts");
+
+
+export async function getBankAccounts(): Promise<{ data: BankAccount[] }> {
+  try {
+    return await fetchWithAuth<{ data: BankAccount[] }>("/api/bank-accounts");
+  } catch {
+    return await fetchWithAuth<{ data: BankAccount[] }>("/api/shared/bank-accounts");
+  }
 }
 
-export async function createBankAccount(payload: Record<string, unknown>): Promise<BankAccount> {
-  return fetchWithAuth<BankAccount>("/api/shared/bank-accounts", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+export async function createBankAccount(payload: Record<string, unknown>): Promise<{ data: BankAccount }> {
+  try {
+    return await fetchWithAuth<{ data: BankAccount }>("/api/bank-accounts", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    return await fetchWithAuth<{ data: BankAccount }>("/api/shared/bank-accounts", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
 }
 
 export async function deleteBankAccount(id: number | string): Promise<{ message: string }> {
-  return fetchWithAuth<{ message: string }>(`/api/shared/bank-accounts/${id}`, {
-    method: "DELETE",
-  });
+  try {
+    return await fetchWithAuth<{ message: string }>(`/api/bank-accounts/${id}`, {
+      method: "DELETE",
+    });
+  } catch {
+    return await fetchWithAuth<{ message: string }>(`/api/shared/bank-accounts/${id}`, {
+      method: "DELETE",
+    });
+  }
 }
 
-export async function setPrimaryBankAccount(id: number | string): Promise<BankAccount> {
-  return fetchWithAuth<BankAccount>(`/api/shared/bank-accounts/${id}/primary`, {
-    method: "PATCH",
-  });
+export async function setPrimaryBankAccount(id: number | string): Promise<{ message: string }> {
+  try {
+    return await fetchWithAuth<{ message: string }>(`/api/bank-accounts/${id}/primary`, {
+      method: "PATCH",
+    });
+  } catch {
+    return await fetchWithAuth<{ message: string }>(`/api/shared/bank-accounts/${id}/primary`, {
+      method: "PATCH",
+    });
+  }
 }
 
 export interface FarmerOnboardingPayload {

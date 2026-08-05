@@ -13,6 +13,11 @@ import {
   downloadSalesInvoice,
   getAuthUser,
   logoutUser,
+  getBankAccounts,
+  createBankAccount,
+  setPrimaryBankAccount,
+  deleteBankAccount,
+  BankAccount,
 } from "@/lib/api";
 import {
   User,
@@ -44,6 +49,7 @@ import {
   X,
   ShoppingBag,
   Check,
+  Trash2,
   Building2,
   ExternalLink,
   Search,
@@ -261,6 +267,75 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
   const [expenses, setExpenses] = useState<any[]>([]);
   const [salesHistory, setSalesHistory] = useState<any[]>([]);
 
+  // Bank Accounts State & Actions
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [isLoadingBanks, setIsLoadingBanks] = useState(false);
+  const [showAddBankForm, setShowAddBankForm] = useState(false);
+  const [newBankName, setNewBankName] = useState("Bank BRI");
+  const [newAccountNumber, setNewAccountNumber] = useState("");
+  const [newAccountHolder, setNewAccountHolder] = useState("");
+
+  const refreshBankAccounts = React.useCallback(async () => {
+    try {
+      setIsLoadingBanks(true);
+      const res = await getBankAccounts();
+      if (res && res.data && Array.isArray(res.data)) {
+        setBankAccounts(res.data);
+      } else if (Array.isArray(res)) {
+        setBankAccounts(res as any);
+      } else {
+        setBankAccounts([]);
+      }
+    } catch (err) {
+      console.warn("Gagal memuat API bank accounts:", err);
+      setBankAccounts([]);
+    } finally {
+      setIsLoadingBanks(false);
+    }
+  }, []);
+
+  const handleAddBankAccountSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAccountNumber || !newAccountHolder) {
+      alert("Harap isi nomor rekening dan nama pemilik rekening.");
+      return;
+    }
+    try {
+      await createBankAccount({
+        bank_name: newBankName,
+        account_number: newAccountNumber,
+        account_holder: newAccountHolder,
+      });
+      setShowAddBankForm(false);
+      setNewAccountNumber("");
+      setNewAccountHolder("");
+      await refreshBankAccounts();
+      alert("Rekening bank berhasil ditambahkan!");
+    } catch (err: any) {
+      alert(err.message || "Gagal menambahkan rekening bank.");
+    }
+  };
+
+  const handleSetPrimaryBankAction = async (id: number) => {
+    try {
+      await setPrimaryBankAccount(id);
+      await refreshBankAccounts();
+    } catch (err: any) {
+      alert(err.message || "Gagal mengubah rekening utama.");
+    }
+  };
+
+  const handleDeleteBankAction = async (id: number) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus rekening bank ini?")) return;
+    try {
+      await deleteBankAccount(id);
+      await refreshBankAccounts();
+      alert("Rekening bank berhasil dihapus.");
+    } catch (err: any) {
+      alert(err.message || "Gagal menghapus rekening bank.");
+    }
+  };
+
   React.useEffect(() => {
     async function loadUserData() {
       const storedUser = getAuthUser();
@@ -353,7 +428,8 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
     loadUserData();
     loadExpensesData();
     loadSalesOrdersData();
-  }, []);
+    refreshBankAccounts();
+  }, [refreshBankAccounts]);
 
   // Preference Toggles
   const [waNotify, setWaNotify] = useState(true);
@@ -1118,7 +1194,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
           </div>
           <button
             type="button"
-            onClick={() => setShowWithdrawModal(true)}
+            onClick={() => setShowBankModal(true)}
             className="px-3.5 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-black backdrop-blur-md border border-white/20 transition-all cursor-pointer active:scale-95 shadow-xs"
           >
             + Metode Pembayaran
@@ -1518,60 +1594,174 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
         </div>
       )}
 
-      {/* 3. MODAL KELOLA REKENING BANK */}
+      {/* 3. MODAL KELOLA REKENING BANK (100% REAL API INTEGRATION) */}
       {showBankModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-[380px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative">
+          <div className="w-full max-w-[420px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-[#0F4C25]" />
-                Rekening Pencairan Saldo
+                Rekening & Metode Pembayaran
               </h3>
               <button
-                onClick={() => setShowBankModal(false)}
+                onClick={() => {
+                  setShowBankModal(false);
+                  setShowAddBankForm(false);
+                }}
                 className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-2 text-xs">
-              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-[#0F4C25] text-white flex items-center justify-center font-black text-[10px]">
-                    BCA
-                  </div>
-                  <div>
-                    <p className="font-black text-[#1A1C19]">Bank Central Asia (BCA)</p>
-                    <p className="text-[10px] text-gray-500 font-semibold">8821-4402-192 • a.n. Bowo Santoso</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                  Utama
-                </span>
+            {/* List Bank Accounts */}
+            {isLoadingBanks ? (
+              <div className="py-8 text-center text-xs font-bold text-gray-400">
+                Memuat data rekening bank API...
               </div>
-
-              <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-[10px]">
-                    DANA
-                  </div>
-                  <div>
-                    <p className="font-black text-[#1A1C19]">DANA E-Wallet</p>
-                    <p className="text-[10px] text-gray-500 font-semibold">0812-3456-7890 • Bowo Santoso</p>
-                  </div>
-                </div>
+            ) : bankAccounts.length === 0 ? (
+              <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-100 text-center space-y-1.5">
+                <p className="text-xs font-black text-[#0F4C25]">Belum Ada Rekening Bank Tersimpan</p>
+                <p className="text-[11px] text-gray-500 font-medium">
+                  Tambahkan rekening bank atau e-wallet utama Anda untuk menerima pencairan hasil panen dari escrow Panentra.
+                </p>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-2 text-xs">
+                {bankAccounts.map((account, index) => {
+                  const isPrimary = account.is_default || index === 0;
+                  const bankBadge = (account.bank_name || "BANK").substring(0, 4).toUpperCase();
+                  return (
+                    <div
+                      key={account.id}
+                      className={`p-3 rounded-2xl border flex items-center justify-between gap-2 ${
+                        isPrimary
+                          ? "bg-emerald-50 border-emerald-300 shadow-2xs"
+                          : "bg-gray-50 border-gray-200"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-[10px] shrink-0 text-white ${
+                            isPrimary ? "bg-[#0F4C25]" : "bg-gray-600"
+                          }`}
+                        >
+                          {bankBadge}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-black text-[#1A1C19] truncate">{account.bank_name}</p>
+                          <p className="text-[10px] text-gray-500 font-semibold truncate">
+                            {account.account_number} • a.n. {account.account_holder}
+                          </p>
+                        </div>
+                      </div>
 
-            <button
-              type="button"
-              onClick={() => alert("Tambah Rekening Bank / E-Wallet Baru")}
-              className="w-full py-2.5 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs"
-            >
-              <Plus className="w-4 h-4" />
-              Tambah Rekening Tujuan
-            </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {isPrimary ? (
+                          <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200">
+                            Utama
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleSetPrimaryBankAction(account.id)}
+                            className="text-[10px] font-bold text-gray-600 hover:text-[#0F4C25] bg-white border border-gray-200 hover:border-emerald-300 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+                          >
+                            Jadikan Utama
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBankAction(account.id)}
+                          className="p-1 text-gray-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
+                          title="Hapus Rekening"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Toggle Add Bank Form */}
+            {showAddBankForm ? (
+              <form onSubmit={handleAddBankAccountSubmit} className="space-y-3 pt-2 border-t border-gray-100 text-xs">
+                <h4 className="font-black text-[#1A1C19] text-xs">Tambah Rekening Baru</h4>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Pilih Bank / E-Wallet</label>
+                  <select
+                    value={newBankName}
+                    onChange={(e) => setNewBankName(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                  >
+                    <option value="Bank BRI">Bank BRI</option>
+                    <option value="Bank BCA">Bank Central Asia (BCA)</option>
+                    <option value="Bank Mandiri">Bank Mandiri</option>
+                    <option value="Bank BNI">Bank Negara Indonesia (BNI)</option>
+                    <option value="Bank BSI">Bank Syariah Indonesia (BSI)</option>
+                    <option value="DANA">DANA E-Wallet</option>
+                    <option value="OVO">OVO E-Wallet</option>
+                    <option value="GoPay">GoPay E-Wallet</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Nomor Rekening / No. E-Wallet</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: 1234567890"
+                    value={newAccountNumber}
+                    onChange={(e) => setNewAccountNumber(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Nama Pemilik Rekening (Atas Nama)</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: Budi Santoso"
+                    value={newAccountHolder}
+                    onChange={(e) => setNewAccountHolder(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAddBankForm(false)}
+                    className="flex-1 justify-center"
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    className="flex-1 justify-center"
+                  >
+                    Simpan Rekening
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowAddBankForm(true)}
+                className="w-full py-2.5 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs"
+              >
+                <Plus className="w-4 h-4" />
+                Tambah Rekening Tujuan
+              </button>
+            )}
           </div>
         </div>
       )}
