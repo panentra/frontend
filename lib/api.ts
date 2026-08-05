@@ -479,6 +479,7 @@ export async function deleteListing(id: number | string): Promise<{ message: str
 export interface SupplierOrderItem {
   id: number;
   order_no: string;
+  listing_id?: number | string;
   commodity: string;
   grade: string;
   qtyKg: number;

@@ -15,6 +15,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Panentra - Menghubungkan Panen dengan Peluang",
   description: "Marketplace Agrotech & Smart Farming Indonesia",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icons/favicon.ico",
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Panentra",
+    statusBarStyle: "black-translucent",
+  },
+  themeColor: "#1B5E20",
 };
 
 export default function RootLayout({

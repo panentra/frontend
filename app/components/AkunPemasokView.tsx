@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { logoutUser, getFavorites, getBankAccounts, createBankAccount, deleteBankAccount, setPrimaryBankAccount, getAuthUser, getSupplierOrders, BankAccount, SupplierOrderItem } from "@/lib/api";
+import { logoutUser, getFavorites, getBankAccounts, createBankAccount, deleteBankAccount, setPrimaryBankAccount, getAuthUser, getSupplierOrders, getSupplierDashboard, BankAccount, SupplierOrderItem, SupplierDashboardData } from "@/lib/api";
 import Avatar from "./Avatar";
 import {
   User,
@@ -84,6 +84,10 @@ export default function AkunPemasokView({
   // Orders Summary State (from API)
   const [orders, setOrders] = useState<SupplierOrderItem[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
+
+  // Financial Summary State (from API)
+  const [dashboard, setDashboard] = useState<SupplierDashboardData | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
 
   // Add Account Form State
   const [showAddForm, setShowAddForm] = useState(false);
@@ -169,6 +173,34 @@ export default function AkunPemasokView({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    getSupplierDashboard()
+      .then((data) => {
+        if (cancelled) return;
+        setDashboard(data);
+      })
+      .catch(() => {
+        setDashboard(null);
+      })
+      .finally(() => {
+        if (!cancelled) setDashboardLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const totalMonthSpend =
+    dashboard?.monthly_spend != null
+      ? dashboard.monthly_spend
+      : dashboard?.recent_orders?.reduce((sum, o) => sum + (o.grand_total || 0), 0) || 0;
+  const totalMonthKg = dashboard?.monthly_kg ?? 0;
+  const completedOrdersCount = dashboard?.completed_orders_count ?? 0;
+  const activeOrdersCount = dashboard?.active_orders_count ?? 0;
+  const monthlyBelanja =
+    dashboard?.recent_orders?.reduce((sum, o) => sum + (o.grand_total || 0), 0) ?? totalMonthSpend;
 
   const deliveryOrders = orders.filter(
     (o) => o.status === "paid_escrow" || o.status === "shipping" || o.status === "delivered"
@@ -293,7 +325,11 @@ export default function AkunPemasokView({
             Anggaran Pembelian Pasokan
           </span>
           <div className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            Rp 24.500.000
+            {dashboardLoading ? (
+              <span className="text-lg animate-pulse">Memuat...</span>
+            ) : (
+              <>Rp {totalMonthSpend.toLocaleString("id-ID")}</>
+            )}
           </div>
         </div>
 
@@ -319,11 +355,25 @@ export default function AkunPemasokView({
         <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/15 text-xs">
           <div className="space-y-0.5">
             <span className="text-[10px] text-emerald-200/90 block font-medium">Belanja Bulan Ini</span>
-            <span className="font-extrabold text-white text-xs sm:text-sm">Rp 32.800.000</span>
+            <span className="font-extrabold text-white text-xs sm:text-sm">
+              {dashboardLoading ? "..." : `Rp ${monthlyBelanja.toLocaleString("id-ID")}`}
+            </span>
+            {totalMonthKg > 0 && (
+              <span className="text-[9px] text-emerald-200/80 block font-medium">
+                {totalMonthKg.toLocaleString("id-ID")} kg diamankan
+              </span>
+            )}
           </div>
           <div className="space-y-0.5 border-l border-white/15 pl-3">
             <span className="text-[10px] text-emerald-200/90 block font-medium">Total Transaksi</span>
-            <span className="font-extrabold text-amber-300 text-xs sm:text-sm">48 Pasokan Selesai</span>
+            <span className="font-extrabold text-amber-300 text-xs sm:text-sm">
+              {dashboardLoading ? "..." : `${completedOrdersCount} Pasokan Selesai`}
+            </span>
+            {activeOrdersCount > 0 && (
+              <span className="text-[9px] text-emerald-200/80 block font-medium">
+                + {activeOrdersCount} pesanan aktif
+              </span>
+            )}
           </div>
         </div>
       </div>

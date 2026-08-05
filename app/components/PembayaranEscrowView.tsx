@@ -20,7 +20,7 @@ import {
 import { HarvestListing } from "./MarketplacePemasokView";
 import Snackbar, { useSnackbar } from "./Snackbar";
 import { getCommodityImage } from "./commodityImage";
-import { createSupplierOrder, payOrder, confirmOrderReceived, getAuthUser } from "@/lib/api";
+import { createSupplierOrder, payOrder, getAuthUser } from "@/lib/api";
 
 const DEFAULT_DELIVERY_ADDRESS = "Jl. Raya Lembang No. 142, Bandung Barat";
 
@@ -71,11 +71,8 @@ export default function PembayaranEscrowView({
   const [deliveryOption, setDeliveryOption] = useState<"dikirim_petani" | "diambil_sendiri" | "titik_kumpul">("dikirim_petani");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPaidEscrow, setIsPaidEscrow] = useState(false);
-  const [isDelivered, setIsDelivered] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
-  const [confirming, setConfirming] = useState(false);
-  const { snackbar, showSnackbar, dismissSnackbar } = useSnackbar();
+  const { snackbar, dismissSnackbar } = useSnackbar();
 
   const deliveryAddress =
     (getAuthUser()?.address as string) || DEFAULT_DELIVERY_ADDRESS;
@@ -98,7 +95,6 @@ export default function PembayaranEscrowView({
       const orderId = (createRes as { data?: { id?: number } })?.data?.id;
 
       if (orderId) {
-        setCreatedOrderId(orderId);
         await payOrder(orderId);
       }
 
@@ -107,29 +103,6 @@ export default function PembayaranEscrowView({
       setPaymentError(err instanceof Error ? err.message : "Gagal memproses pembayaran.");
     } finally {
       setIsProcessing(false);
-    }
-  };
-
-  const handleConfirmReceivedAndReleaseEscrow = async () => {
-    setConfirming(true);
-    try {
-      if (createdOrderId != null) {
-        await confirmOrderReceived(createdOrderId);
-      }
-      showSnackbar(
-        `Sukses! Dana Escrow sebesar Rp ${grandTotal.toLocaleString("id-ID")} telah dicairkan ke Panentra Pay milik ${currentListing.farmerName}. Transaksi Selesai!`,
-        "success"
-      );
-      setTimeout(onPaymentSuccess, 1500);
-    } catch (err) {
-      showSnackbar(
-        err instanceof Error
-          ? err.message
-          : "Order belum dapat dikonfirmasi. Pastikan status pengiriman sudah sampai.",
-        "error"
-      );
-    } finally {
-      setConfirming(false);
     }
   };
 
@@ -365,7 +338,7 @@ export default function PembayaranEscrowView({
           </button>
         </form>
       ) : (
-        /* Paid State: Escrow Release Simulation */
+        /* Paid State */
         <div className="bg-white rounded-[28px] p-5 border border-gray-200 shadow-sm space-y-4 text-xs">
           <div className="flex items-center gap-2 text-[#0F4C25] font-black text-sm">
             <CheckCircle2 className="w-6 h-6 text-[#0F4C25]" />
@@ -376,39 +349,17 @@ export default function PembayaranEscrowView({
             Status: <strong className="text-[#0F4C25]">Pesanan Dibayar (Escrow Active)</strong>. Notifikasi telah dikirim ke {currentListing.farmerName} untuk penyiapan pengiriman.
           </p>
 
-          <div className="p-3 bg-[#F8FAF8] rounded-2xl border border-gray-200 space-y-2">
-            <span className="text-[10px] font-black text-[#0F4C25] uppercase">
-              Verifikasi Barang Diterima Pemasok
-            </span>
-            <p className="text-[11px] text-gray-500">
-              Setel simulasi di bawah untuk menguji konfirmasi penerimaan pasokan di gudang Anda.
-            </p>
-
-            <button
-              type="button"
-              onClick={() => setIsDelivered(!isDelivered)}
-              className={`w-full py-2 rounded-xl text-xs font-bold border transition-all ${
-                isDelivered
-                  ? "bg-emerald-100 text-[#0F4C25] border-[#0F4C25]"
-                  : "bg-gray-100 text-gray-700 border-gray-200"
-              }`}
-            >
-              Simulasi Status Barang: {isDelivered ? "Sudah Sampai di Gudang Toko" : "Dalam Perjalanan"}
-            </button>
-          </div>
+          <p className="p-3 bg-[#F8FAF8] rounded-2xl border border-gray-200 text-[11px] text-gray-500 font-medium leading-relaxed">
+            Dana Anda aman di escrow Panentra dan HANYA dicairkan setelah barang diterima sesuai kualitas. Pantau status pengiriman di menu <strong className="text-[#0F4C25]">Pengantaran</strong> dan riwayat di <strong className="text-[#0F4C25]">Riwayat Pembelian</strong>.
+          </p>
 
           <button
             type="button"
-            disabled={!isDelivered || confirming}
-            onClick={handleConfirmReceivedAndReleaseEscrow}
-            className={`w-full h-12 font-black rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all text-xs ${
-              isDelivered
-                ? "bg-[#0F4C25] hover:bg-[#0A381B] text-white cursor-pointer active:scale-95"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            } disabled:opacity-60`}
+            onClick={onPaymentSuccess}
+            className="w-full h-12 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all text-xs cursor-pointer active:scale-95"
           >
             <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-            <span>{confirming ? "Memproses Konfirmasi..." : "Konfirmasi Barang Sesuai & Cairkan Escrow"}</span>
+            <span>Lanjut ke Riwayat Pesanan</span>
           </button>
         </div>
       )}

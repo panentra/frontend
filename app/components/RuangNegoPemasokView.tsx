@@ -25,9 +25,11 @@ import {
   getChatMessages,
   sendChatMessage,
   startNegotiation,
+  getSupplierOrders,
   getAuthUser,
   ApiChatListItem,
   ApiChatMessageItem,
+  SupplierOrderItem,
 } from "@/lib/api";
 
 function formatChatTime(iso?: string | null): string {
@@ -119,6 +121,7 @@ export default function RuangNegoPemasokView({
   const [activeFilter, setActiveFilter] = useState<"all" | "nego" | "unread" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [chatList, setChatList] = useState<PemasokChatConversation[]>([]);
+  const [chatListLoaded, setChatListLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -137,8 +140,31 @@ export default function RuangNegoPemasokView({
         setError(err.message);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setChatListLoaded(true);
+          setLoading(false);
+        }
       });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Paid orders already created for this supplier (block double payment)
+  const [paidListingIds, setPaidListingIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let cancelled = false;
+    getSupplierOrders()
+      .then((res) => {
+        if (cancelled) return;
+        const ids = new Set<string>();
+        (res?.data || []).forEach((o: SupplierOrderItem) => {
+          if (o.listing_id != null) ids.add(String(o.listing_id));
+        });
+        setPaidListingIds(ids);
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -149,11 +175,17 @@ export default function RuangNegoPemasokView({
   const autoStartedRef = React.useRef(false);
 
   useEffect(() => {
-    if (!listing || autoStartedRef.current) return;
+    if (!listing || !chatListLoaded || autoStartedRef.current) return;
 
-    const existing = chatList.find((c) => c.listingId === listing.id || c.id === listing.id);
+    const existing = chatList.find(
+      (c) =>
+        String(c.listingId) === String(listing.id) ||
+        String(c.id) === String(listing.id) ||
+        String(c.apiChatId) === String(listing.id)
+    );
     if (existing) {
-      setSelectedChat(existing);
+      autoStartedRef.current = true;
+      Promise.resolve().then(() => setSelectedChat(existing));
       return;
     }
 
@@ -235,7 +267,7 @@ export default function RuangNegoPemasokView({
           listingRef: listing,
         });
       });
-  }, [listing, chatList]);
+  }, [listing, chatList, chatListLoaded]);
 
   // Chat Room Input States
   const [inputMessage, setInputMessage] = useState("");
@@ -355,6 +387,12 @@ export default function RuangNegoPemasokView({
     setNegoStatus("pending");
     setShowOfferDrawer(false);
   };
+
+  const isRoomPaid =
+    selectedChat != null &&
+    (paidListingIds.has(String(selectedChat.listingRef?.id ?? "")) ||
+      paidListingIds.has(String(selectedChat.listingId ?? "")) ||
+      paidListingIds.has(String(selectedChat.id ?? "")));
 
   const handleAcceptCounter = () => {
     if (!selectedChat) return;
@@ -518,7 +556,17 @@ export default function RuangNegoPemasokView({
                     </p>
 
                     {/* Actions inside Nego Card */}
-                    {negoStatus === "approved" ? (
+                    {isRoomPaid ? (
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center space-y-1">
+                        <p className="text-[11px] font-black text-[#0F4C25] flex items-center justify-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4" />
+                          Anda sudah membeli / membayar pesanan ini
+                        </p>
+                        <p className="text-[10px] text-gray-600 font-medium">
+                          Pantau status pengiriman di menu Pesanan &amp; Pengantaran.
+                        </p>
+                      </div>
+                    ) : negoStatus === "approved" ? (
                       <button
                         type="button"
                         onClick={() => {
@@ -563,48 +611,17 @@ export default function RuangNegoPemasokView({
                         <span>Setujui Counter Offer & Bayar Escrow</span>
                       </button>
                     ) : (
-                      <div className="flex gap-2">
+                      <div className="space-y-2">
                         <button
                           type="button"
                           onClick={() => setShowOfferDrawer(true)}
-                          className="flex-1 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl font-black text-xs cursor-pointer active:scale-95 transition-all"
+                          className="w-full py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl font-black text-xs cursor-pointer active:scale-95 transition-all"
                         >
                           Ubah Tawaran
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const targetListing: HarvestListing = selectedChat.listingRef || {
-                              id: selectedChat.id,
-                              farmerName: selectedChat.farmerName,
-                              farmerRating: 4.9,
-                              farmerTotalSales: 38,
-                              farmerLocation: selectedChat.farmerLocation,
-                              distanceKm: 3.2,
-                              commodity: selectedChat.item,
-                              grade: "Grade A (SNI)",
-                              hppPerKg: 28500,
-                              sellingPrice: selectedChat.listingPrice,
-                              availableKg: 1280,
-                              harvestStatus: "Siap Dipetik Besok",
-                              allowNegotiation: true,
-                              productImage: selectedChat.productImage,
-                              farmerAvatar: selectedChat.farmerAvatar,
-                              farmImage: selectedChat.farmerAvatar,
-                              harvestCategory: "Bahan-Bahan",
-                            };
-
-                            onProceedToPayment({
-                              listing: targetListing,
-                              agreedPrice: msg.offerData?.price || selectedChat.listingPrice,
-                              agreedQty: msg.offerData?.qty || parseInt(offerQty) || 50,
-                            });
-                          }}
-                          className="flex-1 py-2 bg-[#0F4C25] hover:bg-[#0A381B] text-white rounded-xl font-black text-xs cursor-pointer active:scale-95 transition-all"
-                        >
-                          <ShoppingBag className="w-3.5 h-3.5 text-emerald-300" />
-                          Lanjut ke Pembayaran Escrow
-                        </button>
+                        <p className="text-center text-[10px] font-bold text-gray-500">
+                          Menunggu persetujuan petani sebelum lanjut ke pembayaran escrow.
+                        </p>
                       </div>
                     )}
                   </div>
