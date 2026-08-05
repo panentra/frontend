@@ -209,7 +209,7 @@ const FARM_PLOTS = [
   },
 ];
 
-import { Land, getExpenses, createExpense, deleteExpense, ExpenseItem } from "@/lib/api";
+import { Land, getExpenses, createExpense, deleteExpense, getCurrentUser, getAuthUser, ExpenseItem } from "@/lib/api";
 
 interface AkunKeuanganViewProps {
   onSubViewChange?: (isOpen: boolean) => void;
@@ -242,8 +242,8 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
   const [showLangModal, setShowLangModal] = useState(false);
 
   // Form State Profile
-  const [profileName, setProfileName] = useState("Pak Bowo Santoso");
-  const [profilePhone, setProfilePhone] = useState("+62 812-3456-7890");
+  const [profileName, setProfileName] = useState("Pak Budi Santoso");
+  const [profilePhone, setProfilePhone] = useState("+62 812-9988-7766");
 
   // Form State Expense
   const [expenseTitle, setExpenseTitle] = useState("");
@@ -253,6 +253,28 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
   const [expenses, setExpenses] = useState(INITIAL_EXPENSE_HISTORY);
 
   React.useEffect(() => {
+    async function loadUserData() {
+      const storedUser = getAuthUser();
+      if (storedUser) {
+        if (storedUser.name) setProfileName(storedUser.name);
+        if ((storedUser as Record<string, unknown>).phone || storedUser.email) {
+          setProfilePhone((storedUser as Record<string, unknown>).phone as string || storedUser.email || "+62 812-9988-7766");
+        }
+      }
+
+      try {
+        const liveUser = await getCurrentUser();
+        if (liveUser) {
+          if (liveUser.name) setProfileName(liveUser.name);
+          if ((liveUser as Record<string, unknown>).phone || liveUser.email) {
+            setProfilePhone((liveUser as Record<string, unknown>).phone as string || liveUser.email || "+62 812-9988-7766");
+          }
+        }
+      } catch (err) {
+        console.warn("Gagal memuat API user profile:", err);
+      }
+    }
+
     async function loadExpensesData() {
       try {
         const res = await getExpenses();
@@ -274,6 +296,8 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
         console.warn("Gagal memuat API expenses:", err);
       }
     }
+
+    loadUserData();
     loadExpensesData();
   }, []);
 
