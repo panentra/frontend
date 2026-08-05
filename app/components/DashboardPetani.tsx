@@ -24,9 +24,9 @@ import {
   HelpCircle,
   BarChart3,
   ShieldAlert,
-  Coins,
   ArrowUpRight,
   Info,
+  AlertCircle,
 } from "lucide-react";
 import { getAuthUser, getFarmerDashboard, getLands, getExpenses, createExpense, FarmerDashboardData, LandsResponse, Land } from "@/lib/api";
 import BottomNavbar from "./BottomNavbar";
@@ -247,6 +247,20 @@ export default function DashboardPetani() {
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showSaleModal, setShowSaleModal] = useState(false);
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+
+  // Toast Notification State
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "error" | "info" }>({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = React.useCallback((message: string, type: "success" | "error" | "info" = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast((prev) => ({ ...prev, show: false }));
+    }, 4000);
+  }, []);
 
   const isAnyModalOpen = showExpenseModal || showSaleModal || showEmergencyModal;
 
@@ -845,7 +859,7 @@ export default function DashboardPetani() {
                   variant="primary"
                   size="md"
                   onClick={() => {
-                    alert("Diagnosa AI: Terdeteksi gejala Antraknosa (Patek). Direkomendasikan penyemprotan Fungisida Tembaga Hidroksida dosis 2g/L.");
+                    showToast("Diagnosa AI: Terdeteksi gejala Antraknosa (Patek). Dosis Fungisida Tembaga 2g/L.", "info");
                     setShowEmergencyModal(false);
                   }}
                   className="w-full justify-center bg-red-600 hover:bg-red-700"
@@ -854,6 +868,27 @@ export default function DashboardPetani() {
                 </Button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* SLIDE-IN / TOAST NOTIFICATION POP-UP */}
+        {toast.show && (
+          <div className="fixed bottom-22 sm:bottom-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 bg-[#1A1C19]/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-gray-700/80 animate-slide-up max-w-[92vw] sm:max-w-md">
+            {toast.type === "error" ? (
+              <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+            ) : toast.type === "info" ? (
+              <Info className="w-5 h-5 text-blue-400 shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            )}
+            <span className="text-xs font-bold leading-tight">{toast.message}</span>
+            <button
+              type="button"
+              onClick={() => setToast({ show: false, message: "", type: "success" })}
+              className="p-1 text-gray-400 hover:text-white rounded-lg ml-auto shrink-0 cursor-pointer active:scale-95 transition-all"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
       </main>

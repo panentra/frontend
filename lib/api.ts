@@ -640,6 +640,18 @@ export async function startNegotiation(payload: Record<string, unknown>): Promis
   });
 }
 
+export async function respondFarmerNegotiation(payload: {
+  order_id: number | string;
+  action: "accept" | "counter" | "reject";
+  counter_price?: number;
+  message?: string;
+}): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>("/api/farmer/negotiations/respond", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function getFavorites(): Promise<Record<string, unknown>> {
   return fetchWithAuth<Record<string, unknown>>("/api/supplier/favorites");
 }

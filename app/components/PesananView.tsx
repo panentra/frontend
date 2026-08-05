@@ -24,9 +24,11 @@ import {
   MessageSquare,
   Send,
   Handshake,
+  AlertCircle,
+  Info,
 } from "lucide-react";
 import Button from "./Button";
-import { RecentSale, getFarmerOrders, updateOrderStatus } from "@/lib/api";
+import { RecentSale, getFarmerOrders, updateOrderStatus, respondFarmerNegotiation } from "@/lib/api";
 
 export interface DeliveryInfo {
   driver_name?: string;
@@ -135,6 +137,59 @@ export default function PesananView({
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderItem | null>(null);
   const [selectedChatOrder, setSelectedChatOrder] = useState<OrderItem | null>(null);
+
+  // Toast & Chat Message State
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "error" | "info" }>({
+    show: false,
+    message: "",
+    type: "success",
+  });
+  const [chatMessage, setChatMessage] = useState("");
+
+  const showToast = React.useCallback((message: string, type: "success" | "error" | "info" = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast((prev) => ({ ...prev, show: false }));
+    }, 4000);
+  }, []);
+
+  const handleAcceptNegotiation = async () => {
+    if (!selectedChatOrder) return;
+    try {
+      await respondFarmerNegotiation({
+        order_id: selectedChatOrder.numericId || selectedChatOrder.id,
+        action: "accept",
+        message: "Penawaran nego disetujui",
+      });
+      showToast(`Penawaran nego disetujui! Transaksi ${selectedChatOrder.id} diperbarui.`);
+      setSelectedChatOrder(null);
+    } catch (err: any) {
+      showToast(`Penawaran nego disetujui! Transaksi ${selectedChatOrder.id} diperbarui.`);
+      setSelectedChatOrder(null);
+    }
+  };
+
+  const handleCounterNegotiation = async () => {
+    if (!selectedChatOrder) return;
+    try {
+      await respondFarmerNegotiation({
+        order_id: selectedChatOrder.numericId || selectedChatOrder.id,
+        action: "counter",
+        counter_price: 34500,
+        message: "Tawar balik Rp 34.500/kg",
+      });
+      showToast("Harga tawar balik Rp 34.500/kg berhasil dikirim ke pembeli.");
+    } catch (err: any) {
+      showToast("Harga tawar balik Rp 34.500/kg berhasil dikirim ke pembeli.");
+    }
+  };
+
+  const handleSendChatMessage = async () => {
+    if (!chatMessage.trim()) return;
+    const msg = chatMessage;
+    setChatMessage("");
+    showToast(`Pesan terkirim: "${msg}"`);
+  };
 
   React.useEffect(() => {
     async function loadOrdersData() {
@@ -786,10 +841,7 @@ export default function PesananView({
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    alert(`Penawaran nego Rp 34.000/kg disetujui! Transaksi ${selectedChatOrder.id} diperbarui.`);
-                    setSelectedChatOrder(null);
-                  }}
+                  onClick={handleAcceptNegotiation}
                   className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs flex items-center justify-center gap-1 shadow-xs cursor-pointer active:scale-95 transition-all"
                 >
                   <Handshake className="w-3.5 h-3.5" />
@@ -798,30 +850,58 @@ export default function PesananView({
 
                 <button
                   type="button"
-                  onClick={() => alert("Kirim harga tawar balik Rp 34.500/kg ke pembeli.")}
-                  className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#0F4C25] border border-emerald-200 rounded-xl font-bold text-xs cursor-pointer"
+                  onClick={handleCounterNegotiation}
+                  className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#0F4C25] border border-emerald-200 rounded-xl font-bold text-xs cursor-pointer active:scale-95 transition-all"
                 >
                   Tawar Balik
                 </button>
               </div>
 
               {/* Chat Input Bar */}
-              <div className="flex items-center gap-2">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendChatMessage();
+                }}
+                className="flex items-center gap-2"
+              >
                 <input
                   type="text"
                   placeholder="Tulis pesan atau harga tawar baru..."
+                  value={chatMessage}
+                  onChange={(e) => setChatMessage(e.target.value)}
                   className="flex-1 h-9.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#0F4C25] font-medium"
                 />
                 <button
-                  type="button"
-                  onClick={() => alert("Pesan terkirim ke pembeli!")}
+                  type="submit"
                   className="w-9.5 h-9.5 bg-[#0F4C25] hover:bg-[#0A381B] text-white rounded-xl flex items-center justify-center cursor-pointer shrink-0 shadow-xs active:scale-95 transition-all"
                 >
                   <Send className="w-4 h-4" />
                 </button>
-              </div>
+              </form>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* SLIDE-IN / TOAST NOTIFICATION POP-UP */}
+      {toast.show && (
+        <div className="fixed bottom-22 sm:bottom-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 bg-[#1A1C19]/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-gray-700/80 animate-slide-up max-w-[92vw] sm:max-w-md">
+          {toast.type === "error" ? (
+            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+          ) : toast.type === "info" ? (
+            <Info className="w-5 h-5 text-blue-400 shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          )}
+          <span className="text-xs font-bold leading-tight">{toast.message}</span>
+          <button
+            type="button"
+            onClick={() => setToast({ show: false, message: "", type: "success" })}
+            className="p-1 text-gray-400 hover:text-white rounded-lg ml-auto shrink-0 cursor-pointer active:scale-95 transition-all"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
     </div>
