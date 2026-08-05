@@ -559,6 +559,8 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
 
   const totalSalesRevenue = salesHistory.reduce((sum, item) => sum + (item.rawTotal || 0), 0);
   const totalSalesVolume = salesHistory.reduce((sum, item) => sum + (item.rawQty || 0), 0);
+  const totalHppExpense = expenses.reduce((sum, item) => sum + (item.rawAmount || 0), 0);
+  const netTotalIncome = totalSalesRevenue - totalHppExpense;
 
   const plantingSeasons = React.useMemo(() => {
     const seasonMap = new Map<string, { id: string; name: string; period: string; status: string; numericId: number }>();
@@ -1189,7 +1191,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
               Tracking Total Pendapatan Hasil Panen
             </span>
             <div className="text-2xl sm:text-3xl font-black tracking-tight">
-              Rp 14.850.000
+              Rp {(netTotalIncome > 0 ? netTotalIncome : 0).toLocaleString("id-ID")}
             </div>
           </div>
           <button
@@ -1208,7 +1210,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
             </div>
             <div>
               <span className="text-[10px] text-emerald-200 block font-medium">Pendapatan Omset</span>
-              <span className="font-black text-white text-xs">Rp 17.490.000</span>
+              <span className="font-black text-white text-xs">Rp {totalSalesRevenue.toLocaleString("id-ID")}</span>
             </div>
           </div>
 
@@ -1218,7 +1220,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
             </div>
             <div>
               <span className="text-[10px] text-emerald-200 block font-medium">Total Biaya Produksi (HPP)</span>
-              <span className="font-black text-white text-xs">Rp 1.050.000</span>
+              <span className="font-black text-white text-xs">Rp {totalHppExpense.toLocaleString("id-ID")}</span>
             </div>
           </div>
         </div>
