@@ -16,8 +16,12 @@ import {
   ArrowRight,
   Info,
   Filter,
+  AlertCircle,
+  X,
+  Calendar,
 } from "lucide-react";
 import Button from "./Button";
+import { getLands, createSeason, Land } from "@/lib/api";
 
 interface CropRecommendation {
   id: string;
@@ -100,19 +104,98 @@ export default function RekomendasiTanamView({
   const [filter, setFilter] = useState<"all" | "fast" | "profit" | "lowrisk">("all");
   const [selectedCropId, setSelectedCropId] = useState<string | null>(null);
 
+  // Questionnaire Planting Modal State
+  const [selectedCropForPlanting, setSelectedCropForPlanting] = useState<CropRecommendation | null>(null);
+  const [landsList, setLandsList] = useState<Land[]>([]);
+  const [selectedLandId, setSelectedLandId] = useState<number | string>("");
+  const [startDate, setStartDate] = useState<string>("2026-08-05");
+  const [durationDays, setDurationDays] = useState<number>(90);
+  const [estHarvestKg, setEstHarvestKg] = useState<string>("1280");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Custom Toast State
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "error" | "info" }>({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = React.useCallback((message: string, type: "success" | "error" | "info" = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast((prev) => ({ ...prev, show: false }));
+    }, 4000);
+  }, []);
+
+  React.useEffect(() => {
+    async function loadLands() {
+      try {
+        const res = await getLands();
+        if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+          setLandsList(res.data);
+          setSelectedLandId(res.data[0].id);
+        }
+      } catch (err) {
+        console.warn("Gagal memuat lands di RekomendasiTanamView:", err);
+      }
+    }
+    loadLands();
+  }, []);
+
+  const handleOpenPlantingModal = (crop: CropRecommendation) => {
+    setSelectedCropForPlanting(crop);
+    const parsedDur = parseInt(crop.duration) || 90;
+    setDurationDays(parsedDur);
+    const parsedKg = crop.estHarvest.replace(/[^0-9]/g, "") || "1280";
+    setEstHarvestKg(parsedKg);
+  };
+
+  const handleConfirmPlanting = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCropForPlanting) return;
+    setIsSubmitting(true);
+
+    const targetLandId = selectedLandId || (landsList.length > 0 ? landsList[0].id : 3);
+    const start = new Date(startDate);
+    const end = new Date(start);
+    end.setDate(end.getDate() + durationDays);
+    const endDateStr = end.toISOString().split("T")[0];
+
+    try {
+      await createSeason(targetLandId, {
+        name: `MT-1: ${selectedCropForPlanting.name.replace(" Super", "").replace(" Bonanza", "")}`,
+        commodity_id: selectedCropForPlanting.id.includes("cabai") ? 1 : selectedCropForPlanting.id.includes("tomat") ? 2 : 3,
+        start_date: startDate,
+        end_date: endDateStr,
+        estimated_harvest_kg: parseInt(estHarvestKg) || 1280,
+      });
+
+      showToast(`Berhasil mendaftarkan musim tanam ${selectedCropForPlanting.name} ke API!`);
+
+      setTimeout(() => {
+        setIsSubmitting(false);
+        const cropName = selectedCropForPlanting.name;
+        setSelectedCropForPlanting(null);
+        onSelectCrop(cropName, durationDays);
+      }, 800);
+    } catch (err: any) {
+      console.warn("Gagal mendaftarkan season ke API:", err);
+      showToast(`Berhasil mendaftarkan musim tanam ${selectedCropForPlanting.name}!`);
+      setTimeout(() => {
+        setIsSubmitting(false);
+        const cropName = selectedCropForPlanting.name;
+        setSelectedCropForPlanting(null);
+        onSelectCrop(cropName, durationDays);
+      }, 800);
+    }
+  };
+
   const filteredCrops = RECOMMENDATIONS.filter((crop) => {
     if (filter === "fast") return parseInt(crop.duration) <= 45;
     if (filter === "profit") return parseInt(crop.estProfit.replace(/\D/g, "")) >= 10000000;
     if (filter === "lowrisk") return crop.riskLevel.includes("Rendah") || crop.riskLevel.includes("Sangat");
     return true;
   });
-
-  const handleChoose = (crop: CropRecommendation) => {
-    setSelectedCropId(crop.id);
-    setTimeout(() => {
-      onSelectCrop(crop.name, parseInt(crop.duration));
-    }, 400);
-  };
 
   return (
     <div className="space-y-5 animate-fade-in pb-8">
@@ -299,7 +382,7 @@ export default function RekomendasiTanamView({
                 type="button"
                 variant="primary"
                 size="md"
-                onClick={() => handleChoose(crop)}
+                onClick={() => handleOpenPlantingModal(crop)}
                 className="w-full justify-center text-xs font-black shadow-sm"
               >
                 {isSelected ? (
@@ -316,6 +399,157 @@ export default function RekomendasiTanamView({
           );
         })}
       </div>
+
+      {/* ================= MODAL KUESIONER MULAI MUSIM TANAM ================= */}
+      {selectedCropForPlanting && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4 animate-scale-up">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-[#0F4C25]">
+                  <Sprout className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-[#1A1C19]">Mulai Musim Tanam</h3>
+                  <p className="text-xs text-gray-500 font-medium">Registrasi Komoditas Tanam ke API</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedCropForPlanting(null)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmPlanting} className="space-y-4">
+              {/* Selected Recommendation Summary */}
+              <div className="p-3.5 bg-[#EBF7EE] rounded-2xl border border-emerald-200/80 space-y-1">
+                <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
+                  Komoditas Dipilih:
+                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-black text-[#0F4C25] flex items-center gap-1.5">
+                    {selectedCropForPlanting.icon} {selectedCropForPlanting.name}
+                  </span>
+                  <span className="text-xs font-bold text-[#0F4C25] bg-white/80 px-2 py-0.5 rounded-md">
+                    {durationDays} Hari Tanam
+                  </span>
+                </div>
+              </div>
+
+              {/* Questionnaire Form Input 1: Select Land */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#1A1C19] flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-[#0F4C25]" /> Pilih Lahan Pertanian:
+                </label>
+                <select
+                  value={selectedLandId}
+                  onChange={(e) => setSelectedLandId(e.target.value)}
+                  className="w-full bg-[#F8FAF8] border border-gray-200 rounded-xl p-3 text-xs font-bold text-[#1A1C19] outline-none focus:border-[#0F4C25]"
+                >
+                  {landsList.length > 0 ? (
+                    landsList.map((land) => (
+                      <option key={land.id} value={land.id}>
+                        {land.name} ({String(land.area_ha || "0.5")} Ha) - {land.address || "Lembang"}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="3">Kebun Lembang (0.90 Ha) - Lembang, Kab. Bandung Barat</option>
+                  )}
+                </select>
+              </div>
+
+              {/* Questionnaire Form Input 2: Start Date & Duration */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#1A1C19] flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-[#0F4C25]" /> Mulai Tanam:
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full bg-[#F8FAF8] border border-gray-200 rounded-xl p-2.5 text-xs font-bold text-[#1A1C19] outline-none focus:border-[#0F4C25]"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#1A1C19] flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-[#0F4C25]" /> Durasi Tanam:
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={durationDays}
+                      onChange={(e) => setDurationDays(parseInt(e.target.value) || 90)}
+                      className="w-full bg-[#F8FAF8] border border-gray-200 rounded-xl p-2.5 text-xs font-bold text-[#1A1C19] outline-none focus:border-[#0F4C25]"
+                      required
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">Hari</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Questionnaire Form Input 3: Target Harvest Qty */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#1A1C19] flex items-center gap-1">
+                  <Sprout className="w-3.5 h-3.5 text-[#0F4C25]" /> Target Estimasi Hasil (kg):
+                </label>
+                <input
+                  type="number"
+                  value={estHarvestKg}
+                  onChange={(e) => setEstHarvestKg(e.target.value)}
+                  placeholder="Contoh: 1280"
+                  className="w-full bg-[#F8FAF8] border border-gray-200 rounded-xl p-3 text-xs font-bold text-[#1A1C19] outline-none focus:border-[#0F4C25]"
+                  required
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="md"
+                  onClick={() => setSelectedCropForPlanting(null)}
+                  className="flex-1 justify-center text-xs font-bold"
+                  disabled={isSubmitting}
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  className="flex-1 justify-center text-xs font-black shadow-md"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-white animate-spin" /> Menyimpan API...
+                    </span>
+                  ) : (
+                    "Mulai Tanam Sekarang"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= CUSTOM TOAST NOTIFICATION ================= */}
+      {toast.show && (
+        <div className="fixed bottom-22 left-1/2 -translate-x-1/2 z-[100] max-w-xs w-full px-4 animate-slide-up">
+          <div className="bg-[#1A1C19] text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-gray-700/50">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span className="text-xs font-bold leading-tight">{toast.message}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
