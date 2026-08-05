@@ -15,6 +15,11 @@ import {
   Check,
 } from "lucide-react";
 import Button from "./Button";
+import { Land } from "@/lib/api";
+
+interface KalenderViewProps {
+  lands?: Land[];
+}
 
 export interface ScheduleItem {
   id: number;
@@ -119,7 +124,7 @@ const TYPE_CONFIG = {
   care: { label: "Perawatan", color: "bg-purple-500", text: "text-purple-700", bgLight: "bg-purple-50 border-purple-200" },
 };
 
-export default function KalenderView() {
+export default function KalenderView({ lands }: KalenderViewProps = {}) {
   const [selectedCrop, setSelectedCrop] = useState("semua");
   const [scheduleList, setScheduleList] = useState<ScheduleItem[]>(INITIAL_SCHEDULE);
   

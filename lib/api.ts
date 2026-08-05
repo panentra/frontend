@@ -27,13 +27,41 @@ export interface LoginPayload {
   password: string;
 }
 
+export interface Commodity {
+  id: number;
+  name: string;
+  category?: string;
+  unit?: string;
+  [key: string]: unknown;
+}
+
+export interface SeasonItem {
+  id: number;
+  name: string;
+  commodity?: Commodity;
+  start_date: string;
+  end_date?: string;
+  status: string;
+  estimated_harvest_kg?: number;
+  total_expense?: number;
+  [key: string]: unknown;
+}
+
 export interface Land {
   id: number;
   name: string;
-  area: number;
+  area: string | number;
   area_unit: string;
-  commodity_id?: number;
+  address?: string;
+  lat?: number | null;
+  lng?: number | null;
+  commodity?: Commodity;
+  seasons?: SeasonItem[];
   [key: string]: unknown;
+}
+
+export interface LandsResponse {
+  data: Land[];
 }
 
 export interface CreateLandPayload {
@@ -305,8 +333,8 @@ export async function getFarmerDashboard(): Promise<FarmerDashboardData> {
 /**
  * GET /api/farmer/lands
  */
-export async function getLands(): Promise<Land[]> {
-  return fetchWithAuth<Land[]>("/api/farmer/lands");
+export async function getLands(): Promise<LandsResponse> {
+  return fetchWithAuth<LandsResponse>("/api/farmer/lands");
 }
 
 /**

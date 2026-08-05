@@ -28,7 +28,7 @@ import {
   ArrowUpRight,
   Info,
 } from "lucide-react";
-import { getAuthUser, getFarmerDashboard, FarmerDashboardData } from "@/lib/api";
+import { getAuthUser, getFarmerDashboard, getLands, FarmerDashboardData, LandsResponse, Land } from "@/lib/api";
 import BottomNavbar from "./BottomNavbar";
 import Button from "./Button";
 import KalenderView from "./KalenderView";
@@ -160,6 +160,7 @@ export default function DashboardPetani() {
   const [userName, setUserName] = useState("Andi");
   const [activeTab, setActiveTab] = useState<"beranda" | "kalender" | "jual" | "pesanan" | "chat" | "akun">("beranda");
   const [dashboardData, setDashboardData] = useState<FarmerDashboardData | null>(null);
+  const [landsData, setLandsData] = useState<LandsResponse | null>(null);
 
   useEffect(() => {
     const user = getAuthUser();
@@ -167,7 +168,7 @@ export default function DashboardPetani() {
       setUserName(user.name);
     }
 
-    async function loadDashboard() {
+    async function loadDashboardData() {
       try {
         const data = await getFarmerDashboard();
         if (data) {
@@ -177,7 +178,20 @@ export default function DashboardPetani() {
         console.warn("Gagal memuat farmer dashboard API:", err);
       }
     }
-    loadDashboard();
+
+    async function loadLandsData() {
+      try {
+        const landsRes = await getLands();
+        if (landsRes) {
+          setLandsData(landsRes);
+        }
+      } catch (err) {
+        console.warn("Gagal memuat lahan API:", err);
+      }
+    }
+
+    loadDashboardData();
+    loadLandsData();
   }, []);
   const [viewMode, setViewMode] = useState<"dashboard" | "rekomendasi" | "jual">("dashboard");
   const [isChatRoomActive, setIsChatRoomActive] = useState(false);
@@ -295,7 +309,7 @@ export default function DashboardPetani() {
             />
           ) : (
             <>
-              {activeTab === "kalender" && <KalenderView />}
+              {activeTab === "kalender" && <KalenderView lands={landsData?.data} />}
               {activeTab === "pesanan" && (
                 <PesananView
                   recentSales={dashboardData?.recent_sales}
@@ -344,17 +358,22 @@ export default function DashboardPetani() {
                   {/* Text Content (Layered ON TOP with z-10) */}
                   <div className="space-y-2 z-10 relative max-w-[75%]">
                     <div className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight drop-shadow-md">
-                      {dashboardData?.active_seasons?.[0]?.name || activeCrop.name}
+                      {landsData?.data?.[0]?.seasons?.[0]?.name || landsData?.data?.[0]?.name || dashboardData?.active_seasons?.[0]?.name || activeCrop.name}
                     </div>
 
                     <p className="text-xs text-emerald-100/95 leading-relaxed font-medium drop-shadow-sm">
-                      Estimasi Panen: <span className="font-extrabold text-white">{activeCrop.estimatedHarvestKg} kg</span> · Diprediksi 22 hari lagi!
+                      Estimasi Panen: <span className="font-extrabold text-white">{landsData?.data?.[0]?.seasons?.[0]?.estimated_harvest_kg ? `${landsData.data[0].seasons[0].estimated_harvest_kg} kg` : `${activeCrop.estimatedHarvestKg} kg`}</span> · Diprediksi 22 hari lagi!
                     </p>
 
                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
                       <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white border border-white/20 shadow-sm">
                         HPP: Rp {hppPerKg.toLocaleString("id-ID")}/kg
                       </span>
+                      {landsData?.data?.[0]?.address && (
+                        <span className="bg-emerald-900/40 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-emerald-100 border border-emerald-500/30">
+                          📍 {landsData.data[0].address}
+                        </span>
+                      )}
                     </div>
                   </div>
 
