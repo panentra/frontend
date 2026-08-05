@@ -398,8 +398,37 @@ export async function deleteExpense(id: number | string): Promise<{ message: str
   });
 }
 
-export async function getFarmerListings(): Promise<Listing[]> {
-  return fetchWithAuth<Listing[]>("/api/farmer/listings");
+export interface FarmerListingItem {
+  id: number;
+  farmerName?: string;
+  farmerRating?: number;
+  farmerTotalSales?: number;
+  farmerLocation?: string;
+  distanceKm?: number;
+  commodity?: string;
+  grade?: string;
+  hppPerKg?: number;
+  sellingPrice?: number;
+  availableKg?: number;
+  harvestStatus?: string;
+  allowNegotiation?: boolean;
+  productImage?: string | null;
+  farmerAvatar?: string | null;
+  harvestCategory?: string;
+  isBestSeller?: boolean;
+  deliveryMethod?: string;
+  certifications?: string[];
+  status?: string;
+  expiresAt?: string;
+  [key: string]: unknown;
+}
+
+export interface FarmerListingsResponse {
+  data: FarmerListingItem[];
+}
+
+export async function getFarmerListings(): Promise<FarmerListingsResponse> {
+  return fetchWithAuth<FarmerListingsResponse>("/api/farmer/listings");
 }
 
 export async function createListing(payload: Record<string, unknown>): Promise<Listing> {
