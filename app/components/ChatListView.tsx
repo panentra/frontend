@@ -64,6 +64,7 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
   const [selectedChat, setSelectedChat] = useState<ChatConversation | null>(null);
   const [messages, setMessages] = useState<ApiChatMessageItem[]>([]);
   const [inputText, setInputText] = useState("");
+  const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
   // Penawaran aksi (ACC / tawar balik) sisi Petani
   const currentUserId = getAuthUser()?.id;
@@ -178,21 +179,30 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
   React.useEffect(() => {
     if (!selectedChat) return;
     const targetChatId = selectedChat.numericChatId || selectedChat.id;
-    async function loadMessages() {
-      try {
-        const res = await getChatMessages(targetChatId);
-        if (res && res.data && Array.isArray(res.data)) {
-          setMessages(res.data);
-        } else {
-          setMessages([]);
-        }
-      } catch (err) {
-        console.warn("Gagal memuat API chat messages:", err);
-        setMessages([]);
-      }
-    }
+    let cancelled = false;
+
+    const loadMessages = () => {
+      getChatMessages(targetChatId)
+        .then((res) => {
+          if (cancelled) return;
+          setMessages(res && res.data && Array.isArray(res.data) ? res.data : []);
+        })
+        .catch(() => {
+          if (!cancelled) setMessages([]);
+        });
+    };
+
     loadMessages();
+    const interval = setInterval(loadMessages, 4000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [selectedChat]);
+
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ block: "end" });
+  }, [selectedChat?.id, messages]);
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -306,8 +316,8 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 font-black text-[10px] rounded-md">
-                {selectedChat.id}
+              <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] font-black text-[10px] rounded-md border border-emerald-100">
+                Nego Aktif
               </span>
             </div>
           </div>
@@ -448,6 +458,7 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
               );
             })
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Native Fixed Bottom Input Bar (Full Width WA / Tokped Style) */}

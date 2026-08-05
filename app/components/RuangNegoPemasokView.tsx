@@ -274,39 +274,63 @@ export default function RuangNegoPemasokView({
   const [offerPrice, setOfferPrice] = useState<string>("34500");
   const [offerQty, setOfferQty] = useState<string>("100");
   const [showOfferDrawer, setShowOfferDrawer] = useState(false);
-  const [negoStatus, setNegoStatus] = useState<"draft" | "pending" | "approved" | "counter">("pending");
 
   const [chatRoomMessages, setChatRoomMessages] = useState<ChatRoomMessage[]>([]);
+  const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
-  // Load messages when a real chat is selected
+  // Derive negotiation status from the actual message stream (farmer's reply decides)
+  const negoStatus = React.useMemo<"draft" | "pending" | "approved" | "counter">(() => {
+    if (chatRoomMessages.length === 0) return "pending";
+    const lastMsg = chatRoomMessages[chatRoomMessages.length - 1];
+    if (lastMsg.sender === "petani") {
+      const t = lastMsg.text.toLowerCase();
+      if (t.includes("setuju") || t.includes("disetujui") || t.includes("selesaikan pembayaran") || t.includes("segera selesaikan")) {
+        return "approved";
+      }
+      if (lastMsg.offerData) return "counter";
+    }
+    return "pending";
+  }, [chatRoomMessages]);
+
+  // Load messages when a real chat is selected (with live polling)
   useEffect(() => {
     if (!selectedChat) return;
     const cid = selectedChat.apiChatId ?? selectedChat.id;
     if (typeof cid !== "number") return;
 
     let cancelled = false;
-    getChatMessages(cid)
-      .then((res) => {
-        if (cancelled) return;
-        const msgs = (res?.data || []).map((m: ApiChatMessageItem) => ({
-          id: String(m.id),
-          sender: m.sender_id === currentUserId ? ("pemasok" as const) : ("petani" as const),
-          text: m.text,
-          time: formatChatTime(m.created_at),
-          offerData:
-            m.offer_price != null && m.offer_qty != null
-              ? { price: m.offer_price, qty: m.offer_qty }
-              : undefined,
-        }));
-        setChatRoomMessages(msgs);
-      })
-      .catch(() => {
-        setChatRoomMessages([]);
-      });
+    const loadMessages = () => {
+      getChatMessages(cid)
+        .then((res) => {
+          if (cancelled) return;
+          const msgs = (res?.data || []).map((m: ApiChatMessageItem) => ({
+            id: String(m.id),
+            sender: m.sender_id === currentUserId ? ("pemasok" as const) : ("petani" as const),
+            text: m.text,
+            time: formatChatTime(m.created_at),
+            offerData:
+              m.offer_price != null && m.offer_qty != null
+                ? { price: m.offer_price, qty: m.offer_qty }
+                : undefined,
+          }));
+          setChatRoomMessages(msgs);
+        })
+        .catch(() => {
+          if (!cancelled) setChatRoomMessages([]);
+        });
+    };
+
+    loadMessages();
+    const interval = setInterval(loadMessages, 4000);
     return () => {
       cancelled = true;
+      clearInterval(interval);
     };
   }, [selectedChat?.id, currentUserId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ block: "end" });
+  }, [selectedChat?.id, chatRoomMessages]);
 
   const filteredChats = chatList.filter((chat) => {
     const matchesFilter =
@@ -384,7 +408,6 @@ export default function RuangNegoPemasokView({
         offerData: { price: priceNum, qty: qtyNum },
       },
     ]);
-    setNegoStatus("pending");
     setShowOfferDrawer(false);
   };
 
@@ -396,7 +419,6 @@ export default function RuangNegoPemasokView({
 
   const handleAcceptCounter = () => {
     if (!selectedChat) return;
-    setNegoStatus("approved");
     const lastCounter = chatRoomMessages.find((m) => m.sender === "petani" && m.offerData);
     const agreedP = lastCounter?.offerData?.price || parseInt(offerPrice);
     const agreedQ = lastCounter?.offerData?.qty || parseInt(offerQty);
@@ -462,7 +484,7 @@ export default function RuangNegoPemasokView({
             </div>
 
             <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] font-black text-[10px] rounded-md border border-emerald-100">
-              {selectedChat.id}
+              Nego Aktif
             </span>
           </div>
 
@@ -629,6 +651,7 @@ export default function RuangNegoPemasokView({
               )}
             </React.Fragment>
           ))}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Native Fixed Bottom Input Bar */}
