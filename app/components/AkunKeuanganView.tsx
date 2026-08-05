@@ -326,8 +326,8 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
     if (!expenseTitle || !expenseAmount) return;
 
     const rawAmt = parseInt(expenseAmount);
-    const targetSeason = PLANTING_SEASONS.find((s) => s.id === expenseSeasonId) || PLANTING_SEASONS[1];
-    const seasonNumericId = parseInt(expenseSeasonId.replace("season-", "")) || 3;
+    const targetSeason = plantingSeasons.find((s) => s.id === expenseSeasonId) || plantingSeasons[1] || plantingSeasons[0];
+    const seasonNumericId = targetSeason?.numericId || 3;
 
     try {
       await createExpense({
@@ -364,7 +364,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
         date: "Hari Ini",
         note: "Pencatatan langsung HPP",
         seasonId: targetSeason.id,
-        seasonName: `${targetSeason.name} (${targetSeason.period})`,
+        seasonName: targetSeason.name,
       };
       setExpenses([newExp, ...expenses]);
     }
@@ -382,8 +382,8 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
   );
 
   const plantingSeasons = React.useMemo(() => {
-    const seasonMap = new Map<string, { id: string; name: string; period: string; status: string }>();
-    seasonMap.set("all", { id: "all", name: "Semua Periode", period: "Semua Musim Tanam", status: "" });
+    const seasonMap = new Map<string, { id: string; name: string; period: string; status: string; numericId: number }>();
+    seasonMap.set("all", { id: "all", name: "Semua Periode", period: "Semua Musim Tanam", status: "", numericId: 3 });
 
     if (lands && lands.length > 0) {
       lands.forEach((l) => {
@@ -394,8 +394,9 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
             seasonMap.set(id, {
               id,
               name: s.name || `MT-${s.id}: ${cropName}`,
-              period: "Musim Tanam Aktif",
+              period: "Juni - Sept 2026",
               status: s.status === "active" ? "Aktif" : "Selesai",
+              numericId: s.id || 3,
             });
           });
         }
@@ -405,18 +406,23 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
     if (expenses && expenses.length > 0) {
       expenses.forEach((exp) => {
         if (exp.seasonId && !seasonMap.has(exp.seasonId)) {
+          const numId = parseInt(exp.seasonId.replace("season-", "")) || 3;
           seasonMap.set(exp.seasonId, {
             id: exp.seasonId,
             name: exp.seasonName || "MT-1: Tomat",
             period: "Musim Tanam Aktif",
             status: "Aktif",
+            numericId: numId,
           });
         }
       });
     }
 
     if (seasonMap.size <= 1) {
-      return PLANTING_SEASONS;
+      return [
+        { id: "all", name: "Semua Periode", period: "Semua Musim Tanam", status: "", numericId: 3 },
+        { id: "season-3", name: "MT-1: Tomat", period: "Juni - Sept 2026", status: "Aktif", numericId: 3 },
+      ];
     }
     return Array.from(seasonMap.values());
   }, [lands, expenses]);
@@ -1619,7 +1625,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
                   onChange={(e) => setExpenseSeasonId(e.target.value)}
                   className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
                 >
-                  {PLANTING_SEASONS.filter((s) => s.id !== "all").map((season) => (
+                  {plantingSeasons.filter((s) => s.id !== "all").map((season) => (
                     <option key={season.id} value={season.id}>
                       {season.name} ({season.period}) {season.status === "Aktif" ? "[Aktif]" : ""}
                     </option>

@@ -247,6 +247,7 @@ export default function DashboardPetani() {
   const [productionExpenses, setProductionExpenses] = useState<{ id: number; title: string; category: string; amount: number; date: string }[]>([]);
 
   // Form states for adding expense
+  const [expSeasonId, setExpSeasonId] = useState("season-3");
   const [expCategory, setExpCategory] = useState("Pupuk");
   const [expTitle, setExpTitle] = useState("");
   const [expAmount, setExpAmount] = useState("");
@@ -694,13 +695,11 @@ export default function DashboardPetani() {
               if (e.target === e.currentTarget) setShowExpenseModal(false);
             }}
           >
-            <div className="w-full max-w-[380px] bg-white rounded-[32px] p-5 sm:p-6 shadow-2xl border border-gray-100 space-y-4 max-h-[90vh] overflow-y-auto z-[70]">
+            <div className="w-full max-w-[380px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative max-h-[90vh] overflow-y-auto z-[70]">
               <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                <div>
-                  <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-1.5 mt-1">
-                    Pencatatan Keuangan & Biaya Produksi
-                  </h3>
-                </div>
+                <h3 className="text-sm font-black text-[#1A1C19]">
+                  Catat Biaya Produksi (HPP)
+                </h3>
                 <button
                   type="button"
                   onClick={() => setShowExpenseModal(false)}
@@ -710,54 +709,53 @@ export default function DashboardPetani() {
                 </button>
               </div>
 
-              {/* HPP Live Summary Box */}
-              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs space-y-1">
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-gray-600">Total Pengeluaran Saat Ini:</span>
-                  <span className="font-black text-[#0F4C25] text-sm">Rp {totalExpenseSum.toLocaleString("id-ID")}</span>
-                </div>
-                <p className="text-[10px] text-emerald-800 font-medium">
-                  Data biaya ini otomatis diakumulasi untuk menghitung Harga Pokok Produksi (HPP) saat panen.
-                </p>
-              </div>
-
               <form onSubmit={handleAddExpenseSubmit} className="space-y-3 text-xs">
                 <div>
-                  <label className="font-black text-gray-700 block mb-1">Kategori Pengeluaran</label>
+                  <label className="font-bold text-gray-700 block mb-1">Periode / Musim Tanam</label>
                   <select
-                    value={expCategory}
-                    onChange={(e) => setExpCategory(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25]"
+                    value={expSeasonId}
+                    onChange={(e) => setExpSeasonId(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
                   >
-                    <option value="Pupuk">Pupuk & Nutrisi</option>
-                    <option value="Bibit">Bibit & Benih</option>
-                    <option value="Obat">Obat & Pestisida</option>
-                    <option value="Tenaga Kerja">Tenaga Kerja / Upah Buruh</option>
-                    <option value="Sewa Alat">Sewa Alat / Traktor / Lahan</option>
-                    <option value="Lain-lain">Transportasi & Irigasi</option>
+                    <option value="season-3">MT-1: Tomat (Juni - Sept 2026) [Aktif]</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="font-black text-gray-700 block mb-1">Deskripsi Item / Kegiatan</label>
+                  <label className="font-bold text-gray-700 block mb-1">Kategori Biaya</label>
+                  <select
+                    value={expCategory}
+                    onChange={(e) => setExpCategory(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                  >
+                    <option value="Pupuk">Pupuk & Nutrisi</option>
+                    <option value="Bibit">Bibit & Benih</option>
+                    <option value="Obat">Obat & Pestisida</option>
+                    <option value="Tenaga Kerja">Tenaga Kerja / Upah Harian</option>
+                    <option value="Peralatan">Peralatan & Transportasi</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Deskripsi Item</label>
                   <input
                     type="text"
-                    placeholder="Contoh: Pembelian Pupuk NPK 50kg"
+                    placeholder="Contoh: Pembelian Pupuk KCL 25kg"
                     value={expTitle}
                     onChange={(e) => setExpTitle(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25]"
+                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="font-black text-gray-700 block mb-1">Total Biaya (Rp)</label>
+                  <label className="font-bold text-gray-700 block mb-1">Nominal Biaya (Rp)</label>
                   <input
                     type="number"
-                    placeholder="Contoh: 480000"
+                    placeholder="Contoh: 250000"
                     value={expAmount}
                     onChange={(e) => setExpAmount(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25]"
+                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
                     required
                   />
                 </div>
@@ -768,11 +766,11 @@ export default function DashboardPetani() {
                     variant="outline"
                     size="sm"
                     onClick={() => setShowExpenseModal(false)}
-                    className="flex-1 justify-center"
+                    className="flex-1 justify-center font-bold"
                   >
                     Batal
                   </Button>
-                  <Button type="submit" variant="primary" size="sm" className="flex-1 justify-center">
+                  <Button type="submit" variant="primary" size="sm" className="flex-1 justify-center py-2.5 font-bold">
                     Simpan Biaya
                   </Button>
                 </div>
