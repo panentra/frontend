@@ -50,6 +50,7 @@ export interface OrderItem {
 
 interface PesananViewProps {
   recentSales?: RecentSale[];
+  revenue?: number;
 }
 
 const ORDERS_DATA: OrderItem[] = [
@@ -112,7 +113,7 @@ const ORDERS_DATA: OrderItem[] = [
   },
 ];
 
-export default function PesananView({ recentSales }: PesananViewProps = {}) {
+export default function PesananView({ recentSales, revenue }: PesananViewProps = {}) {
   const [activeFilter, setActiveFilter] = useState<"all" | "incoming" | "shipping" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [orders, setOrders] = useState<OrderItem[]>(ORDERS_DATA);
@@ -237,7 +238,11 @@ export default function PesananView({ recentSales }: PesananViewProps = {}) {
             <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
           </div>
           <div className="text-lg font-black text-[#1A1C19] tracking-tight">
-            Rp 9,09 Jt
+            {revenue != null
+              ? revenue >= 1000000
+                ? `Rp ${(revenue / 1000000).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Jt`
+                : `Rp ${revenue.toLocaleString("id-ID")}`
+              : "Rp 2,40 Jt"}
           </div>
         </div>
       </div>
