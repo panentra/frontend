@@ -1402,39 +1402,6 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
         </button>
       </section>
 
-      {/* ================= 6. PENGELOLAAN TANI ("MANAGE") ================= */}
-      <section className="space-y-3">
-        <h2 className="text-base sm:text-lg font-black text-[#1A1C19] tracking-tight">
-          Pengelolaan Tani & AI
-        </h2>
-
-        {/* Reset / Adjust Goals Card */}
-        <button
-          type="button"
-          onClick={() => showToast("Fitur Atur Ulang Target & Musim Tanam Baru", "info")}
-          className="w-full bg-[#EBF7EE] border border-emerald-200/80 hover:border-emerald-400 rounded-[28px] p-4 flex items-center justify-between text-left cursor-pointer group relative overflow-hidden transition-all shadow-sm"
-        >
-          <div className="space-y-0.5 max-w-[68%] z-10">
-            <h3 className="text-sm font-black text-[#111827]">
-              Atur Ulang Target & Musim Tanam
-            </h3>
-            <p className="text-xs text-gray-600 font-medium leading-tight">
-              Sesuaikan target hasil panen & komoditas musim depan
-            </p>
-          </div>
-
-          <div className="w-20 h-20 shrink-0 relative -mr-2 -mb-2 pointer-events-none">
-            <Image
-              src="/assets/bowo-tanam.png"
-              alt="Atur Target Tanam"
-              width={80}
-              height={80}
-              className="w-full h-full object-contain group-hover:scale-110 transition-transform"
-            />
-          </div>
-        </button>
-      </section>
-
       {/* ================= 7. PENGATURAN & AKSES PERAN ================= */}
       <section className="space-y-2 pt-2">
         <h3 className="text-xs font-black text-gray-500 uppercase tracking-wider">
