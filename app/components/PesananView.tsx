@@ -124,31 +124,7 @@ export default function PesananView({
 }: PesananViewProps = {}) {
   const [activeFilter, setActiveFilter] = useState<"all" | "incoming" | "shipping" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [orders, setOrders] = useState<OrderItem[]>(() => {
-    if (recentSales !== undefined && recentSales.length > 0) {
-      return recentSales.map((sale) => ({
-        numericId: sale.id,
-        id: sale.order_no || `TRX-${sale.id}`,
-        customer: sale.delivery_info?.driver_name || `Mitra Pemasok #${sale.buyer_id || sale.id}`,
-        customerType: "Pemasok Panentra (Terverifikasi)",
-        phone: sale.delivery_info?.driver_phone || "081286647521",
-        item: `Tomat Panen Grade ${sale.grade || "B"}`,
-        category: `Grade ${sale.grade || "B"}`,
-        qty: `${sale.qty_kg} kg`,
-        unitPrice: `Rp ${(sale.agreed_price || 12000).toLocaleString("id-ID")} / kg`,
-        total: `Rp ${(sale.grand_total || sale.subtotal).toLocaleString("id-ID")}`,
-        status: (sale.status === "completed" ? "completed" : sale.status === "shipping" ? "shipping" : "incoming") as OrderItem["status"],
-        date: sale.paid_at ? "4 Agustus 2026, 22:51 WIB" : "Hari Ini",
-        location: sale.delivery_address || "Lembang, Bandung Barat",
-        fullAddress: sale.delivery_address || "Jl. Raya Lembang No. 142, Bandung Barat",
-        paymentStatus: `Escrow ${sale.escrow_status || "released"} (Lunas)`,
-        paymentMethod: sale.payment_method === "transfer_petani" ? "Transfer Direct Bank" : "Panentra Escrow",
-        image: "/assets/bowo-duit.png",
-        notes: sale.delivery_info ? `Armada: ${sale.delivery_info.vehicle} (${sale.delivery_info.driver_name}) - ETA: ${sale.delivery_info.eta}` : undefined,
-      }));
-    }
-    return ORDERS_DATA;
-  });
+  const [orders, setOrders] = useState<OrderItem[]>([]);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderItem | null>(null);
   const [selectedChatOrder, setSelectedChatOrder] = useState<OrderItem | null>(null);
 
@@ -188,35 +164,16 @@ export default function PesananView({
             };
           });
           setOrders(apiMapped);
-        } else if (recentSales !== undefined && recentSales.length > 0) {
-          const apiMapped: OrderItem[] = recentSales.map((sale) => ({
-            numericId: sale.id,
-            id: sale.order_no || `TRX-${sale.id}`,
-            customer: sale.delivery_info?.driver_name || `Mitra Pemasok #${sale.buyer_id || sale.id}`,
-            customerType: "Pemasok Panentra (Terverifikasi)",
-            phone: sale.delivery_info?.driver_phone || "081286647521",
-            item: `Tomat Panen Grade ${sale.grade || "B"}`,
-            category: `Grade ${sale.grade || "B"}`,
-            qty: `${sale.qty_kg} kg`,
-            unitPrice: `Rp ${(sale.agreed_price || 12000).toLocaleString("id-ID")} / kg`,
-            total: `Rp ${(sale.grand_total || sale.subtotal).toLocaleString("id-ID")}`,
-            status: (sale.status === "completed" ? "completed" : sale.status === "shipping" ? "shipping" : "incoming") as OrderItem["status"],
-            date: sale.paid_at ? "4 Agustus 2026, 22:51 WIB" : "Hari Ini",
-            location: sale.delivery_address || "Lembang, Bandung Barat",
-            fullAddress: sale.delivery_address || "Jl. Raya Lembang No. 142, Bandung Barat",
-            paymentStatus: `Escrow ${sale.escrow_status || "released"} (Lunas)`,
-            paymentMethod: sale.payment_method === "transfer_petani" ? "Transfer Direct Bank" : "Panentra Escrow",
-            image: "/assets/bowo-duit.png",
-            notes: sale.delivery_info ? `Armada: ${sale.delivery_info.vehicle} (${sale.delivery_info.driver_name}) - ETA: ${sale.delivery_info.eta}` : undefined,
-          }));
-          setOrders(apiMapped);
+        } else {
+          setOrders([]);
         }
       } catch (err) {
         console.warn("Gagal memuat API farmer orders:", err);
+        setOrders([]);
       }
     }
     loadOrdersData();
-  }, [recentSales]);
+  }, []);
 
   const filteredOrders = orders.filter((order) => {
     const matchesFilter = activeFilter === "all" || order.status === activeFilter;
@@ -245,9 +202,9 @@ export default function PesananView({
     }
   };
 
-  const incomingCount = activeOrdersCount !== undefined ? activeOrdersCount : orders.filter((o) => o.status === "incoming").length;
+  const incomingCount = orders.filter((o) => o.status === "incoming").length;
   const shippingCount = orders.filter((o) => o.status === "shipping").length;
-  const completedCount = completedSalesCount !== undefined ? completedSalesCount : orders.filter((o) => o.status === "completed").length;
+  const completedCount = orders.filter((o) => o.status === "completed").length;
 
   return (
     <div className="space-y-5 animate-fade-in pb-10">
