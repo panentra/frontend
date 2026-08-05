@@ -35,6 +35,10 @@ export interface Commodity {
   [key: string]: unknown;
 }
 
+export async function getCommodities(): Promise<{ data: Commodity[] }> {
+  return fetchWithAuth<{ data: Commodity[] }>("/api/commodities");
+}
+
 export interface SeasonItem {
   id: number;
   name: string;
@@ -923,6 +927,86 @@ export async function completeOnboarding(
   return fetchWithAuth<Record<string, unknown>>("/api/onboarding", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+// ==========================================
+// 4.5 CONTRACTS ENDPOINTS (/api/contracts)
+// ==========================================
+
+export type ContractStatus = "menunggu_pemasok" | "aktif" | "panen_terkirim" | "selesai";
+
+export interface ContractData {
+  id: number | string;
+  contractNo?: string;
+  commodity?: string | { name?: string };
+  commodityId?: number;
+  commodity_id?: number;
+  qtyKg?: number;
+  qty_kg?: number;
+  pricePerKg?: number;
+  price_per_kg?: number;
+  totalValue?: number;
+  total_value?: number;
+  farmer?: { id?: number; name?: string; location?: string } | null;
+  farmer_name?: string;
+  farmer_location?: string;
+  supplier?: { id?: number; name?: string } | null;
+  supplier_name?: string | null;
+  harvestDate?: string;
+  harvest_date?: string;
+  deliveryMethod?: string;
+  delivery_method?: string;
+  status?: ContractStatus;
+  createdAt?: string;
+  created_at?: string;
+  createdBy?: string;
+  created_by?: string;
+  [key: string]: unknown;
+}
+
+export interface ContractsResponse {
+  data: ContractData[];
+}
+
+export interface CreateContractPayload {
+  commodity_id: number;
+  qty_kg: number;
+  price_per_kg: number;
+  harvest_date: string;
+  delivery_method: string;
+}
+
+export async function createContract(payload: CreateContractPayload): Promise<ContractsResponse | ContractData> {
+  return fetchWithAuth<ContractsResponse | ContractData>("/api/contracts", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getMyContracts(): Promise<ContractsResponse | ContractData[]> {
+  return fetchWithAuth<ContractsResponse | ContractData[]>("/api/contracts");
+}
+
+export async function getOpenContractOffers(): Promise<ContractsResponse | ContractData[]> {
+  return fetchWithAuth<ContractsResponse | ContractData[]>("/api/contracts/open");
+}
+
+export async function signContract(id: number | string): Promise<{ message?: string; data?: ContractData }> {
+  return fetchWithAuth<{ message?: string; data?: ContractData }>(`/api/contracts/${id}/sign`, {
+    method: "PATCH",
+  });
+}
+
+export async function markContractSent(id: number | string): Promise<{ message?: string; data?: ContractData }> {
+  return fetchWithAuth<{ message?: string; data?: ContractData }>(`/api/contracts/${id}/sent`, {
+    method: "PATCH",
+  });
+}
+
+export async function completeContract(id: number | string): Promise<{ message?: string; data?: ContractData }> {
+  return fetchWithAuth<{ message?: string; data?: ContractData }>(`/api/contracts/${id}/complete`, {
+    method: "PATCH",
   });
 }
 

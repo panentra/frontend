@@ -25,6 +25,7 @@ import {
 import { HarvestListing } from "./MarketplacePemasokView";
 import Snackbar, { useSnackbar } from "./Snackbar";
 import Avatar from "./Avatar";
+import { getCommodityImage } from "./commodityImage";
 import { getListingDetail, getFavorites, addFavorite, removeFavorite, FarmerListingItem } from "@/lib/api";
 
 function toHarvestListing(item: FarmerListingItem): HarvestListing {
@@ -42,7 +43,7 @@ function toHarvestListing(item: FarmerListingItem): HarvestListing {
     availableKg: item.availableKg || 0,
     harvestStatus: item.harvestStatus || "Siap Dipesan",
     allowNegotiation: item.allowNegotiation ?? false,
-    productImage: item.productImage || "/assets/bowo-senang.png",
+    productImage: item.productImage || getCommodityImage(item.commodity),
     farmerAvatar: item.farmerAvatar || "/assets/bowo-senang.png",
     farmImage: item.farmerAvatar || "/assets/bowo-senang.png",
     harvestCategory: item.harvestCategory || "Bahan-Bahan",
@@ -181,7 +182,7 @@ export default function DetailProdukPemasokView({
       {/* Hero Product Image Banner */}
       <div className="relative w-full aspect-square rounded-[32px] overflow-hidden bg-gray-100 border border-gray-200 shadow-sm">
         <Image
-          src={data.productImage || data.farmImage || "/assets/bowo-senang.png"}
+          src={data.productImage || data.farmImage || getCommodityImage(data.commodity)}
           alt={data.commodity}
           fill
           className="object-cover"

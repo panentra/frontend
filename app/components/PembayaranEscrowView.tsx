@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { HarvestListing } from "./MarketplacePemasokView";
 import Snackbar, { useSnackbar } from "./Snackbar";
+import { getCommodityImage } from "./commodityImage";
 import { createSupplierOrder, payOrder, confirmOrderReceived, getAuthUser } from "@/lib/api";
 
 const DEFAULT_DELIVERY_ADDRESS = "Jl. Raya Lembang No. 142, Bandung Barat";
@@ -58,7 +59,7 @@ export default function PembayaranEscrowView({
     harvestCategory: "Bahan-Bahan",
   };
 
-  const displayImage = currentListing.productImage || currentListing.farmImage || "/assets/bowo-senang.png";
+  const displayImage = currentListing.productImage || currentListing.farmImage || getCommodityImage(currentListing.commodity);
 
   const finalPrice = agreedPrice || currentListing.sellingPrice;
   const finalQty = agreedQty || 100;

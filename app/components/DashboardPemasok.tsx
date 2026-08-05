@@ -42,6 +42,7 @@ import DetailProdukPemasokView from "./DetailProdukPemasokView";
 import RuangNegoPemasokView from "./RuangNegoPemasokView";
 import PembayaranEscrowView from "./PembayaranEscrowView";
 import RiwayatPembelianPemasokView from "./RiwayatPembelianPemasokView";
+import ContractView from "./ContractView";
 import Avatar from "./Avatar";
 import { getSupplierDashboard, getAuthUser, SupplierDashboardData, User as AuthUser } from "@/lib/api";
 
@@ -61,7 +62,7 @@ const NEARBY_HARVESTS: HarvestListing[] = [
     availableKg: 1280,
     harvestStatus: "Siap Dipetik Besok",
     allowNegotiation: true,
-    productImage: "https://images.unsplash.com/photo-1588252303782-7cc9888970aa?q=80&w=600&auto=format&fit=crop",
+    productImage: "/assets/asset-cabai.jpg",
     farmerAvatar: "/assets/bowo-senang.png",
     farmImage: "/assets/bowo-senang.png",
     harvestCategory: "Bahan-Bahan",
@@ -80,7 +81,7 @@ const NEARBY_HARVESTS: HarvestListing[] = [
     availableKg: 650,
     harvestStatus: "Panen Hari Ini",
     allowNegotiation: true,
-    productImage: "https://images.unsplash.com/photo-1540420773420-3366772f4999?q=80&w=600&auto=format&fit=crop",
+    productImage: "/assets/asset-pakcoy.jpg",
     farmerAvatar: "/assets/budi-kaget.png",
     farmImage: "/assets/budi-kaget.png",
     harvestCategory: "Sayuran",
@@ -99,7 +100,7 @@ const NEARBY_HARVESTS: HarvestListing[] = [
     availableKg: 2100,
     harvestStatus: "Siap Panen Lusa",
     allowNegotiation: false,
-    productImage: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?q=80&w=600&auto=format&fit=crop",
+    productImage: "/assets/asset-tomat.jpg",
     farmerAvatar: "/assets/bowo-calendar.png",
     farmImage: "/assets/bowo-calendar.png",
     harvestCategory: "Bahan-Bahan",
@@ -118,7 +119,7 @@ const NEARBY_HARVESTS: HarvestListing[] = [
     availableKg: 3500,
     harvestStatus: "Panen Raya",
     allowNegotiation: true,
-    productImage: "https://images.unsplash.com/photo-1551754655-cd27e38d2076?q=80&w=600&auto=format&fit=crop",
+    productImage: "/assets/asset-jagung.jpg",
     farmerAvatar: "/assets/bowo-ide.png",
     farmImage: "/assets/bowo-ide.png",
     harvestCategory: "Pangan",
@@ -132,7 +133,7 @@ export default function DashboardPemasok() {
   const [activeTab, setActiveTab] = useState<"beranda" | "pasar" | "jualbeli" | "pengantaran" | "akun">("beranda");
   
   // Sub-view Mode: "dashboard" | "marketplace" | "detail" | "nego" | "pembayaran" | "riwayat"
-  const [viewMode, setViewMode] = useState<"dashboard" | "marketplace" | "detail" | "nego" | "pembayaran" | "riwayat">("dashboard");
+  const [viewMode, setViewMode] = useState<"dashboard" | "marketplace" | "detail" | "nego" | "pembayaran" | "riwayat" | "kontrak">("dashboard");
 
   // Selected Listing & Deal state for sub-views
   const [selectedListing, setSelectedListing] = useState<HarvestListing | null>(null);
@@ -253,6 +254,8 @@ export default function DashboardPemasok() {
                 setViewMode("dashboard");
               }}
             />
+          ) : viewMode === "kontrak" ? (
+            <ContractView role="pemasok" onBack={() => setViewMode("dashboard")} />
           ) : (
             <>
               {/* ================= BOTTOM NAVBAR TAB VIEWS ================= */}
@@ -471,6 +474,38 @@ export default function DashboardPemasok() {
                           </div>
                           <p className="text-[11px] text-gray-600 font-medium leading-tight">
                             Semua invoice rapi di satu tempat — repeat order dari petani langganan tinggal satu tap
+                          </p>
+                        </div>
+
+                        <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-gray-500 group-hover:text-[#0F4C25] group-hover:bg-white transition-all shrink-0 z-10 ml-2 shadow-sm">
+                          <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+                        </div>
+                      </button>
+
+                      {/* Workflow Card 3: Kontrak Pasokan */}
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("kontrak")}
+                        className="w-full bg-[#EBF7EE] rounded-[28px] p-3.5 pl-20 flex items-center justify-between transition-all active:scale-[0.99] text-left cursor-pointer group relative overflow-hidden min-h-[78px] shadow-sm"
+                      >
+                        <div className="absolute -left-3 -bottom-2.1 z-10 w-24 h-24 sm:w-30 sm:h-30 pointer-events-none">
+                          <Image
+                            src="/assets/budi-oke.png"
+                            alt="Kontrak Pasokan"
+                            width={100}
+                            height={100}
+                            className="w-full h-full object-contain transition-transform"
+                          />
+                        </div>
+
+                        <div className="space-y-0.5 z-10">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="text-xs sm:text-sm font-black text-[#111827]">
+                              Kontrak Pasokan
+                            </h3>
+                          </div>
+                          <p className="text-[11px] text-gray-600 font-medium leading-tight">
+                            Kunci pasokan petani dengan harga tetap — stok aman saat musim panen
                           </p>
                         </div>
 

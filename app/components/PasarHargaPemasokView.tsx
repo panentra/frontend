@@ -118,7 +118,7 @@ export default function PasarHargaPemasokView() {
 
           <div className="w-28 h-28 shrink-0 relative -mr-2 -mb-6 pointer-events-none">
             <Image
-              src="/assets/budi-tren.png"
+              src="/assets/budi-baca.png"
               alt="Budi Tren Market AI"
               width={120}
               height={120}

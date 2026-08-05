@@ -50,6 +50,7 @@ import PesananView from "./PesananView";
 import AkunKeuanganView from "./AkunKeuanganView";
 import RekomendasiTanamView from "./RekomendasiTanamView";
 import JualPanenView from "./JualPanenView";
+import ContractView from "./ContractView";
 import ChatListView from "./ChatListView";
 
 // Sample commodities for price prediction chart
@@ -222,6 +223,14 @@ export default function DashboardPetani() {
                 totalDays: totalDays,
                 estimatedHarvestKg: estKg,
               });
+            } else {
+              // Lahan ada tapi belum ada musim tanam → jangan tampilkan progress palsu
+              setActiveCrop({
+                name: firstLand.commodity?.name || firstLand.name || "Komoditas",
+                daysPassed: 0,
+                totalDays: 0,
+                estimatedHarvestKg: 0,
+              });
             }
           }
         }
@@ -252,7 +261,7 @@ export default function DashboardPetani() {
     loadLandsData();
     loadExpensesData();
   }, []);
-  const [viewMode, setViewMode] = useState<"dashboard" | "rekomendasi" | "jual">("dashboard");
+  const [viewMode, setViewMode] = useState<"dashboard" | "rekomendasi" | "jual" | "kontrak">("dashboard");
   const [isChatRoomActive, setIsChatRoomActive] = useState(false);
   const [selectedCommodity, setSelectedCommodity] = useState<keyof typeof COMMODITY_PRICE_DATA>("Cabai Rawit");
   const [selectedDate, setSelectedDate] = useState<number>(3);
@@ -292,9 +301,9 @@ export default function DashboardPetani() {
   // Active Crop State (Workflow Stage 1 Result)
   const [activeCrop, setActiveCrop] = useState({
     name: "Cabai Rawit Merah",
-    daysPassed: 68,
-    totalDays: 90,
-    estimatedHarvestKg: 1280,
+    daysPassed: 0,
+    totalDays: 0,
+    estimatedHarvestKg: 0,
   });
 
   // Financial Production Expense State (Workflow Stage 2) - Loaded dynamically from API
@@ -527,6 +536,8 @@ export default function DashboardPetani() {
               totalExpenseSum={totalExpenseSum}
               cropName={activeCrop.name}
             />
+          ) : viewMode === "kontrak" ? (
+            <ContractView role="petani" onBack={() => setViewMode("dashboard")} />
           ) : (
             <>
               {activeTab === "kalender" && <KalenderView lands={landsData?.data} />}
@@ -576,7 +587,20 @@ export default function DashboardPetani() {
                     </div>
 
                     <p className="text-xs text-emerald-100/95 leading-relaxed font-medium drop-shadow-sm">
-                      Estimasi Panen: <span className="font-extrabold text-white">{landsData?.data?.[0]?.seasons?.[0]?.estimated_harvest_kg ? `${landsData.data[0].seasons[0].estimated_harvest_kg} kg` : `${activeCrop.estimatedHarvestKg} kg`}</span> · Diprediksi 22 hari lagi!
+                      {activeCrop.totalDays > 0 ? (
+                        <>
+                          Estimasi Panen:{" "}
+                          <span className="font-extrabold text-white">
+                            {landsData?.data?.[0]?.seasons?.[0]?.estimated_harvest_kg ? `${landsData.data[0].seasons[0].estimated_harvest_kg} kg` : `${activeCrop.estimatedHarvestKg} kg`}
+                          </span>{" "}
+                          · Diprediksi 22 hari lagi!
+                        </>
+                      ) : (
+                        <>
+                          Belum ada musim tanam aktif. Mulai dari{" "}
+                          <span className="font-extrabold text-amber-300">menu Kalender</span> untuk memantau panenmu.
+                        </>
+                      )}
                     </p>
 
                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
@@ -607,9 +631,13 @@ export default function DashboardPetani() {
                 {/* Bottom White Progress Bar Track Section */}
                 <div className="bg-white p-4 sm:p-5 space-y-2.5">
                   <div className="flex justify-between items-center text-xs sm:text-sm font-black text-[#1A1C19]">
-                    <span>Progress Tanam: {activeCrop.daysPassed} / {activeCrop.totalDays} Hari</span>
-                    <span className="text-[#0F4C25] font-extrabold">
-                      {Math.round((activeCrop.daysPassed / activeCrop.totalDays) * 100)}%
+                    <span>
+                      {activeCrop.totalDays > 0
+                        ? `Progress Tanam: ${activeCrop.daysPassed} / ${activeCrop.totalDays} Hari`
+                        : "Belum Ada Musim Tanam"}
+                    </span>
+                    <span className={activeCrop.totalDays > 0 ? "text-[#0F4C25] font-extrabold" : "text-gray-400 font-extrabold"}>
+                      {activeCrop.totalDays > 0 ? `${Math.round((activeCrop.daysPassed / activeCrop.totalDays) * 100)}%` : "0%"}
                     </span>
                   </div>
 
@@ -617,9 +645,14 @@ export default function DashboardPetani() {
                   <div className="w-full h-3.5 bg-gray-200 rounded-full overflow-hidden p-0.5 shadow-inner">
                     <div
                       className="h-full bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] rounded-full transition-all duration-500"
-                      style={{ width: `${(activeCrop.daysPassed / activeCrop.totalDays) * 100}%` }}
+                      style={{ width: `${activeCrop.totalDays > 0 ? (activeCrop.daysPassed / activeCrop.totalDays) * 100 : 0}%` }}
                     />
                   </div>
+                  {activeCrop.totalDays === 0 && (
+                    <p className="text-[11px] text-gray-500 font-semibold pt-0.5">
+                      Mulai musim tanam dari menu Rekomendasi Tanam.
+                    </p>
+                  )}
                 </div>
               </section>
 
@@ -720,6 +753,38 @@ export default function DashboardPetani() {
                       </div>
                       <p className="text-[11px] text-gray-600 font-medium leading-tight">
                         Penjualan berbasis HPP dengan margin paling untung.
+                      </p>
+                    </div>
+
+                    <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-gray-500 group-hover:text-[#0F4C25] group-hover:bg-white transition-all shrink-0 z-10 ml-2 shadow-sm">
+                      <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+                    </div>
+                  </button>
+
+                  {/* Workflow Card 4: Kontrak Panen */}
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("kontrak")}
+                    className="w-full bg-[#EBF7EE] rounded-[28px] p-3.5 pl-20 flex items-center justify-between transition-all active:scale-[0.99] text-left cursor-pointer group relative overflow-hidden min-h-[78px] shadow-sm"
+                  >
+                    <div className="absolute -left-3 -bottom-2.1 z-10 w-24 h-24 sm:w-30 sm:h-30 pointer-events-none">
+                      <Image
+                        src="/assets/budi-oke.png"
+                        alt="Kontrak Panen"
+                        width={100}
+                        height={100}
+                        className="w-full h-full object-contain transition-transform"
+                      />
+                    </div>
+
+                    <div className="space-y-0.5 z-10">
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="text-xs sm:text-sm font-black text-[#111827]">
+                          Kontrak Panen
+                        </h3>
+                      </div>
+                      <p className="text-[11px] text-gray-600 font-medium leading-tight">
+                        Amankan pembeli sebelum panen — harga & volume terkunci.
                       </p>
                     </div>
 

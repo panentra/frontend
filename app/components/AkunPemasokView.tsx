@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { logoutUser, getFavorites, getBankAccounts, createBankAccount, deleteBankAccount, setPrimaryBankAccount, getAuthUser, BankAccount } from "@/lib/api";
+import { logoutUser, getFavorites, getBankAccounts, createBankAccount, deleteBankAccount, setPrimaryBankAccount, getAuthUser, getSupplierOrders, BankAccount, SupplierOrderItem } from "@/lib/api";
 import Avatar from "./Avatar";
 import {
   User,
@@ -81,6 +81,10 @@ export default function AkunPemasokView({
   const [paymentAccounts, setPaymentAccounts] = useState<PaymentAccount[]>([]);
   const [accountsLoading, setAccountsLoading] = useState(true);
 
+  // Orders Summary State (from API)
+  const [orders, setOrders] = useState<SupplierOrderItem[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+
   // Add Account Form State
   const [showAddForm, setShowAddForm] = useState(false);
   const [newBankName, setNewBankName] = useState("Bank BCA");
@@ -147,6 +151,29 @@ export default function AkunPemasokView({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    getSupplierOrders()
+      .then((res) => {
+        if (cancelled) return;
+        setOrders(res?.data || []);
+      })
+      .catch(() => {
+        setOrders([]);
+      })
+      .finally(() => {
+        if (!cancelled) setOrdersLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const deliveryOrders = orders.filter(
+    (o) => o.status === "paid_escrow" || o.status === "shipping" || o.status === "delivered"
+  );
+  const firstDeliveryOrder = deliveryOrders[0] || null;
 
   // Lock background body scroll when popup/modal is open
   useEffect(() => {
@@ -319,16 +346,32 @@ export default function AkunPemasokView({
         </div>
 
         <div className="p-3.5 bg-[#F8FAF8] rounded-2xl border border-gray-200 flex items-center justify-between gap-3 text-xs">
-          <div className="space-y-0.5 min-w-0">
-            <span className="font-black text-[#1A1C19] block truncate">1 Pesanan Sedang Dikirim</span>
-            <span className="text-[10px] text-gray-500 font-medium truncate block">
-              Cabai Rawit Merah (150 kg) • Pak Andi Sugiharto
+          {ordersLoading ? (
+            <div className="space-y-1.5 flex-1 animate-pulse">
+              <div className="h-3 bg-gray-200 rounded-full w-2/3" />
+              <div className="h-3 bg-gray-200 rounded-full w-1/2" />
+            </div>
+          ) : deliveryOrders.length === 0 ? (
+            <span className="text-xs text-gray-500 font-semibold py-1">
+              Tidak ada pesanan dalam perjalanan saat ini.
             </span>
-          </div>
+          ) : (
+            <>
+              <div className="space-y-0.5 min-w-0">
+                <span className="font-black text-[#1A1C19] block truncate">
+                  {deliveryOrders.length} Pesanan Sedang Dikirim
+                </span>
+                <span className="text-[10px] text-gray-500 font-medium truncate block">
+                  {firstDeliveryOrder?.commodity} ({firstDeliveryOrder?.qtyKg} kg) •{" "}
+                  {firstDeliveryOrder?.seller?.name || "Petani"}
+                </span>
+              </div>
 
-          <span className="px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded-full text-[10px] font-black shrink-0 whitespace-nowrap">
-            Dalam Perjalanan
-          </span>
+              <span className="px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded-full text-[10px] font-black shrink-0 whitespace-nowrap">
+                Dalam Perjalanan
+              </span>
+            </>
+          )}
         </div>
       </div>
 

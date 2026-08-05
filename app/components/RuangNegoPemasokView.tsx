@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { HarvestListing } from "./MarketplacePemasokView";
 import Avatar from "./Avatar";
+import { getCommodityImage } from "./commodityImage";
 import {
   getChats,
   getChatMessages,
@@ -60,7 +61,7 @@ function toConversation(c: ApiChatListItem): PemasokChatConversation {
       : "Chat Aktif",
     statusType: c.offer_price ? "nego" : "inquiry",
     farmerAvatar: counterpart.avatar || "/assets/bowo-senang.png",
-    productImage: "/assets/bowo-senang.png",
+    productImage: getCommodityImage(c.item),
     listingPrice: c.offer_price || 0,
     offeredPrice: c.offer_price || 0,
     total:
@@ -180,7 +181,7 @@ export default function RuangNegoPemasokView({
             statusBadge: `Nego Rp ${listing.sellingPrice.toLocaleString("id-ID")}/kg`,
             statusType: "nego",
             farmerAvatar: listing.farmerAvatar || "/assets/bowo-senang.png",
-            productImage: listing.productImage || "/assets/bowo-senang.png",
+            productImage: listing.productImage || getCommodityImage(listing.commodity),
             listingPrice: listing.sellingPrice,
             offeredPrice: listing.sellingPrice - 3500,
             total: `Rp ${((listing.sellingPrice - 3500) * Math.min(100, listing.availableKg || 100)).toLocaleString("id-ID")}`,
@@ -204,7 +205,7 @@ export default function RuangNegoPemasokView({
             statusBadge: `Nego Rp ${listing.sellingPrice.toLocaleString("id-ID")}/kg`,
             statusType: "nego",
             farmerAvatar: listing.farmerAvatar || "/assets/bowo-senang.png",
-            productImage: listing.productImage || "/assets/bowo-senang.png",
+            productImage: listing.productImage || getCommodityImage(listing.commodity),
             listingPrice: listing.sellingPrice,
             offeredPrice: listing.sellingPrice - 3500,
             total: "-",

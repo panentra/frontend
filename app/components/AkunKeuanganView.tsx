@@ -511,8 +511,8 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
     if (localLands && localLands.length > 0) {
       return localLands.map((l, index) => {
         const season = l.seasons?.[0];
-        let progressDay = 68;
-        let totalDays = 90;
+        let progressDay = 0;
+        let totalDays = 0;
 
         if (season && season.start_date && season.end_date) {
           const startDate = new Date(season.start_date);
@@ -1236,12 +1236,16 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
           <div className="space-y-1.5 pt-1">
             <div className="flex justify-between text-xs font-black text-gray-700">
               <span>Progres Masa Tanam</span>
-              <span>Hari ke-{currentPlot.progressDay} / {currentPlot.totalDays} Hari</span>
+              <span className={currentPlot.totalDays > 0 ? "" : "text-gray-400"}>
+                {currentPlot.totalDays > 0
+                  ? `Hari ke-${currentPlot.progressDay} / ${currentPlot.totalDays} Hari`
+                  : "Belum Ada Musim Tanam"}
+              </span>
             </div>
             <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden p-0.5 border border-gray-200">
               <div
                 className="h-full bg-gradient-to-r from-[#0F4C25] to-[#2E7D32] rounded-full transition-all duration-500"
-                style={{ width: `${(currentPlot.progressDay / currentPlot.totalDays) * 100}%` }}
+                style={{ width: `${currentPlot.totalDays > 0 ? (currentPlot.progressDay / currentPlot.totalDays) * 100 : 0}%` }}
               />
             </div>
           </div>

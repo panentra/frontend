@@ -13,7 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Button from "./Button";
-import { completeOnboarding } from "@/lib/api";
+import { completeOnboarding, getCommodities, Commodity } from "@/lib/api";
 
 // Dynamically import Leaflet Map Picker to prevent Next.js SSR window errors
 const LeafletMapPicker = dynamic(
@@ -58,20 +58,6 @@ const STORE_TYPE_OPTIONS = [
   },
 ];
 
-// Komoditas Kebutuhan Pembelian (Clean sans-emoji)
-const PURCHASE_COMMODITIES = [
-  { id: "padi_beras", label: "Padi / Beras" },
-  { id: "jagung", label: "Jagung" },
-  { id: "cabai", label: "Cabai Merah / Rawit" },
-  { id: "bawang", label: "Bawang Merah" },
-  { id: "tomat", label: "Tomat" },
-  { id: "kentang", label: "Kentang" },
-  { id: "sayur", label: "Sayuran (Pakcoy, Selada)" },
-  { id: "perkebunan", label: "Sawit, Kopi, Kakao" },
-  { id: "kedelai", label: "Kedelai" },
-  { id: "buah", label: "Melon / Semangka" },
-];
-
 // Volume Kebutuhan Rutin
 const PURCHASE_VOLUMES = [
   { id: "kecil", label: "< 100 kg / minggu", desc: "Kios / Usaha Kecil" },
@@ -91,9 +77,33 @@ export default function OnboardingPemasokQuestionnaire() {
   const [address, setAddress] = useState("");
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  const [selectedCommodities, setSelectedCommodities] = useState<string[]>(["padi_beras", "cabai"]);
+  const [commodities, setCommodities] = useState<Commodity[]>([]);
+  const [commoditiesLoading, setCommoditiesLoading] = useState(true);
+  const [selectedCommodities, setSelectedCommodities] = useState<number[]>([]);
   const [customCommodity, setCustomCommodity] = useState("");
   const [purchaseVolume, setPurchaseVolume] = useState("sedang");
+
+  React.useEffect(() => {
+    let cancelled = false;
+    getCommodities()
+      .then((res) => {
+        if (cancelled) return;
+        const list = res?.data || [];
+        setCommodities(list);
+        if (list.length > 0) {
+          setSelectedCommodities([list[0].id]);
+        }
+      })
+      .catch(() => {
+        setCommodities([]);
+      })
+      .finally(() => {
+        if (!cancelled) setCommoditiesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleLocationSelect = (lat: number, lng: number, addressText: string) => {
     setSelectedCoords({ lat, lng });
@@ -102,7 +112,7 @@ export default function OnboardingPemasokQuestionnaire() {
     }
   };
 
-  const toggleCommodity = (id: string) => {
+  const toggleCommodity = (id: number) => {
     if (selectedCommodities.includes(id)) {
       if (selectedCommodities.length > 1) {
         setSelectedCommodities(selectedCommodities.filter((item) => item !== id));
@@ -244,24 +254,34 @@ export default function OnboardingPemasokQuestionnaire() {
 
               {/* Clean 2-column grid layout preventing text overflow */}
               <div className="grid grid-cols-2 gap-2.5">
-                {PURCHASE_COMMODITIES.map((item) => {
-                  const isSelected = selectedCommodities.includes(item.id);
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => toggleCommodity(item.id)}
-                      className={`p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-[#1B5E20] text-white border-[#1B5E20] shadow-sm font-bold"
-                          : "bg-[#F8FAFC] text-[#374151] border-[#E2E8F0] hover:border-[#1B5E20]/40 font-medium"
-                      }`}
-                    >
-                      <span className="text-xs leading-snug pr-1">{item.label}</span>
-                      {isSelected && <CheckCircle2 className="w-4 h-4 text-white shrink-0" />}
-                    </button>
-                  );
-                })}
+                {commoditiesLoading ? (
+                  <div className="col-span-2 p-4 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] text-xs text-gray-500 font-medium text-center">
+                    Memuat daftar komoditas...
+                  </div>
+                ) : commodities.length === 0 ? (
+                  <div className="col-span-2 p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 font-medium text-center">
+                    Daftar komoditas tidak tersedia. Silakan coba lagi nanti.
+                  </div>
+                ) : (
+                  commodities.map((item) => {
+                    const isSelected = selectedCommodities.includes(item.id);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => toggleCommodity(item.id)}
+                        className={`p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-[#1B5E20] text-white border-[#1B5E20] shadow-sm font-bold"
+                            : "bg-[#F8FAFC] text-[#374151] border-[#E2E8F0] hover:border-[#1B5E20]/40 font-medium"
+                        }`}
+                      >
+                        <span className="text-xs leading-snug pr-1">{item.name}</span>
+                        {isSelected && <CheckCircle2 className="w-4 h-4 text-white shrink-0" />}
+                      </button>
+                    );
+                  })
+                )}
               </div>
 
               <div className="mt-2.5">
@@ -363,13 +383,13 @@ export default function OnboardingPemasokQuestionnaire() {
                 <span className="text-gray-500 font-medium block text-xs">Komoditas Dicari:</span>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedCommodities.map((cId) => {
-                    const item = PURCHASE_COMMODITIES.find((c) => c.id === cId);
+                    const item = commodities.find((c) => c.id === cId);
                     return (
                       <span
                         key={cId}
                         className="px-2.5 py-1 bg-emerald-50 text-[#1B5E20] font-bold text-[11px] rounded-xl border border-emerald-200"
                       >
-                        {item?.label}
+                        {item?.name || cId}
                       </span>
                     );
                   })}
