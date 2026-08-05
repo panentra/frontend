@@ -18,6 +18,7 @@ import {
   Plus,
 } from "lucide-react";
 import { HarvestListing } from "./MarketplacePemasokView";
+import Avatar from "./Avatar";
 import {
   getChats,
   getChatMessages,
@@ -405,14 +406,8 @@ export default function RuangNegoPemasokView({
                 <ChevronLeft className="w-5 h-5 stroke-[2.5] text-[#1A1C19]" />
               </button>
 
-              <div className="w-9 h-9 rounded-full bg-emerald-50 border border-emerald-200 relative shrink-0 p-0.5 overflow-hidden">
-                <Image
-                  src={selectedChat.farmerAvatar}
-                  alt={selectedChat.farmerName}
-                  width={36}
-                  height={36}
-                  className="w-full h-full object-contain"
-                />
+              <div className="relative shrink-0">
+                <Avatar name={selectedChat.farmerName} size={36} className="border-2 border-emerald-200" textClassName="text-xs" />
               </div>
 
               <div className="min-w-0">
@@ -885,14 +880,8 @@ export default function RuangNegoPemasokView({
               {/* Farmer Row */}
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 p-1 flex items-center justify-center shrink-0 relative overflow-hidden">
-                    <Image
-                      src={chat.farmerAvatar}
-                      alt={chat.farmerName}
-                      width={44}
-                      height={44}
-                      className="w-10 h-10 object-contain"
-                    />
+                  <div className="relative shrink-0">
+                    <Avatar name={chat.farmerName} size={44} className="border-2 border-emerald-100" textClassName="text-sm" />
                     <span className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-white absolute bottom-0 right-0" />
                   </div>
 

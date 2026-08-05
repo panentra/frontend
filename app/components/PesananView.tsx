@@ -49,6 +49,7 @@ export interface OrderItem {
   unitPrice: string;
   total: string;
   status: "incoming" | "shipping" | "delivered" | "completed";
+  apiStatus?: string;
   date: string;
   location: string;
   fullAddress: string;
@@ -206,6 +207,8 @@ export default function PesananView({
             } else if (rawStatus === "completed" || rawStatus === "selesai") {
               mappedStatus = "completed";
             }
+            // paid_escrow / pending → Pesanan Masuk (sudah dibayar escrow, menunggu kirim pasokan)
+            const isIncomingPaid = rawStatus === "paid_escrow" || rawStatus === "pending" || rawStatus === "incoming";
 
             return {
               numericId: order.id,
@@ -219,6 +222,7 @@ export default function PesananView({
               unitPrice: `Rp ${(order.pricePerKg || 0).toLocaleString("id-ID")} / kg`,
               total: `Rp ${(order.grandTotal || order.subtotal || 0).toLocaleString("id-ID")}`,
               status: mappedStatus,
+              apiStatus: order.status,
               date: order.createdAt ? new Date(order.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "5 Agustus 2026",
               location: typeof order.listingLocation === "string" ? order.listingLocation : (typeof order.deliveryAddress === "string" ? order.deliveryAddress : "Lembang, Bandung Barat"),
               fullAddress: typeof order.deliveryAddress === "string" ? order.deliveryAddress : "Jl. Raya Lembang No. 142, Kab. Bandung Barat",
@@ -239,6 +243,19 @@ export default function PesananView({
       }
     }
     loadOrdersData();
+
+    // Auto-refresh berkala agar transaksi escrow yang baru dibayar Pemasok langsung muncul
+    const pollTimer = setInterval(loadOrdersData, 30000);
+    const handleFocus = () => {
+      loadOrdersData();
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+    return () => {
+      clearInterval(pollTimer);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
   }, []);
 
   const filteredOrders = orders.filter((order) => {
@@ -465,25 +482,32 @@ export default function PesananView({
                   <span className="text-[10px] font-bold text-gray-400 shrink-0">• {order.id}</span>
                 </div>
 
-                <span
-                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border shrink-0 ${
-                    order.status === "incoming"
-                      ? "bg-amber-50 text-amber-800 border-amber-200"
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {order.apiStatus === "paid_escrow" && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black border shrink-0 bg-emerald-50 text-[#0F4C25] border-emerald-200">
+                      Escrow Dibayar
+                    </span>
+                  )}
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border shrink-0 ${
+                      order.status === "incoming"
+                        ? "bg-amber-50 text-amber-800 border-amber-200"
+                        : order.status === "shipping"
+                        ? "bg-blue-50 text-blue-800 border-blue-200"
+                        : order.status === "delivered"
+                        ? "bg-indigo-50 text-indigo-800 border-indigo-200"
+                        : "bg-emerald-50 text-[#0F4C25] border-emerald-200"
+                    }`}
+                  >
+                    {order.status === "incoming"
+                      ? "Pesanan Baru"
                       : order.status === "shipping"
-                      ? "bg-blue-50 text-blue-800 border-blue-200"
+                      ? "Dalam Pengiriman"
                       : order.status === "delivered"
-                      ? "bg-indigo-50 text-indigo-800 border-indigo-200"
-                      : "bg-emerald-50 text-[#0F4C25] border-emerald-200"
-                  }`}
-                >
-                  {order.status === "incoming"
-                    ? "Pesanan Baru"
-                    : order.status === "shipping"
-                    ? "Dalam Pengiriman"
-                    : order.status === "delivered"
-                    ? "Tiba di Tujuan"
-                    : "Selesai"}
-                </span>
+                      ? "Tiba di Tujuan"
+                      : "Selesai"}
+                  </span>
+                </div>
               </div>
 
               {/* Main Commodity & Price Row */}

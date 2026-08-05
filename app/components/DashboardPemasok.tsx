@@ -42,6 +42,7 @@ import DetailProdukPemasokView from "./DetailProdukPemasokView";
 import RuangNegoPemasokView from "./RuangNegoPemasokView";
 import PembayaranEscrowView from "./PembayaranEscrowView";
 import RiwayatPembelianPemasokView from "./RiwayatPembelianPemasokView";
+import Avatar from "./Avatar";
 import { getSupplierDashboard, getAuthUser, SupplierDashboardData, User as AuthUser } from "@/lib/api";
 
 // Nearby Harvests Sample Data for Radar Pasokan
@@ -289,7 +290,7 @@ export default function DashboardPemasok() {
                       onClick={() => setActiveTab("akun")}
                       className="w-11 h-11 rounded-full bg-emerald-100 border-2 border-[#0F4C25] p-0.5 shadow-sm hover:scale-105 transition-transform overflow-hidden cursor-pointer flex items-center justify-center"
                     >
-                      <Store className="w-6 h-6 text-[#0F4C25]" />
+                      <Avatar name={storeName} size={40} textClassName="text-sm" />
                     </button>
                   </div>
 

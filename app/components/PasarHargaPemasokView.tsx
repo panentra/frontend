@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Button from "./Button";
 import { getMarketPrices, MarketPriceItem } from "@/lib/api";
+import Snackbar, { useSnackbar } from "./Snackbar";
 
 interface MarketPriceDisplay {
   id: string;
@@ -63,6 +64,7 @@ export default function PasarHargaPemasokView() {
   const [prices, setPrices] = useState<MarketPriceDisplay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { snackbar, showSnackbar, dismissSnackbar } = useSnackbar();
 
   useEffect(() => {
     let cancelled = false;
@@ -275,7 +277,7 @@ export default function PasarHargaPemasokView() {
               {/* Action Button */}
               <button
                 type="button"
-                onClick={() => alert(`Membeli pasokan ${item.name} langsung dari Petani ${item.location}`)}
+                onClick={() => showSnackbar(`Membeli pasokan ${item.name} langsung dari Petani ${item.location}`, "info")}
                 className="w-full h-11 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl flex items-center justify-center gap-2 text-xs shadow-sm active:scale-95 transition-all cursor-pointer"
               >
 
@@ -286,6 +288,8 @@ export default function PasarHargaPemasokView() {
         </div>
         )}
       </div>
+
+      <Snackbar snackbar={snackbar} onDismiss={dismissSnackbar} />
     </div>
   );
 }

@@ -31,7 +31,28 @@ import {
   X,
 } from "lucide-react";
 import Button from "./Button";
-import { getFarmerListings, createListing, FarmerListingItem } from "@/lib/api";
+import { getFarmerListings, createListing, getLands, FarmerListingItem, SeasonItem, Land } from "@/lib/api";
+
+interface SellableCrop {
+  landId: number;
+  seasonId?: number;
+  commodityId: number;
+  commodityName: string;
+  landName: string;
+  status: string;
+  ready: boolean;
+  estimatedKg?: number | null;
+}
+
+function isHarvestReady(s: SeasonItem): boolean {
+  const status = (s.status || "").toLowerCase();
+  if (["completed", "finished", "selesai", "done", "harvest_ready", "panen"].includes(status)) return true;
+  if (s.end_date) {
+    const end = new Date(s.end_date);
+    if (!Number.isNaN(end.getTime()) && end.getTime() < Date.now()) return true;
+  }
+  return false;
+}
 
 interface JualPanenViewProps {
   onBack: () => void;
@@ -186,6 +207,86 @@ export default function JualPanenView({
   const [listingDuration, setListingDuration] = useState("14");
   const [saleSuccessMsg, setSaleSuccessMsg] = useState<string | null>(null);
   const [apiListings, setApiListings] = useState<FarmerListingItem[]>([]);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setSaleSuccessMsg("Format file harus gambar (JPG/PNG).");
+      setTimeout(() => setSaleSuccessMsg(null), 3000);
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setSaleSuccessMsg("Ukuran gambar maksimal 10MB.");
+      setTimeout(() => setSaleSuccessMsg(null), 3000);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setPhotoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  // Komoditas dari semua lahan/musim tanam akun (dengan status siap panen)
+  const [sellableCrops, setSellableCrops] = useState<SellableCrop[]>([]);
+  const [cropsLoading, setCropsLoading] = useState(true);
+  const [selectedCropIndex, setSelectedCropIndex] = useState(0);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    getLands()
+      .then((res) => {
+        if (cancelled) return;
+        const crops: SellableCrop[] = [];
+
+        (res?.data || []).forEach((land: Land) => {
+          const landCommodity = land.commodity?.id;
+          const seasons = land.seasons && land.seasons.length > 0 ? land.seasons : [];
+          if (seasons.length === 0) {
+            // Lahan tanpa musim tanam: pakai komoditas utama lahan
+            if (land.commodity?.id) {
+              crops.push({
+                landId: land.id as number,
+                commodityId: land.commodity.id,
+                commodityName: land.commodity.name || land.name || "Komoditas",
+                landName: land.name || "Lahan",
+                status: "active",
+                ready: false,
+                estimatedKg: null,
+              });
+            }
+            return;
+          }
+          seasons.forEach((s: SeasonItem) => {
+            const ready = isHarvestReady(s);
+            crops.push({
+              landId: land.id as number,
+              seasonId: s.id,
+              commodityId: s.commodity?.id || landCommodity || 0,
+              commodityName: s.commodity?.name || s.name || land.commodity?.name || land.name || "Komoditas",
+              landName: land.name || "Lahan",
+              status: s.status || "active",
+              ready,
+              estimatedKg: s.estimated_harvest_kg,
+            });
+          });
+        });
+
+        setSellableCrops(crops);
+        setSelectedCropIndex(0);
+      })
+      .catch(() => {
+        setSellableCrops([]);
+      })
+      .finally(() => {
+        if (!cancelled) setCropsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   React.useEffect(() => {
     async function loadListings() {
@@ -202,6 +303,9 @@ export default function JualPanenView({
   }, []);
 
   const selectedGradeObj = NATIONAL_GRADES.find((g) => g.id === selectedGradeId) || NATIONAL_GRADES[0];
+
+  const selectedCrop = sellableCrops[selectedCropIndex] || null;
+  const activeCropName = selectedCrop?.commodityName || cropName;
 
   const handleSelectGrade = (grade: typeof NATIONAL_GRADES[0]) => {
     setSelectedGradeId(grade.id);
@@ -290,10 +394,14 @@ export default function JualPanenView({
 
   const handleSubmitSale = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedCrop) {
+      setSaleSuccessMsg("Pilih komoditas yang ingin ditayangkan terlebih dahulu.");
+      return;
+    }
     try {
       await createListing({
-        commodity_id: 3,
-        land_id: 3,
+        commodity_id: selectedCrop.commodityId,
+        land_id: selectedCrop.landId,
         grade: selectedGradeObj.grade === "Grade A" ? "A" : selectedGradeObj.grade === "Grade B" ? "B" : "C",
         available_kg: qtyNumber,
         selling_price: priceNumber,
@@ -309,7 +417,7 @@ export default function JualPanenView({
       console.warn("API createListing warning:", err);
     }
     setSaleSuccessMsg(
-      `Berhasil! Panen (${saleQtyKg} kg - ${selectedGradeObj.grade}) ditayangkan di Marketplace Panentra dengan harga Rp ${priceNumber.toLocaleString("id-ID")}/kg!`
+      `Berhasil! Panen ${activeCropName} (${saleQtyKg} kg - ${selectedGradeObj.grade}) ditayangkan di Marketplace Panentra dengan harga Rp ${priceNumber.toLocaleString("id-ID")}/kg!`
     );
     setTimeout(() => {
       setSaleSuccessMsg(null);
@@ -359,7 +467,9 @@ export default function JualPanenView({
             </div>
             <div className="flex justify-between items-center text-[11px] text-emerald-200/90 pt-1 border-t border-white/10">
               <span>Estimasi Hasil Panen:</span>
-              <span className="font-extrabold text-emerald-300">50 kg siap jual</span>
+              <span className="font-extrabold text-emerald-300">
+                {selectedCrop?.estimatedKg ? `${selectedCrop.estimatedKg} kg siap jual` : `${saleQtyKg} kg siap jual`}
+              </span>
             </div>
           </div>
         </div>
@@ -661,16 +771,102 @@ export default function JualPanenView({
           </div>
         ) : (
           <form onSubmit={handleSubmitSale} className="space-y-5">
+            {/* 5.0 PILIH KOMODITAS SIAP JUAL (dari API lands/seasons) */}
+            <div className="bg-white rounded-[24px] p-4 border border-gray-200 space-y-2 shadow-2xs">
+              <label className="font-black text-xs text-gray-800 block">
+                Pilih Komoditas Siap Jual
+              </label>
+
+              {cropsLoading ? (
+                <p className="text-[11px] text-gray-400 italic py-1">Memuat lahan & musim tanam...</p>
+              ) : sellableCrops.length === 0 ? (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 space-y-1">
+                  <p className="font-black">Belum ada komoditas terdaftar.</p>
+                  <p className="font-medium leading-snug">
+                    Tambahkan lahan & musim tanam dulu di menu Kalender / Akun agar komoditas muncul di sini.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {sellableCrops.map((crop, i) => {
+                    const isSelected = selectedCropIndex === i;
+                    return (
+                      <button
+                        key={`${crop.landId}-${crop.seasonId ?? crop.commodityId}`}
+                        type="button"
+                        onClick={() => setSelectedCropIndex(i)}
+                        className={`w-full p-3 rounded-2xl border flex items-center justify-between gap-2 text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-emerald-50/70 border-[#0F4C25] shadow-2xs"
+                            : "bg-white border-gray-200 hover:border-emerald-300"
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <p className={`text-xs font-black truncate ${isSelected ? "text-[#0F4C25]" : "text-[#1A1C19]"}`}>
+                            {crop.commodityName}
+                          </p>
+                          <p className="text-[10px] text-gray-500 font-medium truncate">
+                            {crop.landName} · Musim #{crop.seasonId ?? "-"}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-black border shrink-0 ${
+                            crop.ready
+                              ? "bg-emerald-100 text-[#0F4C25] border-emerald-300"
+                              : "bg-blue-50 text-blue-900 border-blue-200"
+                          }`}
+                        >
+                          {crop.ready ? "Siap Panen" : "Masih Aktif"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* 5.1 FOTO HASIL PANEN */}
             <div className="bg-white rounded-[24px] p-4 border border-gray-200 space-y-2 shadow-2xs">
               <label className="font-black text-xs text-gray-800 block">Foto Hasil Panen</label>
-              <div className="w-full h-28 bg-[#F8FAF8] border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-[#0F4C25] transition-all">
-                <Upload className="w-6 h-6 text-[#0F4C25] mb-1" />
-                <span className="text-xs font-black text-[#0F4C25]">
-                  Upload Foto Panen {cropName} ({selectedGradeObj.grade})
-                </span>
-                <span className="text-[10px] text-gray-400 font-medium mt-0.5">Format JPG/PNG maks 10MB</span>
-              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoSelect}
+              />
+
+              {photoPreview ? (
+                <div className="relative w-full h-28 rounded-2xl overflow-hidden border border-emerald-200">
+                  <Image
+                    src={photoPreview}
+                    alt="Pratinjau Foto Panen"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 440px) 100vw, 440px"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPhotoPreview(null)}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center cursor-pointer hover:bg-black/80"
+                    title="Hapus Foto"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-28 bg-[#F8FAF8] border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-[#0F4C25] transition-all"
+                >
+                  <Upload className="w-6 h-6 text-[#0F4C25] mb-1" />
+                  <span className="text-xs font-black text-[#0F4C25]">
+                    Upload Foto Panen {activeCropName} ({selectedGradeObj.grade})
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-medium mt-0.5">Format JPG/PNG maks 10MB</span>
+                </div>
+              )}
             </div>
 
             {/* 5.2 DETAIL JUMLAH & HARGA + VALIDASI REAL-TIME */}
@@ -877,7 +1073,7 @@ export default function JualPanenView({
                   </div>
                   <div className="space-y-0.5 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-black text-xs text-[#1A1C19]">{cropName}</span>
+                      <span className="font-black text-xs text-[#1A1C19]">{activeCropName}</span>
                       <span className="bg-emerald-100 text-[#0F4C25] px-2 py-0.5 rounded-md text-[9px] font-black border border-emerald-200">
                         {selectedGradeObj.grade}
                       </span>
@@ -918,9 +1114,12 @@ export default function JualPanenView({
               type="submit"
               variant="primary"
               size="md"
-              className="w-full justify-center text-xs font-black shadow-lg py-3.5 bg-[#0F4C25] hover:bg-[#1B5E20]"
+              disabled={!selectedCrop}
+              className="w-full justify-center text-xs font-black shadow-lg py-3.5 bg-[#0F4C25] hover:bg-[#1B5E20] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Tayangkan di Marketplace Panentra →
+              {selectedCrop
+                ? `Tayangkan ${selectedCrop.commodityName} di Marketplace Panentra →`
+                : "Tayangkan di Marketplace Panentra →"}
             </Button>
           </form>
         )}

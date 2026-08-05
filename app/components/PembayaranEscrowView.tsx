@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { HarvestListing } from "./MarketplacePemasokView";
+import Snackbar, { useSnackbar } from "./Snackbar";
 import { createSupplierOrder, payOrder, confirmOrderReceived, getAuthUser } from "@/lib/api";
 
 const DEFAULT_DELIVERY_ADDRESS = "Jl. Raya Lembang No. 142, Bandung Barat";
@@ -73,6 +74,7 @@ export default function PembayaranEscrowView({
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const { snackbar, showSnackbar, dismissSnackbar } = useSnackbar();
 
   const deliveryAddress =
     (getAuthUser()?.address as string) || DEFAULT_DELIVERY_ADDRESS;
@@ -113,15 +115,17 @@ export default function PembayaranEscrowView({
       if (createdOrderId != null) {
         await confirmOrderReceived(createdOrderId);
       }
-      alert(
-        `Sukses! Dana Escrow sebesar Rp ${grandTotal.toLocaleString("id-ID")} telah dicairkan ke Panentra Pay milik ${currentListing.farmerName}. Transaksi Selesai!`
+      showSnackbar(
+        `Sukses! Dana Escrow sebesar Rp ${grandTotal.toLocaleString("id-ID")} telah dicairkan ke Panentra Pay milik ${currentListing.farmerName}. Transaksi Selesai!`,
+        "success"
       );
-      onPaymentSuccess();
+      setTimeout(onPaymentSuccess, 1500);
     } catch (err) {
-      alert(
+      showSnackbar(
         err instanceof Error
           ? err.message
-          : "Order belum dapat dikonfirmasi. Pastikan status pengiriman sudah sampai."
+          : "Order belum dapat dikonfirmasi. Pastikan status pengiriman sudah sampai.",
+        "error"
       );
     } finally {
       setConfirming(false);
@@ -407,6 +411,8 @@ export default function PembayaranEscrowView({
           </button>
         </div>
       )}
+
+      <Snackbar snackbar={snackbar} onDismiss={dismissSnackbar} />
     </div>
   );
 }

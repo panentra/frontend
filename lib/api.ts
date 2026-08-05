@@ -732,6 +732,19 @@ export async function getSupplierDeliveries(): Promise<SupplierOrdersResponse> {
   return fetchWithAuth<SupplierOrdersResponse>("/api/supplier/deliveries");
 }
 
+export interface ReviewPayload {
+  order_id: number | string;
+  rating: number;
+  comment?: string;
+}
+
+export async function submitReview(payload: ReviewPayload): Promise<{ message?: string }> {
+  return fetchWithAuth<{ message?: string }>("/api/reviews", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 // ==========================================
 // 4. SHARED ENDPOINTS (/api/shared/...)
 // ==========================================

@@ -23,6 +23,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { HarvestListing } from "./MarketplacePemasokView";
+import Snackbar, { useSnackbar } from "./Snackbar";
+import Avatar from "./Avatar";
 import { getListingDetail, getFavorites, addFavorite, removeFavorite, FarmerListingItem } from "@/lib/api";
 
 function toHarvestListing(item: FarmerListingItem): HarvestListing {
@@ -66,6 +68,7 @@ export default function DetailProdukPemasokView({
   const [detail, setDetail] = useState<HarvestListing | null>(null);
   const [favoriteSellerId, setFavoriteSellerId] = useState<number | null>(null);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const { snackbar, showSnackbar, dismissSnackbar } = useSnackbar();
 
   // Sync heart button with favorites API (match by farmer name)
   useEffect(() => {
@@ -102,7 +105,7 @@ export default function DetailProdukPemasokView({
         setFavoriteSellerId(listing.id as number);
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal memperbarui favorit.");
+      showSnackbar(err instanceof Error ? err.message : "Gagal memperbarui favorit.", "error");
     } finally {
       setFavoriteLoading(false);
     }
@@ -167,7 +170,7 @@ export default function DetailProdukPemasokView({
           </button>
           <button
             type="button"
-            onClick={() => alert("Link produk berhasil disalin!")}
+            onClick={() => showSnackbar("Link produk berhasil disalin!", "info")}
             className="w-9 h-9 rounded-2xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 cursor-pointer"
           >
             <Share2 className="w-4 h-4" />
@@ -320,15 +323,7 @@ export default function DetailProdukPemasokView({
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0 overflow-hidden relative">
-              <Image
-                src={data.farmerAvatar || data.farmImage || "/assets/bowo-senang.png"}
-                alt={data.farmerName}
-                width={48}
-                height={48}
-                className="w-full h-full object-contain"
-              />
-            </div>
+            <Avatar name={data.farmerName} size={48} className="border-2 border-emerald-100" textClassName="text-base" />
 
             <div className="space-y-0.5">
               <h4 className="text-xs font-black text-[#1A1C19] flex items-center gap-1">
@@ -392,6 +387,8 @@ export default function DetailProdukPemasokView({
           <span>Beli Escrow</span>
         </button>
       </div>
+
+      <Snackbar snackbar={snackbar} onDismiss={dismissSnackbar} />
     </div>
   );
 }

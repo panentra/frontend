@@ -21,10 +21,16 @@ import {
   Plus,
   Phone,
   MoreVertical,
+  Tag,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import Button from "./Button";
+import Avatar from "./Avatar";
 
-import { getChats, getChatMessages, sendChatMessage, ApiChatListItem, ApiChatMessageItem } from "@/lib/api";
+import { getChats, getChatMessages, sendChatMessage, getAuthUser, ApiChatListItem, ApiChatMessageItem } from "@/lib/api";
+
+type OfferStatus = "pending" | "accepted" | "countered";
 
 export interface ChatConversation {
   numericChatId?: number;
@@ -58,6 +64,80 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
   const [selectedChat, setSelectedChat] = useState<ChatConversation | null>(null);
   const [messages, setMessages] = useState<ApiChatMessageItem[]>([]);
   const [inputText, setInputText] = useState("");
+
+  // Penawaran aksi (ACC / tawar balik) sisi Petani
+  const currentUserId = getAuthUser()?.id;
+  const HPP_PER_KG = 28500;
+  const [offerStatus, setOfferStatus] = useState<Record<number, OfferStatus>>({});
+  const [showCounterSheet, setShowCounterSheet] = useState(false);
+  const [counterChatId, setCounterChatId] = useState<number | null>(null);
+  const [counterPrice, setCounterPrice] = useState("30000");
+  const [counterQty, setCounterQty] = useState("150");
+  const [snackbar, setSnackbar] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showSnackbar = React.useCallback((message: string, type: "success" | "error" = "success") => {
+    setSnackbar({ show: true, message, type });
+    setTimeout(() => {
+      setSnackbar((prev) => ({ ...prev, show: false }));
+    }, type === "error" ? 4000 : 3000);
+  }, []);
+
+  const handleAcceptOffer = async (msg: ApiChatMessageItem) => {
+    if (!msg.offer_price || !msg.offer_qty) return;
+    const chatId = Number(selectedChat?.numericChatId || selectedChat?.id);
+
+    setOfferStatus((prev) => ({ ...prev, [msg.id]: "accepted" }));
+    showSnackbar("Penawaran harga disetujui. Menunggu pembayaran escrow dari mitra.");
+
+    try {
+      if (chatId) {
+        await sendChatMessage(chatId, {
+          text: `Saya setuju dengan penawaran Rp ${msg.offer_price.toLocaleString("id-ID")}/kg untuk ${msg.offer_qty} kg. Mohon segera selesaikan pembayaran escrow.`,
+        });
+      }
+    } catch {
+      // Optimistic acceptance; konfirmasi tetap tampil walau API gagal
+    }
+  };
+
+  const handleOpenCounter = (msg: ApiChatMessageItem) => {
+    setCounterChatId(msg.id);
+    setCounterPrice((msg.offer_price || 30000).toString());
+    setCounterQty((msg.offer_qty || 150).toString());
+    setShowCounterSheet(true);
+  };
+
+  const handleSendCounter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const chatId = Number(selectedChat?.numericChatId || selectedChat?.id);
+    const priceNum = parseInt(counterPrice) || HPP_PER_KG;
+    const qtyNum = parseInt(counterQty) || 50;
+
+    if (counterChatId != null) {
+      setOfferStatus((prev) => ({ ...prev, [counterChatId]: "countered" }));
+    }
+    setShowCounterSheet(false);
+    showSnackbar("Tawaran balik terkirim. Menunggu respon mitra.");
+
+    try {
+      if (chatId) {
+        const res = await sendChatMessage(chatId, {
+          text: `Tawaran balik saya: Rp ${priceNum.toLocaleString("id-ID")}/kg untuk ${qtyNum} kg. Apakah bisa?`,
+          offer_price: priceNum,
+          offer_qty: qtyNum,
+        });
+        if (res?.data) {
+          setMessages((prev) => [...prev, res.data]);
+        }
+      }
+    } catch {
+      // Pesan tetap tampil lokal walau API gagal
+    }
+  };
 
   React.useEffect(() => {
     async function loadChatsData() {
@@ -210,14 +290,8 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
                 <ChevronLeft className="w-5 h-5 stroke-[2.5] text-[#1A1C19]" />
               </button>
 
-              <div className="w-9 h-9 rounded-full bg-emerald-50 border border-emerald-200 relative shrink-0 p-0.5 overflow-hidden">
-                <Image
-                  src={selectedChat.image}
-                  alt={selectedChat.customer}
-                  width={36}
-                  height={36}
-                  className="w-full h-full object-contain"
-                />
+              <div className="relative shrink-0">
+                <Avatar name={selectedChat.customer} size={36} className="border-2 border-emerald-200" textClassName="text-xs" />
               </div>
 
               <div className="min-w-0">
@@ -241,14 +315,8 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
           {/* Shopee / Tokopedia Style Pinned Product Bar */}
           <div className="p-2.5 px-4 flex items-center justify-between gap-3 bg-[#F9FAF9]">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 p-1 border border-emerald-100 shrink-0">
-                <Image
-                  src={selectedChat.image}
-                  alt={selectedChat.item}
-                  width={36}
-                  height={36}
-                  className="w-full h-full object-contain"
-                />
+              <div className="shrink-0">
+                <Avatar name={selectedChat.customer} size={36} className="rounded-xl" textClassName="text-xs" />
               </div>
               <div className="min-w-0">
                 <h4 className="text-xs font-black text-[#1A1C19] truncate">
@@ -281,7 +349,9 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
             </div>
           ) : (
             messages.map((msg) => {
-              const isMe = msg.sender_id === 6 || (msg.sender_name && msg.sender_name.toLowerCase().includes("budi"));
+              const isMe =
+                currentUserId != null ? msg.sender_id === currentUserId : (msg.sender_name && msg.sender_name.toLowerCase().includes("budi"));
+              const offerStatusKey = offerStatus[msg.id];
               return (
                 <div
                   key={msg.id}
@@ -305,6 +375,74 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
                     <span className="text-[9px] text-gray-400 font-medium px-1 block">
                       {msg.created_at ? new Date(msg.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "Hari ini"}
                     </span>
+
+                    {/* ===== CARD AKSI PENAWARAN HARGA PASOKAN (dari Mitra/Pemasok) ===== */}
+                    {!isMe && msg.offer_price && msg.offer_qty != null && (
+                      <div className="max-w-[92%] space-y-1 mx-auto mt-1">
+                        <div className="bg-white border-2 border-[#0F4C25] rounded-2xl p-3.5 space-y-2.5 shadow-md">
+                          {/* Header Card */}
+                          <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                            <span className="font-black text-[#0F4C25] text-xs flex items-center gap-1.5">
+                              <Handshake className="w-4 h-4 text-emerald-700" />
+                              Penawaran Harga Pasokan
+                            </span>
+                            <span
+                              className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
+                                offerStatusKey === "accepted"
+                                  ? "bg-emerald-100 text-[#0F4C25]"
+                                  : offerStatusKey === "countered"
+                                  ? "bg-gray-100 text-gray-600"
+                                  : "bg-amber-50 text-amber-900 border border-amber-200"
+                              }`}
+                            >
+                              {offerStatusKey === "accepted"
+                                ? "Penawaran Disetujui"
+                                : offerStatusKey === "countered"
+                                ? "Menunggu Respon Mitra"
+                                : "Menunggu Respon Anda"}
+                            </span>
+                          </div>
+
+                          {/* Box Highlight Utama */}
+                          <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 text-[#0F4C25] font-black text-sm flex justify-between items-center">
+                            <span>Rp {msg.offer_price.toLocaleString("id-ID")} /kg</span>
+                            <span className="text-xs text-gray-600 font-bold">Total {msg.offer_qty} kg</span>
+                          </div>
+
+                          {/* Sub-info Margin */}
+                          <p className="text-[11px] text-gray-600 font-medium leading-relaxed">
+                            Modal HPP Petani: <strong>Rp {HPP_PER_KG.toLocaleString("id-ID")}/kg</strong> • Margin +
+                            {Math.round(((msg.offer_price - HPP_PER_KG) / HPP_PER_KG) * 100)}%
+                          </p>
+
+                          {/* Aksi */}
+                          {offerStatusKey === "accepted" ? (
+                            <p className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl py-2 text-center">
+                              ✓ Penawaran telah disetujui. Menunggu pembayaran escrow dari mitra.
+                            </p>
+                          ) : (
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenCounter(msg)}
+                                className="flex-1 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl font-black text-xs cursor-pointer active:scale-95 transition-all"
+                              >
+                                <Tag className="w-3.5 h-3.5 inline-block mr-1 text-amber-700" />
+                                Ubah Tawaran
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleAcceptOffer(msg)}
+                                className="flex-1 py-2 bg-emerald-800 hover:bg-[#0F4C25] text-white rounded-xl font-black text-xs cursor-pointer active:scale-95 transition-all"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 inline-block mr-1 text-emerald-300" />
+                                Terima Penawaran
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -332,6 +470,71 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
             <Send className="w-4 h-4" />
           </button>
         </form>
+
+        {/* BottomSheet Tawar Balik (Ubah Tawaran) */}
+        {showCounterSheet && (
+          <div className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm flex items-end justify-center animate-fade-in">
+            <div className="bg-white rounded-t-[32px] p-5 w-full max-w-[440px] space-y-4 shadow-2xl border-t border-gray-200 animate-slide-up">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-1.5">
+                  <Tag className="w-4 h-4 text-[#0F4C25]" />
+                  Tawar Balik Harga Pasokan
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowCounterSheet(false)}
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSendCounter} className="space-y-3.5">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 block">Harga Tawaran (Rp/kg)</label>
+                    <input
+                      type="number"
+                      value={counterPrice}
+                      onChange={(e) => setCounterPrice(e.target.value)}
+                      className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl text-xs font-extrabold outline-none focus:border-[#0F4C25]"
+                    />
+                    <span className="text-[9px] text-gray-400 font-medium block">HPP: Rp {HPP_PER_KG.toLocaleString("id-ID")}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 block">Jumlah Pasokan (kg)</label>
+                    <input
+                      type="number"
+                      value={counterQty}
+                      onChange={(e) => setCounterQty(e.target.value)}
+                      className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl text-xs font-extrabold outline-none focus:border-[#0F4C25]"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full h-11 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl flex items-center justify-center gap-2 text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+                >
+                  <Send className="w-4 h-4 text-emerald-300" />
+                  Kirim Tawaran Balik
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Snackbar / Toast Notification */}
+        {snackbar.show && (
+          <div className="fixed bottom-22 sm:bottom-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 bg-[#1A1C19]/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-gray-700/80 animate-slide-up max-w-[92vw] sm:max-w-md">
+            {snackbar.type === "error" ? (
+              <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            )}
+            <p className="text-xs font-bold leading-snug">{snackbar.message}</p>
+          </div>
+        )}
       </div>
     );
   }
@@ -477,14 +680,8 @@ export default function ChatListView({ onChatRoomStateChange }: ChatListViewProp
               {/* Buyer Row */}
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 p-1 flex items-center justify-center shrink-0 border border-emerald-100 relative">
-                    <Image
-                      src={chat.image}
-                      alt={chat.customer}
-                      width={44}
-                      height={44}
-                      className="w-10 h-10 object-contain"
-                    />
+                  <div className="relative shrink-0">
+                    <Avatar name={chat.customer} size={44} className="border-2 border-emerald-100" textClassName="text-sm" />
                     <span className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-white absolute bottom-0 right-0" />
                   </div>
 

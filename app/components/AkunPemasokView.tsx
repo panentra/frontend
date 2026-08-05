@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { logoutUser, getFavorites, getBankAccounts, createBankAccount, deleteBankAccount, setPrimaryBankAccount, BankAccount } from "@/lib/api";
+import { logoutUser, getFavorites, getBankAccounts, createBankAccount, deleteBankAccount, setPrimaryBankAccount, getAuthUser, BankAccount } from "@/lib/api";
+import Avatar from "./Avatar";
 import {
   User,
   Store,
@@ -29,6 +29,7 @@ import {
   Trash2,
   Check,
   AlertCircle,
+  Info,
 } from "lucide-react";
 
 interface AkunPemasokViewProps {
@@ -69,6 +70,7 @@ export default function AkunPemasokView({
   onNavigateToPetani,
 }: AkunPemasokViewProps) {
   const router = useRouter();
+  const storeName = (getAuthUser()?.name as string) || "Toko Sembako Berkah Jaya";
 
   // Favorite Farmers List (from API)
   const [favoriteFarmers, setFavoriteFarmers] = useState<FavoriteFarmer[]>([]);
@@ -86,13 +88,13 @@ export default function AkunPemasokView({
   const [newAccHolder, setNewAccHolder] = useState("");
 
   // Snackbar / Toast Notification State
-  const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "error" | "info" }>({
     show: false,
     message: "",
     type: "success",
   });
 
-  const showSnackbar = React.useCallback((message: string, type: "success" | "error" = "success") => {
+  const showSnackbar = React.useCallback((message: string, type: "success" | "error" | "info" = "success") => {
     setToast({ show: true, message, type });
     setTimeout(() => {
       setToast((prev) => ({ ...prev, show: false }));
@@ -239,9 +241,7 @@ export default function AkunPemasokView({
 
       {/* ================= 1. HEADER PROFIL & REPUTASI PEMASOK ================= */}
       <div className="bg-[#F8FAF8] rounded-[28px] p-5 border border-gray-200 flex items-center gap-4 relative overflow-hidden shadow-sm">
-        <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0 text-[#0F4C25] shadow-2xs">
-          <Store className="w-7 h-7" />
-        </div>
+        <Avatar name={storeName} size={56} className="border-2 border-emerald-200" textClassName="text-xl" />
 
         <div className="space-y-1 flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
@@ -273,7 +273,7 @@ export default function AkunPemasokView({
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={() => alert("Menampilkan Rekapitulasi Keuangan Pembelian...")}
+            onClick={() => showSnackbar("Menampilkan Rekapitulasi Keuangan Pembelian...", "info")}
             className="h-10 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-black backdrop-blur-md border border-white/20 transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
           >
             <FileText className="w-3.5 h-3.5" />
@@ -367,15 +367,7 @@ export default function AkunPemasokView({
               className="bg-white rounded-[24px] p-3.5 border border-gray-200 shadow-sm space-y-2.5 text-xs hover:border-[#0F4C25]/40 transition-all cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 overflow-hidden p-0.5">
-                  <Image
-                    src={farmer.image}
-                    alt={farmer.name}
-                    width={36}
-                    height={36}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
+                <Avatar name={farmer.name} size={36} className="border-2 border-emerald-100" textClassName="text-xs" />
                 <div className="min-w-0 flex-1 space-y-0.5">
                   <h4 className="font-black text-[#1A1C19] truncate leading-tight">{farmer.name}</h4>
                   <span className="text-[9px] text-gray-500 font-semibold block truncate">{farmer.location}</span>
@@ -428,7 +420,7 @@ export default function AkunPemasokView({
 
           <button
             type="button"
-            onClick={() => alert("Unduh Rekap Laporan Pembelian Pasokan (PDF/Excel)")}
+            onClick={() => showSnackbar("Unduh Rekap Laporan Pembelian Pasokan (PDF/Excel) diproses...", "info")}
             className="w-full p-4 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -440,7 +432,7 @@ export default function AkunPemasokView({
 
           <button
             type="button"
-            onClick={() => alert("Menghubungi Pusat Bantuan AI Panentra 24/7...")}
+            onClick={() => showSnackbar("Menghubungi Pusat Bantuan AI Panentra 24/7...", "info")}
             className="w-full p-4 flex items-center justify-between hover:bg-gray-50 text-left cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -644,6 +636,8 @@ export default function AkunPemasokView({
         <div className="fixed bottom-22 sm:bottom-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 bg-[#1A1C19]/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-gray-700/80 animate-slide-up max-w-[92vw] sm:max-w-md">
           {toast.type === "error" ? (
             <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+          ) : toast.type === "info" ? (
+            <Info className="w-5 h-5 text-blue-400 shrink-0" />
           ) : (
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           )}

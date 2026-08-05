@@ -16,6 +16,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { getSupplierDeliveries, confirmOrderReceived, SupplierOrderItem } from "@/lib/api";
+import Snackbar, { useSnackbar } from "./Snackbar";
 
 export interface DeliveryItem {
   id: string;
@@ -88,6 +89,7 @@ export default function PengantaranPemasokView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const { snackbar, showSnackbar, dismissSnackbar } = useSnackbar();
 
   const loadDeliveries = () => {
     setLoading(true);
@@ -128,11 +130,11 @@ export default function PengantaranPemasokView() {
     setConfirmingId(item.orderId);
     try {
       await confirmOrderReceived(item.orderId);
-      alert("Pasokan telah berhasil dikonfirmasi sampai di toko! Escrow pembayaran segera dicairkan ke Petani.");
+      showSnackbar("Pasokan telah berhasil dikonfirmasi sampai di toko! Escrow pembayaran segera dicairkan ke Petani.", "success");
       setSelectedDelivery(null);
       loadDeliveries();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Order belum dapat dikonfirmasi.");
+      showSnackbar(err instanceof Error ? err.message : "Order belum dapat dikonfirmasi.", "error");
     } finally {
       setConfirmingId(null);
     }
@@ -232,7 +234,7 @@ export default function PengantaranPemasokView() {
 
           <button
             type="button"
-            onClick={() => alert(`Menghubungi Driver ${selectedDelivery.driverName} (${selectedDelivery.driverPhone})...`)}
+            onClick={() => showSnackbar(`Menghubungi Driver ${selectedDelivery.driverName} (${selectedDelivery.driverPhone})...`, "info")}
             className="px-3.5 py-2 bg-[#0F4C25] hover:bg-[#0A381B] text-white rounded-xl font-extrabold flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer shadow-xs"
           >
             <Phone className="w-3.5 h-3.5" />
@@ -298,6 +300,8 @@ export default function PengantaranPemasokView() {
             <span>{confirmingId === selectedDelivery.orderId ? "Memproses..." : "Konfirmasi Pasokan Telah Diterima"}</span>
           </button>
         )}
+
+        <Snackbar snackbar={snackbar} onDismiss={dismissSnackbar} />
       </div>
     );
   }
@@ -462,6 +466,8 @@ export default function PengantaranPemasokView() {
         ))}
       </div>
       )}
+
+      <Snackbar snackbar={snackbar} onDismiss={dismissSnackbar} />
     </div>
   );
 }

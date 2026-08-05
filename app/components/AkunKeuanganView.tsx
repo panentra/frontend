@@ -64,6 +64,7 @@ import {
   Layers,
 } from "lucide-react";
 import Button from "./Button";
+import Avatar from "./Avatar";
 
 // Master Periode Musim Tanam Data
 const PLANTING_SEASONS = [
@@ -1131,15 +1132,9 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
             <Edit2 className="w-4 h-4" />
           </button>
 
-          {/* Centered Avatar Image Circle */}
-          <div className="w-20 h-20 rounded-full bg-emerald-50 border-4 border-white shadow-lg overflow-hidden relative mb-2 p-0.5">
-            <Image
-              src="/assets/bowo-senang.png"
-              alt={profileName}
-              width={80}
-              height={80}
-              className="w-full h-full object-contain"
-            />
+          {/* Centered Avatar Circle (WhatsApp-style: inisial dari nama) */}
+          <div className="mb-2">
+            <Avatar name={profileName} size={80} className="border-4 border-white shadow-lg" textClassName="text-2xl" />
           </div>
 
           {/* User Name & Verification Badge */}

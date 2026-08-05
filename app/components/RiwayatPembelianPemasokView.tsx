@@ -15,7 +15,8 @@ import {
   Search,
   Package,
 } from "lucide-react";
-import { getSupplierOrders, confirmOrderReceived, SupplierOrderItem } from "@/lib/api";
+import { getSupplierOrders, confirmOrderReceived, submitReview, SupplierOrderItem } from "@/lib/api";
+import Snackbar, { useSnackbar } from "./Snackbar";
 
 export interface PurchaseHistoryItem {
   id: string;
@@ -87,6 +88,7 @@ export default function RiwayatPembelianPemasokView({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const { snackbar, showSnackbar, dismissSnackbar } = useSnackbar();
 
   const loadOrders = () => {
     setLoading(true);
@@ -127,10 +129,10 @@ export default function RiwayatPembelianPemasokView({
     setConfirmingId(item.orderId);
     try {
       await confirmOrderReceived(item.orderId);
-      alert("Barang telah dikonfirmasi diterima! Dana escrow berhasil dicairkan ke petani.");
+      showSnackbar("Barang telah dikonfirmasi diterima! Dana escrow berhasil dicairkan ke petani.", "success");
       loadOrders();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal mengonfirmasi penerimaan pesanan.");
+      showSnackbar(err instanceof Error ? err.message : "Gagal mengonfirmasi penerimaan pesanan.", "error");
     } finally {
       setConfirmingId(null);
     }
@@ -152,24 +154,33 @@ export default function RiwayatPembelianPemasokView({
     };
   }, [selectedForReview, selectedInvoice]);
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedForReview) return;
 
-    setPurchases((prev) =>
-      prev.map((item) =>
-        item.id === selectedForReview.id
-          ? {
-              ...item,
-              isReviewed: true,
-              userRating: ratingStars,
-              userReview: reviewComment || "Kualitas pasokan sangat baik!",
-            }
-          : item
-      )
-    );
+    try {
+      await submitReview({
+        order_id: selectedForReview.orderId ?? selectedForReview.id,
+        rating: ratingStars,
+        comment: reviewComment || "Kualitas pasokan sangat baik!",
+      });
+      setPurchases((prev) =>
+        prev.map((item) =>
+          item.id === selectedForReview.id
+            ? {
+                ...item,
+                isReviewed: true,
+                userRating: ratingStars,
+                userReview: reviewComment || "Kualitas pasokan sangat baik!",
+              }
+            : item
+        )
+      );
 
-    alert(`Terima kasih! Rating ⭐ ${ratingStars} dan ulasan berhasil ditambahkan untuk ${selectedForReview.farmerName}. Reputasi petani telah diperbarui.`);
+      showSnackbar(`Terima kasih! Rating ⭐ ${ratingStars} dan ulasan berhasil ditambahkan untuk ${selectedForReview.farmerName}. Reputasi petani telah diperbarui.`, "success");
+    } catch (err) {
+      showSnackbar(err instanceof Error ? err.message : "Gagal mengirim rating.", "error");
+    }
     setSelectedForReview(null);
     setReviewComment("");
   };
@@ -323,7 +334,7 @@ export default function RiwayatPembelianPemasokView({
                 <span>Invoice</span>
               </button>
 
-              {!item.isReviewed ? (
+              {!item.isReviewed && item.apiStatus === "completed" ? (
                 <button
                   type="button"
                   onClick={() => setSelectedForReview(item)}
@@ -332,10 +343,14 @@ export default function RiwayatPembelianPemasokView({
                   <Star className="w-3.5 h-3.5 fill-amber-400 stroke-amber-500" />
                   <span>Beri Rating</span>
                 </button>
-              ) : (
+              ) : item.isReviewed ? (
                 <div className="h-10 bg-emerald-50 border border-emerald-200 text-[#0F4C25] font-extrabold rounded-2xl flex items-center justify-center gap-1.5 text-[10px]">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Telah Diulas</span>
+                </div>
+              ) : (
+                <div className="h-10 bg-gray-50 border border-gray-200 text-gray-400 font-extrabold rounded-2xl flex items-center justify-center text-[10px]">
+                  Menunggu Selesai
                 </div>
               )}
 
@@ -480,7 +495,7 @@ export default function RiwayatPembelianPemasokView({
             <button
               type="button"
               onClick={() => {
-                alert("Mengunduh Invoice PDF...");
+                showSnackbar("Mengunduh Invoice PDF...", "info");
                 setSelectedInvoice(null);
               }}
               className="w-full h-11 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl flex items-center justify-center gap-2 text-xs cursor-pointer shadow-md active:scale-95 transition-all"
@@ -491,6 +506,8 @@ export default function RiwayatPembelianPemasokView({
           </div>
         </div>
       )}
+
+      <Snackbar snackbar={snackbar} onDismiss={dismissSnackbar} />
     </div>
   );
 }

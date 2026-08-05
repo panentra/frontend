@@ -43,6 +43,7 @@ import {
   PriceHistoryItem,
 } from "@/lib/api";
 import BottomNavbar from "./BottomNavbar";
+import Avatar from "./Avatar";
 import Button from "./Button";
 import KalenderView from "./KalenderView";
 import PesananView from "./PesananView";
@@ -557,13 +558,7 @@ export default function DashboardPetani() {
                   onClick={() => setActiveTab("akun")}
                   className="w-11 h-11 rounded-full bg-emerald-100 border-2 border-[#0F4C25] p-0.5 shadow-sm hover:scale-105 transition-transform overflow-hidden cursor-pointer"
                 >
-                  <Image
-                    src="/assets/bowo-senang.png"
-                    alt="Profil Andi"
-                    width={44}
-                    height={44}
-                    className="w-full h-full object-contain"
-                  />
+                  <Avatar name={userName} size={40} textClassName="text-sm" />
                 </button>
               </div>
 

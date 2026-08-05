@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "re
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { LocateFixed, Loader2 } from "lucide-react";
+import Snackbar, { useSnackbar } from "./Snackbar";
 
 // Fix standard Leaflet default marker icon paths in Next.js
 const farmMarkerIcon = new L.Icon({
@@ -45,6 +46,7 @@ function GoogleMapsLocationButton({
 }) {
   const map = useMap();
   const [isLocating, setIsLocating] = useState(false);
+  const { snackbar, showSnackbar, dismissSnackbar } = useSnackbar();
 
   const handleLocate = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -63,6 +65,7 @@ function GoogleMapsLocationButton({
         (err) => {
           console.warn("GPS Access Error/Denied:", err);
           setIsLocating(false);
+          showSnackbar("Gagal mengakses lokasi GPS. Menggunakan lokasi fallback.", "error");
           const fallbackLat = -7.25045;
           const fallbackLng = 112.76885;
           map.flyTo([fallbackLat, fallbackLng], 15, { animate: true, duration: 1 });
@@ -72,7 +75,7 @@ function GoogleMapsLocationButton({
       );
     } else {
       setIsLocating(false);
-      alert("Browser tidak mendukung Geolocation.");
+      showSnackbar("Browser tidak mendukung Geolocation.", "error");
     }
   };
 
@@ -91,6 +94,8 @@ function GoogleMapsLocationButton({
           <LocateFixed className="w-5 h-5 text-[#1B5E20]" />
         )}
       </button>
+
+      <Snackbar snackbar={snackbar} onDismiss={dismissSnackbar} />
     </div>
   );
 }
