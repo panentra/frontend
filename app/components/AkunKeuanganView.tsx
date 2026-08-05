@@ -765,6 +765,102 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
             )}
           </div>
         </div>
+
+        {/* 8. MODAL CATAT BIAYA (HPP FORM MODAL WITH SEASON SELECTOR) */}
+        {showExpenseModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+            <div className="w-full max-w-[380px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-sm font-black text-[#1A1C19]">
+                  Catat Biaya Produksi (HPP)
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowExpenseModal(false)}
+                  className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddExpense} className="space-y-3 text-xs">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Periode / Musim Tanam</label>
+                  <select
+                    value={expenseSeasonId}
+                    onChange={(e) => setExpenseSeasonId(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                  >
+                    {plantingSeasons.filter((s) => s.id !== "all").map((season) => (
+                      <option key={season.id} value={season.id}>
+                        {season.name} ({season.period}) {season.status === "Aktif" ? "[Aktif]" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Kategori Biaya</label>
+                  <select
+                    value={expenseCategory}
+                    onChange={(e) => setExpenseCategory(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                  >
+                    <option value="Pupuk">Pupuk & Nutrisi</option>
+                    <option value="Bibit">Bibit & Benih</option>
+                    <option value="Obat">Obat & Pestisida</option>
+                    <option value="Tenaga Kerja">Tenaga Kerja / Upah Harian</option>
+                    <option value="Peralatan">Peralatan & Transportasi</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Deskripsi Item</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: Pembelian Pupuk KCL 25kg"
+                    value={expenseTitle}
+                    onChange={(e) => setExpenseTitle(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Nominal Biaya (Rp)</label>
+                  <input
+                    type="number"
+                    placeholder="Contoh: 250000"
+                    value={expenseAmount}
+                    onChange={(e) => setExpenseAmount(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowExpenseModal(false)}
+                    className="flex-1 justify-center"
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    className="flex-1 justify-center py-2.5 font-bold"
+                  >
+                    Simpan Biaya
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
