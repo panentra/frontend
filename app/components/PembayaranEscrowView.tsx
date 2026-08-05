@@ -18,6 +18,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import { HarvestListing } from "./MarketplacePemasokView";
+import { createSupplierOrder, payOrder, confirmOrderReceived, getAuthUser } from "@/lib/api";
+
+const DEFAULT_DELIVERY_ADDRESS = "Jl. Raya Lembang No. 142, Bandung Barat";
 
 interface PembayaranEscrowViewProps {
   listing?: HarvestListing | null;
@@ -67,21 +70,62 @@ export default function PembayaranEscrowView({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPaidEscrow, setIsPaidEscrow] = useState(false);
   const [isDelivered, setIsDelivered] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
-  const handlePay = (e: React.FormEvent) => {
+  const deliveryAddress =
+    (getAuthUser()?.address as string) || DEFAULT_DELIVERY_ADDRESS;
+
+  const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
+    setPaymentError(null);
+
+    try {
+      const createRes = await createSupplierOrder({
+        listing_id: currentListing.id,
+        qty_kg: finalQty,
+        agreed_price: finalPrice,
+        payment_method: paymentMethod,
+        delivery_method: deliveryOption === "dikirim_petani" ? "dikirim" : "diambil",
+        delivery_address: deliveryAddress,
+      });
+
+      const orderId = (createRes as { data?: { id?: number } })?.data?.id;
+
+      if (orderId) {
+        setCreatedOrderId(orderId);
+        await payOrder(orderId);
+      }
+
       setIsPaidEscrow(true);
-    }, 1500);
+    } catch (err) {
+      setPaymentError(err instanceof Error ? err.message : "Gagal memproses pembayaran.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleConfirmReceivedAndReleaseEscrow = () => {
-    alert(
-      `Sukses! Dana Escrow sebesar Rp ${grandTotal.toLocaleString("id-ID")} telah dicairkan ke Panentra Pay milik ${currentListing.farmerName}. Transaksi Selesai!`
-    );
-    onPaymentSuccess();
+  const handleConfirmReceivedAndReleaseEscrow = async () => {
+    setConfirming(true);
+    try {
+      if (createdOrderId != null) {
+        await confirmOrderReceived(createdOrderId);
+      }
+      alert(
+        `Sukses! Dana Escrow sebesar Rp ${grandTotal.toLocaleString("id-ID")} telah dicairkan ke Panentra Pay milik ${currentListing.farmerName}. Transaksi Selesai!`
+      );
+      onPaymentSuccess();
+    } catch (err) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Order belum dapat dikonfirmasi. Pastikan status pengiriman sudah sampai."
+      );
+    } finally {
+      setConfirming(false);
+    }
   };
 
   return (
@@ -291,6 +335,12 @@ export default function PembayaranEscrowView({
             </div>
           </div>
 
+          {paymentError && (
+            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-3 text-[11px] font-bold text-rose-700">
+              {paymentError}
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={isProcessing}
@@ -344,16 +394,16 @@ export default function PembayaranEscrowView({
 
           <button
             type="button"
-            disabled={!isDelivered}
+            disabled={!isDelivered || confirming}
             onClick={handleConfirmReceivedAndReleaseEscrow}
             className={`w-full h-12 font-black rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all text-xs ${
               isDelivered
                 ? "bg-[#0F4C25] hover:bg-[#0A381B] text-white cursor-pointer active:scale-95"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
+            } disabled:opacity-60`}
           >
             <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-            <span>Konfirmasi Barang Sesuai & Cairkan Escrow</span>
+            <span>{confirming ? "Memproses Konfirmasi..." : "Konfirmasi Barang Sesuai & Cairkan Escrow"}</span>
           </button>
         </div>
       )}

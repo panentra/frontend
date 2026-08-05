@@ -42,6 +42,7 @@ import DetailProdukPemasokView from "./DetailProdukPemasokView";
 import RuangNegoPemasokView from "./RuangNegoPemasokView";
 import PembayaranEscrowView from "./PembayaranEscrowView";
 import RiwayatPembelianPemasokView from "./RiwayatPembelianPemasokView";
+import { getSupplierDashboard, getAuthUser, SupplierDashboardData, User as AuthUser } from "@/lib/api";
 
 // Nearby Harvests Sample Data for Radar Pasokan
 const NEARBY_HARVESTS: HarvestListing[] = [
@@ -135,8 +136,36 @@ export default function DashboardPemasok() {
   // Selected Listing & Deal state for sub-views
   const [selectedListing, setSelectedListing] = useState<HarvestListing | null>(null);
   const [agreedDeal, setAgreedDeal] = useState<{ price: number; qty: number } | null>(null);
+  const [buySource, setBuySource] = useState<"detail" | "nego">("nego");
 
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
+  const [marketplaceDetailOpen, setMarketplaceDetailOpen] = useState(false);
+
+  const [dashboard, setDashboard] = useState<SupplierDashboardData | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [user] = useState<AuthUser | null>(() => getAuthUser());
+
+  useEffect(() => {
+    getSupplierDashboard()
+      .then((data) => setDashboard(data))
+      .catch((err: Error) => setDashboardError(err.message))
+      .finally(() => setDashboardLoading(false));
+  }, []);
+
+  const totalMonthSpend =
+    dashboard?.monthly_spend != null
+      ? dashboard.monthly_spend
+      : dashboard?.recent_orders?.reduce((sum, o) => sum + (o.grand_total || 0), 0) || 0;
+  const totalMonthKg =
+    dashboard?.monthly_kg != null
+      ? dashboard.monthly_kg
+      : dashboard?.recent_orders?.reduce((sum, o) => sum + (o.qty_kg || 0), 0) || 0;
+
+  const formatRupiah = (value: number) =>
+    value.toLocaleString("id-ID");
+
+  const storeName = (user?.name as string) || "Toko Berkah";
 
   const filteredHarvests =
     selectedCategory === "Semua"
@@ -160,7 +189,13 @@ export default function DashboardPemasok() {
 
   const handleOpenBuyEscrow = (listing: HarvestListing) => {
     setSelectedListing(listing);
-    setViewMode("nego"); // Alur: Marketplace -> Milih Produk -> Beli -> Nego Harga (chat)
+    setBuySource("detail");
+    // Beli langsung dari detail: default harga jual & kuantitas, lalu lanjut ke pembayaran escrow (API)
+    setAgreedDeal({
+      price: listing.sellingPrice,
+      qty: Math.max(1, Math.min(100, listing.availableKg || 100)),
+    });
+    setViewMode("pembayaran");
   };
 
   const handleProceedFromNegoToPayment = (dealDetails: {
@@ -169,6 +204,7 @@ export default function DashboardPemasok() {
     agreedQty: number;
   }) => {
     setSelectedListing(dealDetails.listing);
+    setBuySource("nego");
     setAgreedDeal({ price: dealDetails.agreedPrice, qty: dealDetails.agreedQty });
     setViewMode("pembayaran");
   };
@@ -192,7 +228,7 @@ export default function DashboardPemasok() {
               listing={selectedListing}
               onBack={() => setViewMode("dashboard")}
               onSelectNego={(listing) => handleOpenNego(listing)}
-              onSelectBuy={(listing) => handleOpenNego(listing)} // Alur: Milih produk -> Beli/Nego -> Chat Nego dulu
+              onSelectBuy={(listing) => handleOpenBuyEscrow(listing)}
             />
           ) : viewMode === "nego" ? (
             <RuangNegoPemasokView
@@ -205,7 +241,7 @@ export default function DashboardPemasok() {
               listing={selectedListing}
               agreedPrice={agreedDeal?.price}
               agreedQty={agreedDeal?.qty}
-              onBack={() => setViewMode("nego")}
+              onBack={() => setViewMode(buySource === "detail" ? "detail" : "nego")}
               onPaymentSuccess={() => setViewMode("riwayat")}
             />
           ) : viewMode === "riwayat" ? (
@@ -224,7 +260,8 @@ export default function DashboardPemasok() {
                 <MarketplacePemasokView
                   onBack={() => setActiveTab("beranda")}
                   onSelectNego={(listing) => handleOpenNego(listing)}
-                  onSelectBuy={(listing) => handleOpenNego(listing)}
+                  onSelectBuy={(listing) => handleOpenBuyEscrow(listing)}
+                  onDetailVisibilityChange={setMarketplaceDetailOpen}
                 />
               )}
               {activeTab === "pengantaran" && <PengantaranPemasokView />}
@@ -240,8 +277,8 @@ export default function DashboardPemasok() {
                   {/* ================= 1. TOP HEADER & GREETING ================= */}
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <h1 className="text-2xl font-black text-[#1A1C19] tracking-tight">
-                        Halo, Toko Berkah! 👋
+                      <h1 className="text-2xl font-black text-[#1A1C19] tracking-tight" suppressHydrationWarning>
+                        Halo, {storeName}! 👋
                       </h1>
                       <p className="text-xs font-bold text-[#0F4C25]">
                         Pasokan Hasil Panen Langsung dari Lahan Petani
@@ -270,19 +307,36 @@ export default function DashboardPemasok() {
                         </span>
 
                         <div className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight drop-shadow-md">
-                          Rp 14.250.000
+                          {dashboardLoading ? (
+                            <span className="animate-pulse">Memuat...</span>
+                          ) : dashboardError ? (
+                            <span className="text-base">Rp 0</span>
+                          ) : (
+                            <>Rp {formatRupiah(totalMonthSpend)}</>
+                          )}
                         </div>
 
                         <p className="text-xs text-emerald-100/95 leading-relaxed font-medium drop-shadow-sm">
-                          450 kg sudah diamankan dari <span className="font-extrabold text-[#FFFFFF]">12 petani mitra terpercaya — pasokanmu makin kuat!</span>
+                          {dashboardLoading
+                            ? "Mengambil data pesanan terbaru..."
+                            : dashboardError
+                            ? "Gagal memuat data dashboard."
+                            : <>
+                                {formatRupiah(totalMonthKg)} kg sudah diamankan dari{" "}
+                                <span className="font-extrabold text-[#FFFFFF]">
+                                  {dashboard?.favorite_farmers_count ?? 0} petani mitra terpercaya — pasokanmu makin kuat!
+                                </span>
+                              </>}
                         </p>
 
                         <div className="flex flex-wrap items-center gap-2 pt-1">
                           <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white border border-white/20 shadow-sm">
-                            450 kg Terpesan
+                            {dashboardLoading ? "..." : `${formatRupiah(totalMonthKg)} kg Terpesan`}
                           </span>
                           <span className="text-[10px] text-emerald-100/90 font-medium leading-none">
-                            Sisa 50 kg lagi menuju target bulan ini
+                            {dashboard?.active_orders_count != null
+                              ? `${dashboard.active_orders_count} pesanan aktif berjalan`
+                              : "Pantau pesanan aktifmu di sini"}
                           </span>
                         </div>
                       </div>
@@ -304,22 +358,52 @@ export default function DashboardPemasok() {
                     <div className="bg-white p-4 sm:p-5 space-y-2">
                       <div className="flex justify-between items-center text-xs sm:text-sm font-black text-[#1A1C19]">
                         <span>Target Pasokan Bulanan</span>
-                        <span className="text-[#0F4C25] font-extrabold">90%</span>
+                        <span className="text-[#0F4C25] font-extrabold">
+                          {dashboardLoading
+                            ? "..."
+                            : dashboard?.completed_orders_count != null && dashboard?.active_orders_count != null
+                            ? `${Math.round(
+                                (dashboard.completed_orders_count /
+                                  (dashboard.completed_orders_count + dashboard.active_orders_count)) *
+                                  100
+                              )}%`
+                            : "0%"}
+                        </span>
                       </div>
 
                       {/* Smooth Gray Pill Track */}
                       <div className="w-full h-3.5 bg-gray-200 rounded-full overflow-hidden p-0.5 shadow-inner">
                         <div
                           className="h-full bg-gradient-to-r from-[#1B5E20] to-[#2E7D32] rounded-full transition-all duration-500"
-                          style={{ width: "90%" }}
+                          style={{
+                            width: `${
+                              dashboardLoading
+                                ? "0"
+                                : dashboard?.completed_orders_count != null && dashboard?.active_orders_count != null
+                                ? Math.min(
+                                    100,
+                                    Math.round(
+                                      (dashboard.completed_orders_count /
+                                        (dashboard.completed_orders_count + dashboard.active_orders_count)) *
+                                        100
+                                    )
+                                  )
+                                : 0
+                            }%`,
+                          }}
                         />
                       </div>
                       
                       <p className="text-[11px] text-gray-500 font-semibold pt-0.5">
-                        Tinggal 50 kg lagi — beberapa mitra petani baru siap panen minggu ini
+                        {dashboardLoading
+                          ? "Memuat statistik pesanan..."
+                          : dashboardError
+                          ? "Statistik tidak tersedia saat ini."
+                          : `${dashboard?.completed_orders_count ?? 0} pesanan selesai dari total ${(dashboard?.completed_orders_count ?? 0) + (dashboard?.active_orders_count ?? 0)} — target pasokanmu makin mendekati`}
                       </p>
                     </div>
                   </section>
+
 
                   {/* ================= 3. LANGKAH UTAMA WORKFLOW CARDS (Strict Checkout Flow: No standalone Payment Card) ================= */}
                   <section className="space-y-3">
@@ -417,7 +501,7 @@ export default function DashboardPemasok() {
         </div>
 
         {/* Bottom Navigation Bar (Hidden when in sub-views) */}
-        {viewMode === "dashboard" && (
+        {viewMode === "dashboard" && !marketplaceDetailOpen && (
           <BottomNavbarPemasok
             activeTab={activeTab}
             onTabChange={(tab) => {

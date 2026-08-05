@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   ChevronLeft,
@@ -16,184 +16,124 @@ import {
   Flame,
   CheckCircle2,
   Lock,
+  RefreshCw,
 } from "lucide-react";
 import DetailProdukPemasokView from "./DetailProdukPemasokView";
+import { getMarketplace, FarmerListingItem } from "@/lib/api";
 
 export interface HarvestListing {
-  id: string;
+  id: string | number;
   farmerName: string;
   farmerRating: number;
   farmerTotalSales: number;
   farmerLocation: string;
   distanceKm: number;
   commodity: string;
-  grade: "Grade A (SNI)" | "Grade B (SNI)" | "Grade C (SNI)";
+  grade: string;
   hppPerKg: number;
   sellingPrice: number;
   availableKg: number;
   harvestStatus: string;
   allowNegotiation: boolean;
-  productImage: string;
-  farmerAvatar: string;
-  farmImage?: string;
-  harvestCategory: "Sayuran" | "Pangan" | "Bahan-Bahan" | "Tanaman Perkebunan";
+  productImage: string | null;
+  farmerAvatar: string | null;
+  farmImage?: string | null;
+  harvestCategory: string;
   isBestSeller?: boolean;
 }
 
-const SAMPLE_LISTINGS: HarvestListing[] = [
-  {
-    id: "LIST-101",
-    farmerName: "Pak Andi Sugiharto",
-    farmerRating: 4.9,
-    farmerTotalSales: 38,
-    farmerLocation: "Lembang, Bandung",
-    distanceKm: 3.2,
-    commodity: "Cabai Rawit Merah Super",
-    grade: "Grade A (SNI)",
-    hppPerKg: 28500,
-    sellingPrice: 38000,
-    availableKg: 1280,
-    harvestStatus: "Siap Dipetik Besok",
-    allowNegotiation: true,
-    productImage: "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?q=80&w=600&auto=format&fit=crop",
-    farmerAvatar: "/assets/bowo-senang.png",
-    farmImage: "/assets/bowo-senang.png",
-    harvestCategory: "Bahan-Bahan",
-    isBestSeller: true,
-  },
-  {
-    id: "LIST-102",
-    farmerName: "Ibu Sri Rahayu",
-    farmerRating: 5.0,
-    farmerTotalSales: 52,
-    farmerLocation: "Ciwidey, Kab. Bandung",
-    distanceKm: 5.1,
-    commodity: "Pakcoy Hydroponic Fresh",
-    grade: "Grade A (SNI)",
-    hppPerKg: 13500,
-    sellingPrice: 18000,
-    availableKg: 650,
-    harvestStatus: "Panen Hari Ini",
-    allowNegotiation: true,
-    productImage: "https://images.unsplash.com/photo-1540420773420-3366772f4999?q=80&w=600&auto=format&fit=crop",
-    farmerAvatar: "/assets/budi-kaget.png",
-    farmImage: "/assets/budi-kaget.png",
-    harvestCategory: "Sayuran",
-    isBestSeller: true,
-  },
-  {
-    id: "LIST-103",
-    farmerName: "Pak Budi Santoso",
-    farmerRating: 4.8,
-    farmerTotalSales: 24,
-    farmerLocation: "Pangalengan",
-    distanceKm: 8.4,
-    commodity: "Tomat Red Super Harvest",
-    grade: "Grade B (SNI)",
-    hppPerKg: 8800,
-    sellingPrice: 12000,
-    availableKg: 2100,
-    harvestStatus: "Siap Panen Lusa",
-    allowNegotiation: false,
-    productImage: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?q=80&w=600&auto=format&fit=crop",
-    farmerAvatar: "/assets/bowo-calendar.png",
-    farmImage: "/assets/bowo-calendar.png",
-    harvestCategory: "Bahan-Bahan",
-  },
-  {
-    id: "LIST-104",
-    farmerName: "Kelompok Tani Harapan",
-    farmerRating: 4.9,
-    farmerTotalSales: 67,
-    farmerLocation: "Parongpong",
-    distanceKm: 4.5,
-    commodity: "Jagung Manis Super Sweet",
-    grade: "Grade A (SNI)",
-    hppPerKg: 5200,
-    sellingPrice: 7200,
-    availableKg: 3500,
-    harvestStatus: "Panen Raya",
-    allowNegotiation: true,
-    productImage: "https://images.unsplash.com/photo-1551754655-cd27e38d2076?q=80&w=600&auto=format&fit=crop",
-    farmerAvatar: "/assets/bowo-ide.png",
-    farmImage: "/assets/bowo-ide.png",
-    harvestCategory: "Pangan",
-    isBestSeller: true,
-  },
-  {
-    id: "LIST-105",
-    farmerName: "Pak Mulyana",
-    farmerRating: 4.9,
-    farmerTotalSales: 41,
-    farmerLocation: "Garut",
-    distanceKm: 12.0,
-    commodity: "Kopi Arabika Bean Premium",
-    grade: "Grade A (SNI)",
-    hppPerKg: 75000,
-    sellingPrice: 95000,
-    availableKg: 500,
-    harvestStatus: "Petik Merah",
-    allowNegotiation: true,
-    productImage: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=600&auto=format&fit=crop",
-    farmerAvatar: "/assets/bowo-senang.png",
-    farmImage: "/assets/bowo-senang.png",
-    harvestCategory: "Tanaman Perkebunan",
-  },
-  {
-    id: "LIST-106",
-    farmerName: "Poktan Sukamaju",
-    farmerRating: 4.8,
-    farmerTotalSales: 89,
-    farmerLocation: "Subang",
-    distanceKm: 15.2,
-    commodity: "Beras Pandan Wangi Super",
-    grade: "Grade A (SNI)",
-    hppPerKg: 11500,
-    sellingPrice: 14500,
-    availableKg: 5000,
-    harvestStatus: "Stok Gudang Lahan",
-    allowNegotiation: false,
-    productImage: "https://images.unsplash.com/photo-1586201375761-83865001e31c?q=80&w=600&auto=format&fit=crop",
-    farmerAvatar: "/assets/budi-senang.png",
-    farmImage: "/assets/budi-senang.png",
-    harvestCategory: "Pangan",
-  },
-];
+function toHarvestListing(item: FarmerListingItem): HarvestListing {
+  return {
+    id: item.id,
+    farmerName: item.farmerName || "Petani Panentra",
+    farmerRating: item.farmerRating || 0,
+    farmerTotalSales: item.farmerTotalSales || 0,
+    farmerLocation: item.farmerLocation || "Lokasi Lahan",
+    distanceKm: item.distanceKm || 0,
+    commodity: item.commodity || "Hasil Panen",
+    grade: item.grade || "Grade A (SNI)",
+    hppPerKg: item.hppPerKg || 0,
+    sellingPrice: item.sellingPrice || 0,
+    availableKg: item.availableKg || 0,
+    harvestStatus: item.harvestStatus || "Siap Dipesan",
+    allowNegotiation: item.allowNegotiation ?? false,
+    productImage: item.productImage || "/assets/bowo-senang.png",
+    farmerAvatar: item.farmerAvatar || "/assets/bowo-senang.png",
+    farmImage: item.farmerAvatar || "/assets/bowo-senang.png",
+    harvestCategory: item.harvestCategory || "Bahan-Bahan",
+    isBestSeller: item.isBestSeller || false,
+  };
+}
+
+const IMAGE_FALLBACK = "/assets/bowo-senang.png";
 
 interface MarketplacePemasokViewProps {
   onBack: () => void;
   onSelectNego: (listing: HarvestListing) => void;
   onSelectBuy: (listing: HarvestListing) => void;
+  onDetailVisibilityChange?: (open: boolean) => void;
 }
 
 export default function MarketplacePemasokView({
   onBack,
   onSelectNego,
   onSelectBuy,
+  onDetailVisibilityChange,
 }: MarketplacePemasokViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [deferredSearch, setDeferredSearch] = useState("");
   const [selectedGrade, setSelectedGrade] = useState<string>("Semua Grade");
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
   const [onlyNego, setOnlyNego] = useState(false);
   const [layoutStyle, setLayoutStyle] = useState<"grid" | "list">("grid");
   const [selectedDetailListing, setSelectedDetailListing] = useState<HarvestListing | null>(null);
 
-  const filteredListings = SAMPLE_LISTINGS.filter((item) => {
-    const matchSearch =
-      item.commodity.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.farmerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.farmerLocation.toLowerCase().includes(searchQuery.toLowerCase());
+  const [listings, setListings] = useState<HarvestListing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
-    const matchGrade =
-      selectedGrade === "Semua Grade" || item.grade.includes(selectedGrade);
+  // Debounce search query so we don't spam the API per keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => setDeferredSearch(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-    const matchCategory =
-      selectedCategory === "Semua" || item.harvestCategory === selectedCategory;
+  useEffect(() => {
+    let cancelled = false;
 
-    const matchNego = !onlyNego || item.allowNegotiation;
+    const params: Record<string, string> = {};
+    if (deferredSearch.trim()) params.q = deferredSearch.trim();
+    if (selectedCategory !== "Semua") params.category = selectedCategory;
+    if (selectedGrade !== "Semua Grade") params.grade = selectedGrade;
+    if (onlyNego) params.nego = "1";
+    params.sort = "best_seller";
 
-    return matchSearch && matchGrade && matchCategory && matchNego;
-  });
+    getMarketplace(params)
+      .then((res) => {
+        if (cancelled) return;
+        setListings((res?.data || []).map(toHarvestListing));
+        setError(null);
+      })
+      .catch((err: Error) => {
+        if (cancelled) return;
+        setError(err.message);
+        setListings([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [deferredSearch, selectedGrade, selectedCategory, onlyNego, retryKey]);
+
+  // Notify parent so bottom navbar can hide while detail view is open
+  useEffect(() => {
+    onDetailVisibilityChange?.(!!selectedDetailListing);
+    return () => onDetailVisibilityChange?.(false);
+  }, [selectedDetailListing, onDetailVisibilityChange]);
 
   if (selectedDetailListing) {
     return (
@@ -322,14 +262,59 @@ export default function MarketplacePemasokView({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-black text-[#1A1C19]">
-            {filteredListings.length} Produk Pasokan Ditemukan
+            {loading ? "Memuat Produk..." : `${listings.length} Produk Pasokan Ditemukan`}
           </span>
         </div>
 
-        {layoutStyle === "grid" ? (
+        {error && (
+          <div className="bg-rose-50 border border-rose-200 rounded-[24px] p-5 text-center space-y-3">
+            <p className="text-xs font-bold text-rose-700">{error}</p>
+            <button
+              type="button"
+              onClick={() => setRetryKey((k) => k + 1)}
+              className="h-10 px-4 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl flex items-center gap-1.5 mx-auto text-[11px] cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Coba Lagi
+            </button>
+          </div>
+        )}
+
+        {!error && loading && (
+          <div className="space-y-3">
+            {[0, 1].map((n) => (
+              <div key={n} className="grid grid-cols-2 gap-3 sm:gap-4">
+                {[0, 1].map((m) => (
+                  <div
+                    key={m}
+                    className="bg-white rounded-[24px] border border-gray-200/90 shadow-sm overflow-hidden animate-pulse"
+                  >
+                    <div className="w-full aspect-square bg-gray-100" />
+                    <div className="p-3 space-y-2">
+                      <div className="h-3 bg-gray-100 rounded-full w-3/4" />
+                      <div className="h-3 bg-gray-100 rounded-full w-1/2" />
+                      <div className="h-3 bg-gray-100 rounded-full w-2/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!error && !loading && listings.length === 0 && (
+          <div className="bg-white border border-gray-200 rounded-[24px] p-8 text-center space-y-2">
+            <p className="text-sm font-black text-[#1A1C19]">Tidak ada produk ditemukan</p>
+            <p className="text-xs text-gray-500 font-medium">
+              Coba ubah kata kunci pencarian atau atur ulang filter.
+            </p>
+          </div>
+        )}
+
+        {!error && !loading && listings.length > 0 && layoutStyle === "grid" ? (
           /* ================= 2-COLUMN MARKETPLACE CARD GRID ================= */
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {filteredListings.map((item) => {
+            {listings.map((item) => {
               const marginFromHpp = Math.round(
                 ((item.sellingPrice - item.hppPerKg) / item.hppPerKg) * 100
               );
@@ -343,7 +328,7 @@ export default function MarketplacePemasokView({
                   {/* Product Image Thumbnail Banner */}
                   <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
                     <Image
-                      src={item.productImage}
+                      src={item.productImage || IMAGE_FALLBACK}
                       alt={item.commodity}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -426,7 +411,7 @@ export default function MarketplacePemasokView({
         ) : (
           /* ================= LIST VIEW (FULL CARDS WITH THUMBNAIL) ================= */
           <div className="space-y-3.5">
-            {filteredListings.map((item) => {
+            {listings.map((item) => {
               const marginFromHpp = Math.round(
                 ((item.sellingPrice - item.hppPerKg) / item.hppPerKg) * 100
               );
@@ -440,7 +425,7 @@ export default function MarketplacePemasokView({
                   {/* Thumbnail Image */}
                   <div className="w-24 h-24 rounded-2xl bg-gray-100 relative overflow-hidden shrink-0">
                     <Image
-                      src={item.productImage}
+                      src={item.productImage || IMAGE_FALLBACK}
                       alt={item.commodity}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { logoutUser } from "@/lib/api";
+import { logoutUser, getFavorites, getBankAccounts, createBankAccount, deleteBankAccount, setPrimaryBankAccount, BankAccount } from "@/lib/api";
 import {
   User,
   Store,
@@ -28,6 +28,7 @@ import {
   Plus,
   Trash2,
   Check,
+  AlertCircle,
 } from "lucide-react";
 
 interface AkunPemasokViewProps {
@@ -43,56 +44,107 @@ export interface PaymentAccount {
   isPrimary: boolean;
 }
 
+function toPaymentAccount(acc: BankAccount): PaymentAccount {
+  return {
+    id: acc.id,
+    bankName: acc.bank_name || "Bank",
+    accountNumber: acc.account_number || "-",
+    accountHolder: acc.account_holder || "-",
+    isPrimary: !!(acc.is_primary || acc.is_default),
+  };
+}
+
+interface FavoriteFarmer {
+  id: number;
+  sellerId?: number;
+  name: string;
+  location: string;
+  rating: number;
+  commodity: string;
+  image: string;
+}
+
 export default function AkunPemasokView({
   onNavigateToHistory,
   onNavigateToPetani,
 }: AkunPemasokViewProps) {
   const router = useRouter();
 
-  // Favorite Farmers List
-  const [favoriteFarmers] = useState([
-    {
-      id: 1,
-      name: "Pak Andi Sugiharto",
-      location: "Lahan Sukamaju, Lembang",
-      rating: 4.9,
-      commodity: "Cabai Rawit Merah",
-      image: "/assets/bowo-senang.png",
-    },
-    {
-      id: 2,
-      name: "Ibu Sri Rahayu",
-      location: "Ciwidey, Kab. Bandung",
-      rating: 5.0,
-      commodity: "Pakcoy Hydroponic",
-      image: "/assets/budi-kaget.png",
-    },
-  ]);
+  // Favorite Farmers List (from API)
+  const [favoriteFarmers, setFavoriteFarmers] = useState<FavoriteFarmer[]>([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(true);
 
-  // Payment Methods / Bank Accounts State
+  // Payment Methods / Bank Accounts State (from API)
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentAccounts, setPaymentAccounts] = useState<PaymentAccount[]>([
-    {
-      id: 1,
-      bankName: "Bank BCA",
-      accountNumber: "8821-4402-192",
-      accountHolder: "Toko Sembako Berkah Jaya",
-      isPrimary: true,
-    },
-    {
-      id: 2,
-      bankName: "QRIS / DANA E-Wallet",
-      accountNumber: "0812-3456-7890",
-      accountHolder: "Toko Sembako Berkah Jaya",
-      isPrimary: false,
-    },
-  ]);
+  const [paymentAccounts, setPaymentAccounts] = useState<PaymentAccount[]>([]);
+  const [accountsLoading, setAccountsLoading] = useState(true);
 
   // Add Account Form State
   const [showAddForm, setShowAddForm] = useState(false);
   const [newBankName, setNewBankName] = useState("Bank BCA");
   const [newAccNumber, setNewAccNumber] = useState("");
   const [newAccHolder, setNewAccHolder] = useState("");
+
+  // Snackbar / Toast Notification State
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showSnackbar = React.useCallback((message: string, type: "success" | "error" = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast((prev) => ({ ...prev, show: false }));
+    }, type === "error" ? 4000 : 3000);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    getFavorites()
+      .then((res) => {
+        if (cancelled) return;
+        const favs = (res as { data?: Array<{ seller_id?: number; name?: string; location?: string; rating?: number; commodity?: string }> })?.data || [];
+        setFavoriteFarmers(
+          favs.map((f) => ({
+            id: f.seller_id ?? 0,
+            sellerId: f.seller_id,
+            name: f.name || "Petani",
+            location: f.location || "Lokasi Lahan",
+            rating: f.rating || 0,
+            commodity: f.commodity || "Hasil Panen",
+            image: "/assets/bowo-senang.png",
+          }))
+        );
+      })
+      .catch(() => {
+        setFavoriteFarmers([]);
+      })
+      .finally(() => {
+        if (!cancelled) setFavoritesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    getBankAccounts()
+      .then((res) => {
+        if (cancelled) return;
+        setPaymentAccounts((res?.data || []).map(toPaymentAccount));
+      })
+      .catch(() => {
+        setPaymentAccounts([]);
+      })
+      .finally(() => {
+        if (!cancelled) setAccountsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Lock background body scroll when popup/modal is open
   useEffect(() => {
@@ -106,41 +158,56 @@ export default function AkunPemasokView({
     };
   }, [showPaymentModal]);
 
-  const handleAddAccount = (e: React.FormEvent) => {
+  const handleAddAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAccNumber || !newAccHolder) {
-      alert("Mohon isi nomor rekening dan nama pemilik rekening!");
+      showSnackbar("Mohon isi nomor rekening dan nama pemilik rekening!", "error");
       return;
     }
 
-    const newAcc: PaymentAccount = {
-      id: Date.now(),
-      bankName: newBankName,
-      accountNumber: newAccNumber,
-      accountHolder: newAccHolder,
-      isPrimary: paymentAccounts.length === 0,
-    };
-
-    setPaymentAccounts((prev) => [...prev, newAcc]);
-    setNewAccNumber("");
-    setNewAccHolder("");
-    setShowAddForm(false);
-    alert(`Rekening ${newBankName} (${newAccNumber}) berhasil ditambahkan!`);
-  };
-
-  const handleDeleteAccount = (id: number) => {
-    if (confirm("Apakah Anda yakin ingin menghapus rekening ini?")) {
-      setPaymentAccounts((prev) => prev.filter((acc) => acc.id !== id));
+    try {
+      const res = await createBankAccount({
+        bank_name: newBankName,
+        account_number: newAccNumber,
+        account_holder: newAccHolder,
+        is_primary: paymentAccounts.length === 0,
+      });
+      const created = (res as { data?: BankAccount })?.data;
+      if (created) {
+        setPaymentAccounts((prev) => [...prev, toPaymentAccount(created)]);
+      }
+      setNewAccNumber("");
+      setNewAccHolder("");
+      setShowAddForm(false);
+      showSnackbar("Rekening/E-Wallet berhasil ditambahkan.");
+    } catch (err) {
+      showSnackbar(err instanceof Error ? err.message : "Gagal menambahkan rekening.", "error");
     }
   };
 
-  const handleSetPrimary = (id: number) => {
-    setPaymentAccounts((prev) =>
-      prev.map((acc) => ({
-        ...acc,
-        isPrimary: acc.id === id,
-      }))
-    );
+  const handleDeleteAccount = async (id: number) => {
+    try {
+      await deleteBankAccount(id);
+      setPaymentAccounts((prev) => prev.filter((acc) => acc.id !== id));
+      showSnackbar("Rekening berhasil dihapus.");
+    } catch (err) {
+      showSnackbar(err instanceof Error ? err.message : "Gagal menghapus rekening.", "error");
+    }
+  };
+
+  const handleSetPrimary = async (id: number) => {
+    try {
+      await setPrimaryBankAccount(id);
+      setPaymentAccounts((prev) =>
+        prev.map((acc) => ({
+          ...acc,
+          isPrimary: acc.id === id,
+        }))
+      );
+      showSnackbar("Berhasil memperbarui rekening utama.");
+    } catch (err) {
+      showSnackbar(err instanceof Error ? err.message : "Gagal mengatur rekening utama.", "error");
+    }
   };
 
   const handleLogout = async () => {
@@ -271,6 +338,28 @@ export default function AkunPemasokView({
           Petani Langganan (Mitra Favorit)
         </h3>
 
+        {favoritesLoading ? (
+          <div className="grid grid-cols-2 gap-3">
+            {[0, 1].map((n) => (
+              <div key={n} className="bg-white rounded-[24px] p-3.5 border border-gray-200 shadow-sm space-y-2.5 animate-pulse">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-gray-100" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 bg-gray-100 rounded-full w-3/4" />
+                    <div className="h-3 bg-gray-100 rounded-full w-1/2" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : favoriteFarmers.length === 0 ? (
+          <div className="bg-white rounded-[24px] p-6 border border-gray-200 text-center space-y-1.5">
+            <p className="text-sm font-black text-[#1A1C19]">Belum ada petani favorit</p>
+            <p className="text-[11px] text-gray-500 font-medium">
+              Klik ikon ❤️ di halaman detail produk untuk menyimpan petani langganan.
+            </p>
+          </div>
+        ) : (
         <div className="grid grid-cols-2 gap-3">
           {favoriteFarmers.map((farmer) => (
             <div
@@ -300,6 +389,7 @@ export default function AkunPemasokView({
             </div>
           ))}
         </div>
+        )}
       </div>
 
       {/* ================= 5. PENGATURAN & AKSES PERAN ================= */}
@@ -406,7 +496,9 @@ export default function AkunPemasokView({
                 Rekening / E-Wallet Terdaftar ({paymentAccounts.length})
               </span>
 
-              {paymentAccounts.length === 0 ? (
+              {accountsLoading ? (
+                <p className="text-xs text-gray-400 italic text-center py-3">Memuat rekening...</p>
+              ) : paymentAccounts.length === 0 ? (
                 <p className="text-xs text-gray-400 italic text-center py-3">
                   Belum ada rekening terdaftar. Silakan tambah rekening baru.
                 </p>
@@ -544,6 +636,18 @@ export default function AkunPemasokView({
               </form>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Snackbar / Toast Notification */}
+      {toast.show && (
+        <div className="fixed bottom-22 sm:bottom-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 bg-[#1A1C19]/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-gray-700/80 animate-slide-up max-w-[92vw] sm:max-w-md">
+          {toast.type === "error" ? (
+            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          )}
+          <p className="text-xs font-bold leading-snug">{toast.message}</p>
         </div>
       )}
     </div>

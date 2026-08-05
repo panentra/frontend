@@ -472,6 +472,56 @@ export async function deleteListing(id: number | string): Promise<{ message: str
   });
 }
 
+export interface SupplierOrderItem {
+  id: number;
+  order_no: string;
+  commodity: string;
+  grade: string;
+  qtyKg: number;
+  pricePerKg: number;
+  subtotal: number;
+  service_fee?: number;
+  grandTotal: number;
+  status: string;
+  escrowStatus?: string;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  deliveryMethod?: string;
+  deliveryAddress?: string;
+  deliveryInfo?: DeliveryInfo | null;
+  listingPhoto?: string | null;
+  listingLocation?: string;
+  paidAt?: string | null;
+  completedAt?: string | null;
+  createdAt?: string;
+  buyer?: {
+    id: number;
+    name: string;
+    phone?: string | null;
+  };
+  seller?: {
+    id: number;
+    name: string;
+    location?: string | null;
+    rating?: number | null;
+  };
+  [key: string]: unknown;
+}
+
+export interface SupplierOrdersResponse {
+  data: SupplierOrderItem[];
+}
+
+export interface SupplierDashboardData {
+  monthly_spend?: number;
+  monthly_kg?: number;
+  active_orders_count: number;
+  completed_orders_count: number;
+  favorite_farmers_count: number;
+  recent_orders: RecentSale[];
+  [key: string]: unknown;
+}
+
 export interface FarmerOrderItem {
   id: number;
   order_no: string;
@@ -567,7 +617,7 @@ export async function updateTask(
 }
 
 export async function downloadSalesInvoice(orderId: number | string): Promise<Blob> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token = getAuthToken();
   const res = await fetch(`${API_BASE_URL}/api/farmer/orders/${orderId}/invoice`, {
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -580,7 +630,7 @@ export async function downloadSalesInvoice(orderId: number | string): Promise<Bl
 }
 
 export async function downloadHppReport(): Promise<Blob> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token = getAuthToken();
   const res = await fetch(`${API_BASE_URL}/api/farmer/hpp-report`, {
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -596,45 +646,48 @@ export async function downloadHppReport(): Promise<Blob> {
 // 3. SUPPLIER ENDPOINTS (/api/supplier/...)
 // ==========================================
 
-export async function getSupplierDashboard(): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>("/api/supplier/dashboard");
+export async function getSupplierDashboard(): Promise<SupplierDashboardData> {
+  return fetchWithAuth<SupplierDashboardData>("/api/supplier/dashboard");
 }
 
-export async function getMarketplace(params?: Record<string, string>): Promise<Record<string, unknown>> {
+export async function getMarketplace(params?: Record<string, string>): Promise<FarmerListingsResponse> {
   const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-  return fetchWithAuth<Record<string, unknown>>(`/api/supplier/marketplace${query}`);
+  return fetchWithAuth<FarmerListingsResponse>(`/api/supplier/marketplace${query}`);
 }
 
-export async function getListingDetail(id: number | string): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>(`/api/supplier/listings/${id}`);
+export async function getListingDetail(id: number | string): Promise<{ data: FarmerListingItem }> {
+  return fetchWithAuth<{ data: FarmerListingItem }>(`/api/supplier/listings/${id}`);
 }
 
-export async function getPurchaseHistory(): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>("/api/supplier/purchases");
+export async function getSupplierOrders(): Promise<SupplierOrdersResponse> {
+  return fetchWithAuth<SupplierOrdersResponse>("/api/supplier/orders");
 }
 
-export async function createSupplierOrder(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>("/api/supplier/orders", {
+export async function createSupplierOrder(payload: Record<string, unknown>): Promise<{ data: SupplierOrderItem }> {
+  return fetchWithAuth<{ data: SupplierOrderItem }>("/api/supplier/orders", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function payOrder(id: number | string, payload?: Record<string, unknown>): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>(`/api/supplier/orders/${id}/pay`, {
+export async function payOrder(id: number | string, payload?: Record<string, unknown>): Promise<{ data: SupplierOrderItem }> {
+  return fetchWithAuth<{ data: SupplierOrderItem }>(`/api/supplier/orders/${id}/pay`, {
     method: "PATCH",
     body: payload ? JSON.stringify(payload) : undefined,
   });
 }
 
-export async function confirmOrderReceived(id: number | string): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>(`/api/supplier/orders/${id}/confirm-received`, {
-    method: "PATCH",
-  });
+export async function confirmOrderReceived(id: number | string): Promise<{
+  data: { id: number; status: string; escrowStatus: string; completedAt: string };
+}> {
+  return fetchWithAuth<{ data: { id: number; status: string; escrowStatus: string; completedAt: string } }>(
+    `/api/supplier/orders/${id}/confirm-received`,
+    { method: "PATCH" }
+  );
 }
 
-export async function startNegotiation(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>("/api/supplier/negotiations/start", {
+export async function startNegotiation(payload: StartNegotiationPayload): Promise<Record<string, unknown>> {
+  return fetchWithAuth<Record<string, unknown>>("/api/supplier/chats/from-listing", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -656,21 +709,27 @@ export async function getFavorites(): Promise<Record<string, unknown>> {
   return fetchWithAuth<Record<string, unknown>>("/api/supplier/favorites");
 }
 
-export async function addFavorite(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>("/api/supplier/favorites", {
+export async function addFavorite(sellerId: number | string): Promise<{ message: string }> {
+  return fetchWithAuth<{ message: string }>(`/api/supplier/favorites/${sellerId}`, {
     method: "POST",
-    body: JSON.stringify(payload),
   });
 }
 
-export async function removeFavorite(id: number | string): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>(`/api/supplier/favorites/${id}`, {
+export async function removeFavorite(sellerId: number | string): Promise<{ message: string }> {
+  return fetchWithAuth<{ message: string }>(`/api/supplier/favorites/${sellerId}`, {
     method: "DELETE",
   });
 }
 
-export async function getSupplierDeliveries(): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>("/api/supplier/deliveries");
+export interface StartNegotiationPayload {
+  listing_id: number | string;
+  offer_price?: number;
+  offer_qty?: number;
+  message?: string;
+}
+
+export async function getSupplierDeliveries(): Promise<SupplierOrdersResponse> {
+  return fetchWithAuth<SupplierOrdersResponse>("/api/supplier/deliveries");
 }
 
 // ==========================================

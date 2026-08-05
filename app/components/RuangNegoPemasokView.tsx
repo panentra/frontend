@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   MessageSquare,
@@ -18,9 +18,61 @@ import {
   Plus,
 } from "lucide-react";
 import { HarvestListing } from "./MarketplacePemasokView";
+import {
+  getChats,
+  getChatMessages,
+  sendChatMessage,
+  startNegotiation,
+  getAuthUser,
+  ApiChatListItem,
+  ApiChatMessageItem,
+} from "@/lib/api";
+
+function formatChatTime(iso?: string | null): string {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  if (sameDay) {
+    return d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+  }
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+}
+
+function toConversation(c: ApiChatListItem): PemasokChatConversation {
+  const counterpart = c.counterpart || ({} as ApiChatListItem["counterpart"]);
+  return {
+    id: c.id,
+    apiChatId: c.id,
+    listingId: c.listing_id,
+    farmerName: counterpart.name || "Mitra Petani",
+    farmerLocation: counterpart.location || "",
+    item: c.item,
+    grade: c.grade || "Grade A (SNI)",
+    qty: c.offer_qty ? `${c.offer_qty} kg` : "-",
+    lastMessage: c.last_message || "",
+    time: formatChatTime(c.last_message_time),
+    unreadCount: c.unread_count || 0,
+    statusBadge: c.offer_price
+      ? `Nego Rp ${c.offer_price.toLocaleString("id-ID")}/kg`
+      : "Chat Aktif",
+    statusType: c.offer_price ? "nego" : "inquiry",
+    farmerAvatar: counterpart.avatar || "/assets/bowo-senang.png",
+    productImage: "/assets/bowo-senang.png",
+    listingPrice: c.offer_price || 0,
+    offeredPrice: c.offer_price || 0,
+    total:
+      c.offer_price && c.offer_qty
+        ? `Rp ${(c.offer_price * c.offer_qty).toLocaleString("id-ID")}`
+        : "-",
+  };
+}
 
 export interface PemasokChatConversation {
-  id: string;
+  id: string | number;
+  apiChatId?: number;
+  listingId?: number | null;
   farmerName: string;
   farmerLocation: string;
   item: string;
@@ -39,62 +91,13 @@ export interface PemasokChatConversation {
   listingRef?: HarvestListing;
 }
 
-const PEMASOK_CHAT_LIST_DATA: PemasokChatConversation[] = [
-  {
-    id: "LIST-101",
-    farmerName: "Pak Andi Sugiharto",
-    farmerLocation: "Lahan Sukamaju, Lembang",
-    item: "Cabai Rawit Merah Super",
-    grade: "Grade A (SNI)",
-    qty: "150 kg",
-    lastMessage: "Penawaran Rp 34.500/kg sedang ditinjau. Siap kirim besok pagi dari lahan Lembang...",
-    time: "10:22 WIB",
-    unreadCount: 1,
-    statusBadge: "Nego Rp 34.500/kg",
-    statusType: "nego",
-    farmerAvatar: "/assets/bowo-senang.png",
-    productImage: "https://images.unsplash.com/photo-1588252303782-7cc9888970aa?q=80&w=600&auto=format&fit=crop",
-    listingPrice: 38000,
-    offeredPrice: 34500,
-    total: "Rp 5.175.000",
-  },
-  {
-    id: "LIST-102",
-    farmerName: "Ibu Sri Rahayu",
-    farmerLocation: "Desa Karanganyar, Ciwidey",
-    item: "Pakcoy Hydroponic Fresh",
-    grade: "Grade A (SNI)",
-    qty: "80 kg",
-    lastMessage: "Pasokan Pakcoy Hydro 80 kg sudah diangkut armada pick-up menuju toko Anda...",
-    time: "Kemarin",
-    unreadCount: 0,
-    statusBadge: "Dalam Pengiriman",
-    statusType: "shipping",
-    farmerAvatar: "/assets/budi-kaget.png",
-    productImage: "https://images.unsplash.com/photo-1540420773420-3366772f4999?q=80&w=600&auto=format&fit=crop",
-    listingPrice: 18000,
-    offeredPrice: 18000,
-    total: "Rp 1.440.000",
-  },
-  {
-    id: "LIST-103",
-    farmerName: "Pak Budi Santoso",
-    farmerLocation: "Pangalengan, Kab. Bandung",
-    item: "Tomat Red Super Harvest",
-    grade: "Grade B (SNI)",
-    qty: "200 kg",
-    lastMessage: "Pembayaran Escrow Rp 2.400.000 telah dicairkan ke dompet. Terima kasih Toko Berkah!",
-    time: "28 Jul",
-    unreadCount: 0,
-    statusBadge: "Selesai",
-    statusType: "completed",
-    farmerAvatar: "/assets/bowo-calendar.png",
-    productImage: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?q=80&w=600&auto=format&fit=crop",
-    listingPrice: 12000,
-    offeredPrice: 12000,
-    total: "Rp 2.400.000",
-  },
-];
+interface ChatRoomMessage {
+  id: string;
+  sender: "pemasok" | "petani";
+  text: string;
+  time: string;
+  offerData?: { price: number; qty: number };
+}
 
 interface RuangNegoPemasokViewProps {
   listing?: HarvestListing | null;
@@ -113,32 +116,124 @@ export default function RuangNegoPemasokView({
 }: RuangNegoPemasokViewProps) {
   const [activeFilter, setActiveFilter] = useState<"all" | "nego" | "unread" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [chatList, setChatList] = useState<PemasokChatConversation[]>(PEMASOK_CHAT_LIST_DATA);
+  const [chatList, setChatList] = useState<PemasokChatConversation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const currentUserId = getAuthUser()?.id;
 
-  // If a specific listing was passed from marketplace, automatically set initial chat
-  const initialChat = listing
-    ? chatList.find((c) => c.id === listing.id) || {
-        id: listing.id,
-        farmerName: listing.farmerName,
-        farmerLocation: listing.farmerLocation,
-        item: listing.commodity,
-        grade: listing.grade,
-        qty: "100 kg",
-        lastMessage: `Halo ${listing.farmerName}, saya tertarik mengajukan penawaran pasokan 100 kg.`,
-        time: "Sekarang",
-        unreadCount: 0,
-        statusBadge: `Nego Rp ${listing.sellingPrice.toLocaleString("id-ID")}/kg`,
-        statusType: "nego" as const,
-        farmerAvatar: listing.farmerAvatar || "/assets/bowo-senang.png",
-        productImage: listing.productImage,
-        listingPrice: listing.sellingPrice,
-        offeredPrice: listing.sellingPrice - 3500,
-        total: `Rp ${((listing.sellingPrice - 3500) * 100).toLocaleString("id-ID")}`,
-        listingRef: listing,
-      }
-    : null;
+  // Load chat list from API
+  useEffect(() => {
+    let cancelled = false;
+    getChats()
+      .then((res) => {
+        if (cancelled) return;
+        setChatList((res?.data || []).map(toConversation));
+      })
+      .catch((err: Error) => {
+        if (cancelled) return;
+        setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  const [selectedChat, setSelectedChat] = useState<PemasokChatConversation | null>(initialChat);
+  // When opened from a listing, auto-open (or create via API) the negotiation room
+  const [selectedChat, setSelectedChat] = useState<PemasokChatConversation | null>(null);
+  const autoStartedRef = React.useRef(false);
+
+  useEffect(() => {
+    if (!listing || autoStartedRef.current) return;
+
+    const existing = chatList.find((c) => c.listingId === listing.id || c.id === listing.id);
+    if (existing) {
+      setSelectedChat(existing);
+      return;
+    }
+
+    autoStartedRef.current = true;
+    startNegotiation({
+      listing_id: listing.id,
+      message: `Halo ${listing.farmerName}, saya tertarik mengajukan penawaran pasokan ${listing.commodity}.`,
+    })
+      .then((res) => {
+        const data = res as { data?: { id?: number; conversation_id?: number; chat_id?: number } };
+        const roomId = data?.data?.conversation_id ?? data?.data?.id ?? data?.data?.chat_id;
+        if (roomId) {
+          const local: PemasokChatConversation = {
+            id: roomId,
+            apiChatId: roomId,
+            listingId: listing.id as number,
+            farmerName: listing.farmerName,
+            farmerLocation: listing.farmerLocation,
+            item: listing.commodity,
+            grade: listing.grade,
+            qty: `${Math.min(100, listing.availableKg || 100)} kg`,
+            lastMessage: `Halo ${listing.farmerName}, saya tertarik mengajukan penawaran pasokan ${listing.commodity}.`,
+            time: "Sekarang",
+            unreadCount: 0,
+            statusBadge: `Nego Rp ${listing.sellingPrice.toLocaleString("id-ID")}/kg`,
+            statusType: "nego",
+            farmerAvatar: listing.farmerAvatar || "/assets/bowo-senang.png",
+            productImage: listing.productImage || "/assets/bowo-senang.png",
+            listingPrice: listing.sellingPrice,
+            offeredPrice: listing.sellingPrice - 3500,
+            total: `Rp ${((listing.sellingPrice - 3500) * Math.min(100, listing.availableKg || 100)).toLocaleString("id-ID")}`,
+            listingRef: listing,
+          };
+          setSelectedChat(local);
+          setChatList((prev) => [local, ...prev]);
+        } else {
+          // Room creation didn't return an id; still show a local conversation
+          setSelectedChat({
+            id: `new-${listing.id}`,
+            listingId: listing.id as number,
+            farmerName: listing.farmerName,
+            farmerLocation: listing.farmerLocation,
+            item: listing.commodity,
+            grade: listing.grade,
+            qty: `${Math.min(100, listing.availableKg || 100)} kg`,
+            lastMessage: "Penawaran baru",
+            time: "Sekarang",
+            unreadCount: 0,
+            statusBadge: `Nego Rp ${listing.sellingPrice.toLocaleString("id-ID")}/kg`,
+            statusType: "nego",
+            farmerAvatar: listing.farmerAvatar || "/assets/bowo-senang.png",
+            productImage: listing.productImage || "/assets/bowo-senang.png",
+            listingPrice: listing.sellingPrice,
+            offeredPrice: listing.sellingPrice - 3500,
+            total: "-",
+            listingRef: listing,
+          });
+        }
+      })
+      .catch(() => {
+        setSelectedChat({
+          id: `new-${listing.id}`,
+          listingId: listing.id as number,
+          farmerName: listing.farmerName,
+          farmerLocation: listing.farmerLocation,
+          item: listing.commodity,
+          grade: listing.grade,
+          qty: `${Math.min(100, listing.availableKg || 100)} kg`,
+          lastMessage: "Penawaran baru",
+          time: "Sekarang",
+          unreadCount: 0,
+          statusBadge: `Nego Rp ${listing.sellingPrice.toLocaleString("id-ID")}/kg`,
+          statusType: "nego",
+          farmerAvatar: listing.farmerAvatar || "/assets/bowo-senang.png",
+          productImage: listing.productImage || "/assets/bowo-senang.png",
+          listingPrice: listing.sellingPrice,
+          offeredPrice: listing.sellingPrice - 3500,
+          total: "-",
+          listingRef: listing,
+        });
+      });
+  }, [listing, chatList]);
 
   // Chat Room Input States
   const [inputMessage, setInputMessage] = useState("");
@@ -147,23 +242,37 @@ export default function RuangNegoPemasokView({
   const [showOfferDrawer, setShowOfferDrawer] = useState(false);
   const [negoStatus, setNegoStatus] = useState<"draft" | "pending" | "approved" | "counter">("pending");
 
-  const [chatRoomMessages, setChatRoomMessages] = useState<
-    Array<{ id: string; sender: "pemasok" | "petani"; text: string; time: string; offerData?: { price: number; qty: number } }>
-  >([
-    {
-      id: "1",
-      sender: "petani",
-      text: `Halo Toko Berkah! Hasil panen Cabai Rawit Merah Super (Grade A (SNI)) dari lahan Lembang siap dikirim. Silakan ajukan penawaran harga & kuantitas pasokan.`,
-      time: "10:15 WIB",
-    },
-    {
-      id: "2",
-      sender: "pemasok",
-      text: `Halo Pak Andi, saya tertarik mengajukan penawaran pasokan 100 kg di harga Rp 34.500/kg.`,
-      time: "10:18 WIB",
-      offerData: { price: 34500, qty: 100 },
-    },
-  ]);
+  const [chatRoomMessages, setChatRoomMessages] = useState<ChatRoomMessage[]>([]);
+
+  // Load messages when a real chat is selected
+  useEffect(() => {
+    if (!selectedChat) return;
+    const cid = selectedChat.apiChatId ?? selectedChat.id;
+    if (typeof cid !== "number") return;
+
+    let cancelled = false;
+    getChatMessages(cid)
+      .then((res) => {
+        if (cancelled) return;
+        const msgs = (res?.data || []).map((m: ApiChatMessageItem) => ({
+          id: String(m.id),
+          sender: m.sender_id === currentUserId ? ("pemasok" as const) : ("petani" as const),
+          text: m.text,
+          time: formatChatTime(m.created_at),
+          offerData:
+            m.offer_price != null && m.offer_qty != null
+              ? { price: m.offer_price, qty: m.offer_qty }
+              : undefined,
+        }));
+        setChatRoomMessages(msgs);
+      })
+      .catch(() => {
+        setChatRoomMessages([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedChat?.id, currentUserId]);
 
   const filteredChats = chatList.filter((chat) => {
     const matchesFilter =
@@ -175,7 +284,7 @@ export default function RuangNegoPemasokView({
     const matchesSearch =
       chat.farmerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       chat.item.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      chat.id.toLowerCase().includes(searchQuery.toLowerCase());
+      String(chat.id).toLowerCase().includes(searchQuery.toLowerCase());
 
     return matchesFilter && matchesSearch;
   });
@@ -188,67 +297,61 @@ export default function RuangNegoPemasokView({
     setOfferPrice(chat.offeredPrice.toString());
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || !selectedChat || sending) return;
 
-    const newMsg = {
-      id: Date.now().toString(),
-      sender: "pemasok" as const,
-      text: inputMessage,
-      time: "10:25 WIB",
-    };
-
-    setChatRoomMessages((prev) => [...prev, newMsg]);
+    const text = inputMessage.trim();
     setInputMessage("");
+    const cid = selectedChat.apiChatId ?? selectedChat.id;
+
+    if (typeof cid === "number") {
+      setSending(true);
+      try {
+        await sendChatMessage(cid, { text });
+      } catch {
+        // Keep optimistic message even if API send fails
+      }
+      setSending(false);
+    }
+
+    setChatRoomMessages((prev) => [
+      ...prev,
+      { id: Date.now().toString(), sender: "pemasok", text, time: "Sekarang" },
+    ]);
   };
 
-  const handleSendNewOffer = (e: React.FormEvent) => {
+  const handleSendNewOffer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedChat) return;
+    if (!selectedChat || sending) return;
     const priceNum = parseInt(offerPrice) || selectedChat.listingPrice;
     const qtyNum = parseInt(offerQty) || 50;
 
-    const newOfferMsg = {
-      id: Date.now().toString(),
-      sender: "pemasok" as const,
-      text: `Saya memperbarui penawaran pasokan sebesar ${qtyNum} kg di harga Rp ${priceNum.toLocaleString("id-ID")}/kg.`,
-      time: "10:26 WIB",
-      offerData: { price: priceNum, qty: qtyNum },
-    };
+    const text = `Saya memperbarui penawaran pasokan sebesar ${qtyNum} kg di harga Rp ${priceNum.toLocaleString("id-ID")}/kg.`;
+    const cid = selectedChat.apiChatId ?? selectedChat.id;
 
-    setChatRoomMessages((prev) => [...prev, newOfferMsg]);
+    if (typeof cid === "number") {
+      setSending(true);
+      try {
+        await sendChatMessage(cid, { text, offer_price: priceNum, offer_qty: qtyNum });
+      } catch {
+        // Keep optimistic message even if API send fails
+      }
+      setSending(false);
+    }
+
+    setChatRoomMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        sender: "pemasok",
+        text,
+        time: "Sekarang",
+        offerData: { price: priceNum, qty: qtyNum },
+      },
+    ]);
     setNegoStatus("pending");
     setShowOfferDrawer(false);
-
-    // Simulate Petani Response after 1.5 seconds
-    setTimeout(() => {
-      if (priceNum >= 28500 + 3000) {
-        setNegoStatus("approved");
-        setChatRoomMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            sender: "petani" as const,
-            text: `Penawaran Anda disetujui! Harga Rp ${priceNum.toLocaleString("id-ID")}/kg untuk ${qtyNum} kg disepakati. Silakan klik 'Lanjut ke Pembayaran Escrow'.`,
-            time: "10:27 WIB",
-          },
-        ]);
-      } else {
-        const counterPrice = Math.round((priceNum + selectedChat.listingPrice) / 2);
-        setNegoStatus("counter");
-        setChatRoomMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            sender: "petani" as const,
-            text: `Maaf, tawaran tersebut mendekati HPP modal saya. Bagaimana jika di harga Rp ${counterPrice.toLocaleString("id-ID")}/kg untuk ${qtyNum} kg?`,
-            time: "10:27 WIB",
-            offerData: { price: counterPrice, qty: qtyNum },
-          },
-        ]);
-      }
-    }, 1500);
   };
 
   const handleAcceptCounter = () => {
@@ -472,6 +575,40 @@ export default function RuangNegoPemasokView({
                         >
                           Ubah Tawaran
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const targetListing: HarvestListing = selectedChat.listingRef || {
+                              id: selectedChat.id,
+                              farmerName: selectedChat.farmerName,
+                              farmerRating: 4.9,
+                              farmerTotalSales: 38,
+                              farmerLocation: selectedChat.farmerLocation,
+                              distanceKm: 3.2,
+                              commodity: selectedChat.item,
+                              grade: "Grade A (SNI)",
+                              hppPerKg: 28500,
+                              sellingPrice: selectedChat.listingPrice,
+                              availableKg: 1280,
+                              harvestStatus: "Siap Dipetik Besok",
+                              allowNegotiation: true,
+                              productImage: selectedChat.productImage,
+                              farmerAvatar: selectedChat.farmerAvatar,
+                              farmImage: selectedChat.farmerAvatar,
+                              harvestCategory: "Bahan-Bahan",
+                            };
+
+                            onProceedToPayment({
+                              listing: targetListing,
+                              agreedPrice: msg.offerData?.price || selectedChat.listingPrice,
+                              agreedQty: msg.offerData?.qty || parseInt(offerQty) || 50,
+                            });
+                          }}
+                          className="flex-1 py-2 bg-[#0F4C25] hover:bg-[#0A381B] text-white rounded-xl font-black text-xs cursor-pointer active:scale-95 transition-all"
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5 text-emerald-300" />
+                          Lanjut ke Pembayaran Escrow
+                        </button>
                       </div>
                     )}
                   </div>
@@ -610,7 +747,9 @@ export default function RuangNegoPemasokView({
               Ruang Nego & Chat Petani
             </h2>
             <p className="text-xs text-emerald-100/90 leading-relaxed font-medium">
-              1 Percakapan nego aktif dengan Pak Andi Sugiharto (Cabai Rawit Merah Super).
+              {chatList.length > 0
+                ? `${chatList.length} percakapan negosiasi dengan mitra petani tersimpan.`
+                : "Mulai negosiasi dengan memilih produk dari marketplace."}
             </p>
           </div>
 
@@ -705,6 +844,28 @@ export default function RuangNegoPemasokView({
       </div>
 
       {/* Chat List Conversation Cards */}
+      {loading ? (
+        <div className="space-y-2.5">
+          {[0, 1].map((n) => (
+            <div key={n} className="bg-white rounded-[24px] p-4 border border-gray-200 shadow-2xs space-y-2.5 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gray-100" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-gray-100 rounded-full w-1/2" />
+                  <div className="h-3 bg-gray-100 rounded-full w-3/4" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : error && filteredChats.length === 0 ? (
+        <div className="bg-rose-50 border border-rose-200 rounded-[28px] p-6 text-center space-y-3">
+          <p className="text-xs font-bold text-rose-700">{error}</p>
+          <p className="text-[11px] text-rose-600 font-medium">
+            Pastikan login sebagai pemasok untuk melihat daftar chat.
+          </p>
+        </div>
+      ) : (
       <div className="space-y-2.5">
         {filteredChats.length === 0 ? (
           <div className="p-8 bg-white rounded-[28px] border border-gray-200 text-center space-y-2">
@@ -781,6 +942,7 @@ export default function RuangNegoPemasokView({
           ))
         )}
       </div>
+      )}
     </div>
   );
 }

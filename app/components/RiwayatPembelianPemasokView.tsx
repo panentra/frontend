@@ -13,10 +13,14 @@ import {
   MessageSquare,
   ShieldCheck,
   Search,
+  Package,
 } from "lucide-react";
+import { getSupplierOrders, confirmOrderReceived, SupplierOrderItem } from "@/lib/api";
 
 export interface PurchaseHistoryItem {
   id: string;
+  orderId?: number;
+  apiStatus?: string;
   transactionDate: string;
   farmerName: string;
   farmerLocation: string;
@@ -26,7 +30,7 @@ export interface PurchaseHistoryItem {
   qtyKg: number;
   pricePerKg: number;
   totalPaid: number;
-  status: "Selesai" | "Dalam Pengiriman" | "Escrow Dicairkan";
+  status: string;
   isReviewed: boolean;
   userRating?: number;
   userReview?: string;
@@ -34,60 +38,38 @@ export interface PurchaseHistoryItem {
   farmImage: string;
 }
 
-const SAMPLE_PURCHASES: PurchaseHistoryItem[] = [
-  {
-    id: "TRX-8841",
-    transactionDate: "3 Agustus 2026",
-    farmerName: "Pak Andi Sugiharto",
-    farmerLocation: "Lahan Sukamaju, Lembang",
-    farmerRating: 4.9,
-    commodity: "Cabai Rawit Merah Super",
-    grade: "Grade A (SNI)",
-    qtyKg: 150,
-    pricePerKg: 38000,
-    totalPaid: 5700000,
-    status: "Escrow Dicairkan",
+function formatDate(iso?: string | null): string {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function toPurchaseItem(o: SupplierOrderItem): PurchaseHistoryItem {
+  return {
+    id: o.order_no || `TRX-${o.id}`,
+    orderId: o.id,
+    apiStatus: o.status,
+    transactionDate: formatDate(o.paidAt || o.createdAt || o.completedAt),
+    farmerName: o.seller?.name || o.deliveryInfo?.driver_name || "Petani",
+    farmerLocation: o.listingLocation || "Lokasi Lahan",
+    farmerRating: o.seller?.rating || 0,
+    commodity: o.commodity,
+    grade: o.grade,
+    qtyKg: o.qtyKg,
+    pricePerKg: o.pricePerKg,
+    totalPaid: o.grandTotal,
+    status:
+      o.status === "completed"
+        ? "Escrow Dicairkan"
+        : o.status === "paid_escrow"
+        ? "Dalam Pengiriman"
+        : "Menunggu Pembayaran",
     isReviewed: false,
     invoiceUrl: "#",
     farmImage: "/assets/bowo-senang.png",
-  },
-  {
-    id: "TRX-8820",
-    transactionDate: "28 Juli 2026",
-    farmerName: "Ibu Sri Rahayu",
-    farmerLocation: "Ciwidey, Kab. Bandung",
-    farmerRating: 5.0,
-    commodity: "Pakcoy Hydroponic Organic",
-    grade: "Grade A (SNI)",
-    qtyKg: 80,
-    pricePerKg: 18000,
-    totalPaid: 1440000,
-    status: "Selesai",
-    isReviewed: true,
-    userRating: 5,
-    userReview: "Kualitas luar biasa presisi Grade A. Pengiriman sangat tepat waktu!",
-    invoiceUrl: "#",
-    farmImage: "/assets/budi-kaget.png",
-  },
-  {
-    id: "TRX-8799",
-    transactionDate: "20 Juli 2026",
-    farmerName: "Pak Budi Santoso",
-    farmerLocation: "Pangalengan",
-    farmerRating: 4.8,
-    commodity: "Tomat Red Super Harvest",
-    grade: "Grade B (SNI)",
-    qtyKg: 200,
-    pricePerKg: 12000,
-    totalPaid: 2400000,
-    status: "Selesai",
-    isReviewed: true,
-    userRating: 4,
-    userReview: "Barang bagus, buah segar dan tidak ada yang busuk.",
-    invoiceUrl: "#",
-    farmImage: "/assets/bowo-calendar.png",
-  },
-];
+  };
+}
 
 interface RiwayatPembelianPemasokViewProps {
   onBack: () => void;
@@ -98,9 +80,61 @@ export default function RiwayatPembelianPemasokView({
   onBack,
   onBuyAgain,
 }: RiwayatPembelianPemasokViewProps) {
-  const [purchases, setPurchases] = useState<PurchaseHistoryItem[]>(SAMPLE_PURCHASES);
+  const [purchases, setPurchases] = useState<PurchaseHistoryItem[]>([]);
   const [selectedForReview, setSelectedForReview] = useState<PurchaseHistoryItem | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<PurchaseHistoryItem | null>(null);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+
+  const loadOrders = () => {
+    setLoading(true);
+    setError(null);
+    getSupplierOrders()
+      .then((res) => {
+        setPurchases((res?.data || []).map(toPurchaseItem));
+      })
+      .catch((err: Error) => {
+        setError(err.message);
+        setPurchases([]);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    getSupplierOrders()
+      .then((res) => {
+        if (cancelled) return;
+        setPurchases((res?.data || []).map(toPurchaseItem));
+      })
+      .catch((err: Error) => {
+        if (cancelled) return;
+        setError(err.message);
+        setPurchases([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleConfirmReceived = async (item: PurchaseHistoryItem) => {
+    if (item.orderId == null) return;
+    setConfirmingId(item.orderId);
+    try {
+      await confirmOrderReceived(item.orderId);
+      alert("Barang telah dikonfirmasi diterima! Dana escrow berhasil dicairkan ke petani.");
+      loadOrders();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Gagal mengonfirmasi penerimaan pesanan.");
+    } finally {
+      setConfirmingId(null);
+    }
+  };
 
   // Review Form States
   const [ratingStars, setRatingStars] = useState(5);
@@ -163,7 +197,51 @@ export default function RiwayatPembelianPemasokView({
       </div>
 
       {/* List of Purchase History Cards */}
-      <div className="space-y-4">
+      {loading && (
+        <div className="space-y-4">
+          {[0, 1, 2].map((n) => (
+            <div
+              key={n}
+              className="bg-white rounded-[28px] p-4 sm:p-5 border border-gray-200 shadow-sm space-y-3.5 animate-pulse"
+            >
+              <div className="h-4 bg-gray-100 rounded-full w-1/3" />
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gray-100" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-3 bg-gray-100 rounded-full w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded-full w-1/2" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="bg-rose-50 border border-rose-200 rounded-[28px] p-6 text-center space-y-3">
+          <Package className="w-8 h-8 text-rose-400 mx-auto" />
+          <p className="text-xs font-bold text-rose-700">{error}</p>
+          <button
+            type="button"
+            onClick={loadOrders}
+            className="h-10 px-4 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl text-[11px] cursor-pointer"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && purchases.length === 0 && (
+        <div className="bg-white border border-gray-200 rounded-[28px] p-8 text-center space-y-2">
+          <p className="text-sm font-black text-[#1A1C19]">Belum ada riwayat pembelian</p>
+          <p className="text-xs text-gray-500 font-medium">
+            Mulai pesan pasokan dari marketplace untuk melihat riwayat transaksi di sini.
+          </p>
+        </div>
+      )}
+
+      {!loading && !error && purchases.length > 0 && (
+        <div className="space-y-4">
         {purchases.map((item) => (
           <div
             key={item.id}
@@ -261,18 +339,31 @@ export default function RiwayatPembelianPemasokView({
                 </div>
               )}
 
-              <button
-                type="button"
-                onClick={() => onBuyAgain(item.farmerName)}
-                className="h-10 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer shadow-sm text-[11px]"
-              >
-                <RefreshCw className="w-3.5 h-3.5 text-emerald-300" />
-                <span>Beli Lagi</span>
-              </button>
+              {item.apiStatus === "paid_escrow" ? (
+                <button
+                  type="button"
+                  disabled={confirmingId === item.orderId}
+                  onClick={() => handleConfirmReceived(item)}
+                  className="h-10 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer text-[11px] disabled:opacity-60"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>{confirmingId === item.orderId ? "Memproses..." : "Konfirmasi Terima"}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onBuyAgain(item.farmerName)}
+                  className="h-10 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer shadow-sm text-[11px]"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Beli Lagi</span>
+                </button>
+              )}
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      )}
 
       {/* Review Modal */}
       {selectedForReview && (

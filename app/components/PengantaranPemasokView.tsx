@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   Truck,
@@ -15,9 +15,11 @@ import {
   ArrowRight,
   ShieldCheck,
 } from "lucide-react";
+import { getSupplierDeliveries, confirmOrderReceived, SupplierOrderItem } from "@/lib/api";
 
 export interface DeliveryItem {
   id: string;
+  orderId?: number;
   commodity: string;
   qty: string;
   farmer: string;
@@ -35,83 +37,109 @@ export interface DeliveryItem {
   steps: { title: string; time: string; done: boolean; current?: boolean }[];
 }
 
-const ALL_DELIVERIES: DeliveryItem[] = [
-  {
-    id: "ORD-8821",
-    commodity: "Cabai Rawit Merah Super",
-    qty: "150 kg",
-    farmer: "Pak Andi Sugiharto",
-    farmLocation: "Lahan Sukamaju, Lembang",
-    destination: "Toko Sembako Berkah Jaya (Jl. Swadaya II No. 45, Bandung)",
-    driverName: "Pak Mulyono",
-    vehicle: "Pick-Up Mitsubishi L300 (D 8892 ABC)",
-    driverPhone: "0812-3456-7890",
-    eta: "35 Menit Lagi (11:15 WIB)",
-    statusText: "Kurir Dalam Perjalanan ke Toko",
-    isCompleted: false,
+function formatDateTime(iso?: string | null): string {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("id-ID", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+}
+
+function toDeliveryItem(o: SupplierOrderItem): DeliveryItem {
+  const completed = o.status === "completed";
+  const info = o.deliveryInfo || {};
+  return {
+    id: o.order_no || `TRX-${o.id}`,
+    orderId: o.id,
+    commodity: o.commodity,
+    qty: `${o.qtyKg} kg`,
+    farmer: o.seller?.name || "Petani",
+    farmLocation: o.listingLocation || "Lokasi Lahan",
+    destination: o.deliveryAddress || "Alamat Toko",
+    driverName: info.driver_name || "Kurir Panentra",
+    vehicle: info.vehicle || "-",
+    driverPhone: info.driver_phone || "-",
+    eta: info.eta || (completed ? "Selesai" : "Sedang Berlangsung"),
+    statusText: completed ? "Sampai & Selesai" : "Kurir Dalam Perjalanan ke Toko",
+    isCompleted: completed,
+    deliveredDate: o.completedAt ? formatDateTime(o.completedAt) : undefined,
     image: "/assets/bowo-senang.png",
-    statusStep: 3,
-    steps: [
-      { title: "Pesanan Dikonfirmasi Petani", time: "08:30 WIB", done: true },
-      { title: "Hasil Panen Dipetik & Dikemas", time: "09:15 WIB", done: true },
-      { title: "Kurir Dalam Perjalanan ke Toko", time: "Sedang Berlangsung", done: true, current: true },
-      { title: "Pasokan Sampai di Gudang Toko", time: "Estimasi 11:15 WIB", done: false },
-    ],
-  },
-  {
-    id: "ORD-8819",
-    commodity: "Pakcoy Hydroponic Grade A",
-    qty: "80 kg",
-    farmer: "Ibu Sri Rahayu",
-    farmLocation: "Ciwidey, Kab. Bandung",
-    destination: "Toko Sembako Berkah Jaya",
-    driverName: "Pak Agus",
-    vehicle: "Grand Max Blind Van (D 1420 XYZ)",
-    driverPhone: "0857-1122-3344",
-    eta: "Tiba 15:40 WIB",
-    statusText: "Sampai & Selesai",
-    isCompleted: true,
-    deliveredDate: "Kemarin, 15:40 WIB",
-    image: "/assets/budi-kaget.png",
-    statusStep: 4,
-    steps: [
-      { title: "Pesanan Dikonfirmasi Petani", time: "Kemarin 10:00 WIB", done: true },
-      { title: "Hasil Panen Dipetik & Dikemas", time: "Kemarin 13:00 WIB", done: true },
-      { title: "Kurir Dalam Perjalanan ke Toko", time: "Kemarin 14:30 WIB", done: true },
-      { title: "Pasokan Sampai di Gudang Toko", time: "Kemarin 15:40 WIB", done: true },
-    ],
-  },
-  {
-    id: "ORD-8812",
-    commodity: "Tomat Red Super",
-    qty: "200 kg",
-    farmer: "Pak Budi Santoso",
-    farmLocation: "Pangalengan",
-    destination: "Toko Sembako Berkah Jaya",
-    driverName: "Pak Hendra",
-    vehicle: "Truck Engkel Canter (D 9012 EFG)",
-    driverPhone: "0813-9988-7766",
-    eta: "Tiba 1 Agustus",
-    statusText: "Sampai & Selesai",
-    isCompleted: true,
-    deliveredDate: "1 Agustus 2026",
-    image: "/assets/bowo-calendar.png",
-    statusStep: 4,
-    steps: [
-      { title: "Pesanan Dikonfirmasi Petani", time: "1 Ags 07:00 WIB", done: true },
-      { title: "Hasil Panen Dipetik & Dikemas", time: "1 Ags 09:00 WIB", done: true },
-      { title: "Kurir Dalam Perjalanan ke Toko", time: "1 Ags 11:00 WIB", done: true },
-      { title: "Pasokan Sampai di Gudang Toko", time: "1 Ags 14:00 WIB", done: true },
-    ],
-  },
-];
+    statusStep: completed ? 4 : 3,
+    steps: completed
+      ? [
+          { title: "Pesanan Dikonfirmasi Petani", time: "Terkonfirmasi", done: true },
+          { title: "Hasil Panen Dipetik & Dikemas", time: "Disiapkan", done: true },
+          { title: "Kurir Dalam Perjalanan ke Toko", time: "Dalam Perjalanan", done: true },
+          { title: "Pasokan Sampai di Gudang Toko", time: formatDateTime(o.completedAt), done: true },
+        ]
+      : [
+          { title: "Pesanan Dikonfirmasi Petani", time: "Terkonfirmasi", done: true },
+          { title: "Hasil Panen Dipetik & Dikemas", time: "Disiapkan", done: true },
+          { title: "Kurir Dalam Perjalanan ke Toko", time: info.eta || "Sedang Berlangsung", done: true, current: true },
+          { title: "Pasokan Sampai di Gudang Toko", time: "Menunggu Konfirmasi", done: false },
+        ],
+  };
+}
 
 export default function PengantaranPemasokView() {
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
   const [selectedDelivery, setSelectedDelivery] = useState<DeliveryItem | null>(null);
 
-  const activeDeliveries = ALL_DELIVERIES.filter((d) => !d.isCompleted);
-  const historyDeliveries = ALL_DELIVERIES.filter((d) => d.isCompleted);
+  const [deliveries, setDeliveries] = useState<DeliveryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+
+  const loadDeliveries = () => {
+    setLoading(true);
+    setError(null);
+    getSupplierDeliveries()
+      .then((res) => {
+        setDeliveries((res?.data || []).map(toDeliveryItem));
+      })
+      .catch((err: Error) => {
+        setError(err.message);
+        setDeliveries([]);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    getSupplierDeliveries()
+      .then((res) => {
+        if (cancelled) return;
+        setDeliveries((res?.data || []).map(toDeliveryItem));
+      })
+      .catch((err: Error) => {
+        if (cancelled) return;
+        setError(err.message);
+        setDeliveries([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleConfirmReceived = async (item: DeliveryItem) => {
+    if (item.orderId == null) return;
+    setConfirmingId(item.orderId);
+    try {
+      await confirmOrderReceived(item.orderId);
+      alert("Pasokan telah berhasil dikonfirmasi sampai di toko! Escrow pembayaran segera dicairkan ke Petani.");
+      setSelectedDelivery(null);
+      loadDeliveries();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Order belum dapat dikonfirmasi.");
+    } finally {
+      setConfirmingId(null);
+    }
+  };
+
+  const activeDeliveries = deliveries.filter((d) => !d.isCompleted);
+  const historyDeliveries = deliveries.filter((d) => d.isCompleted);
 
   // ================= VIEW 2: DETAIL LAGI TRACKING VIEW =================
   if (selectedDelivery) {
@@ -262,14 +290,12 @@ export default function PengantaranPemasokView() {
         {!selectedDelivery.isCompleted && (
           <button
             type="button"
-            onClick={() => {
-              alert("Pasokan telah berhasil dikonfirmasi sampai di toko! Escrow pembayaran segera dicairkan ke Petani.");
-              setSelectedDelivery(null);
-            }}
-            className="w-full h-12 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all text-xs cursor-pointer"
+            disabled={confirmingId === selectedDelivery.orderId}
+            onClick={() => handleConfirmReceived(selectedDelivery)}
+            className="w-full h-12 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all text-xs cursor-pointer disabled:opacity-60"
           >
             <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-            <span>Konfirmasi Pasokan Telah Diterima</span>
+            <span>{confirmingId === selectedDelivery.orderId ? "Memproses..." : "Konfirmasi Pasokan Telah Diterima"}</span>
           </button>
         )}
       </div>
@@ -321,6 +347,54 @@ export default function PengantaranPemasokView() {
       </div>
 
       {/* Delivery Cards List */}
+      {loading && (
+        <div className="space-y-3.5">
+          {[0, 1].map((n) => (
+            <div
+              key={n}
+              className="bg-white rounded-[28px] p-4 sm:p-5 border border-gray-200 shadow-sm space-y-3 animate-pulse"
+            >
+              <div className="h-4 bg-gray-100 rounded-full w-1/3" />
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gray-100" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-3 bg-gray-100 rounded-full w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded-full w-1/2" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="bg-rose-50 border border-rose-200 rounded-[28px] p-6 text-center space-y-3">
+          <Package className="w-8 h-8 text-rose-400 mx-auto" />
+          <p className="text-xs font-bold text-rose-700">{error}</p>
+          <button
+            type="button"
+            onClick={loadDeliveries}
+            className="h-10 px-4 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl text-[11px] cursor-pointer"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && currentList.length === 0 && (
+        <div className="bg-white border border-gray-200 rounded-[28px] p-8 text-center space-y-2">
+          <p className="text-sm font-black text-[#1A1C19]">
+            Tidak ada pengantaran {activeTab === "active" ? "aktif" : "riwayat"}
+          </p>
+          <p className="text-xs text-gray-500 font-medium">
+            {activeTab === "active"
+              ? "Semua pesanan telah sampai ke tujuan. Pantau pesanan baru di marketplace."
+              : "Belum ada riwayat pengantaran yang tercatat."}
+          </p>
+        </div>
+      )}
+
+      {!loading && !error && currentList.length > 0 && (
       <div className="space-y-3.5">
         {currentList.map((item) => (
           <div
@@ -387,6 +461,7 @@ export default function PengantaranPemasokView() {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

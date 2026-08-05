@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   TrendingUp,
@@ -14,69 +14,77 @@ import {
   CheckCircle2,
   DollarSign,
   ShoppingBag,
+  RefreshCw,
 } from "lucide-react";
 import Button from "./Button";
+import { getMarketPrices, MarketPriceItem } from "@/lib/api";
 
-const MARKET_PRICES = [
-  {
-    id: "cabai",
-    name: "Cabai Rawit Merah Super",
-    category: "Bahan-Bahan",
-    farmerPrice: "Rp 35.000 / kg",
-    marketPrice: "Rp 46.000 / kg",
-    margin: "+31%",
-    trend: "up",
-    location: "Lembang, Bandung Barat",
-    status: "Panen Raya (Oversupply)",
-    harvestVol: "1.280 kg Siap Beli",
+interface MarketPriceDisplay {
+  id: string;
+  name: string;
+  category: string;
+  farmerPrice: string;
+  marketPrice: string;
+  margin: string;
+  trend: "up" | "down";
+  location: string;
+  status: string;
+  harvestVol: string;
+  image: string;
+}
+
+function formatRupiah(num: number): string {
+  return `Rp ${num.toLocaleString("id-ID")} / kg`;
+}
+
+function toDisplay(item: MarketPriceItem): MarketPriceDisplay {
+  const marginPct =
+    item.farmerPrice > 0
+      ? Math.round(((item.marketPrice - item.farmerPrice) / item.farmerPrice) * 100)
+      : 0;
+  return {
+    id: String(item.id),
+    name: item.name,
+    category: item.category || "Bahan-Bahan",
+    farmerPrice: formatRupiah(item.farmerPrice),
+    marketPrice: formatRupiah(item.marketPrice),
+    margin: `+${marginPct}%`,
+    trend: item.trend === "down" ? "down" : "up",
+    location: item.location || "Lokasi Lahan",
+    status: item.status || "Harga Stabil",
+    harvestVol: item.harvestVol || "-",
     image: "/assets/budi-tren.png",
-  },
-  {
-    id: "pakcoy",
-    name: "Pakcoy Hydroponic Grade A",
-    category: "Sayuran",
-    farmerPrice: "Rp 18.000 / kg",
-    marketPrice: "Rp 24.000 / kg",
-    margin: "+33%",
-    trend: "up",
-    location: "Ciwidey, Bandung",
-    status: "Stok Melimpah",
-    harvestVol: "850 kg Siap Beli",
-    image: "/assets/budi-kaget.png",
-  },
-  {
-    id: "tomat",
-    name: "Tomat Red Super",
-    category: "Bahan-Bahan",
-    farmerPrice: "Rp 12.000 / kg",
-    marketPrice: "Rp 16.500 / kg",
-    margin: "+37.5%",
-    trend: "down",
-    location: "Pangalengan",
-    status: "Harga Stabil",
-    harvestVol: "2.100 kg Siap Beli",
-    image: "/assets/bowo-calendar.png",
-  },
-  {
-    id: "kopi",
-    name: "Kopi Arabika Bean",
-    category: "Tanaman Perkebunan",
-    farmerPrice: "Rp 95.000 / kg",
-    marketPrice: "Rp 120.000 / kg",
-    margin: "+26.3%",
-    trend: "up",
-    location: "Garut",
-    status: "Permintaan Tinggi",
-    harvestVol: "500 kg Siap Beli",
-    image: "/assets/bowo-senang.png",
-  },
-];
+  };
+}
 
 export default function PasarHargaPemasokView() {
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
+  const [prices, setPrices] = useState<MarketPriceDisplay[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredPrices = MARKET_PRICES.filter((item) => {
+  useEffect(() => {
+    let cancelled = false;
+    getMarketPrices()
+      .then((res) => {
+        if (cancelled) return;
+        setPrices((res?.data || []).map(toDisplay));
+      })
+      .catch((err: Error) => {
+        if (cancelled) return;
+        setError(err.message);
+        setPrices([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredPrices = prices.filter((item) => {
     const matchCat = selectedCategory === "Semua" || item.category === selectedCategory;
     const matchSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.location.toLowerCase().includes(searchQuery.toLowerCase());
     return matchCat && matchSearch;
@@ -165,10 +173,49 @@ export default function PasarHargaPemasokView() {
             Daftar Pasaran Harga Lahan Petani
           </h3>
           <span className="text-xs font-bold text-[#1B5E20]">
-            {filteredPrices.length} Komoditas
+            {loading ? "Memuat..." : `${filteredPrices.length} Komoditas`}
           </span>
         </div>
 
+        {error && (
+          <div className="bg-rose-50 border border-rose-200 rounded-[28px] p-6 text-center space-y-3">
+            <p className="text-xs font-bold text-rose-700">{error}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setLoading(true);
+                getMarketPrices()
+                  .then((res) => setPrices((res?.data || []).map(toDisplay)))
+                  .catch((err: Error) => setError(err.message))
+                  .finally(() => setLoading(false));
+              }}
+              className="h-10 px-4 bg-[#0F4C25] hover:bg-[#0A381B] text-white font-black rounded-2xl flex items-center gap-1.5 mx-auto text-[11px] cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Coba Lagi
+            </button>
+          </div>
+        )}
+
+        {!error && loading && (
+          <div className="space-y-3.5">
+            {[0, 1].map((n) => (
+              <div key={n} className="bg-white rounded-[28px] p-4 sm:p-5 border border-gray-200 shadow-sm space-y-3.5 animate-pulse">
+                <div className="h-4 bg-gray-100 rounded-full w-1/3" />
+                <div className="h-10 bg-gray-100 rounded-2xl w-full" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!error && !loading && filteredPrices.length === 0 && (
+          <div className="bg-white border border-gray-200 rounded-[28px] p-8 text-center space-y-2">
+            <p className="text-sm font-black text-[#1A1C19]">Tidak ada data harga ditemukan</p>
+            <p className="text-xs text-gray-500 font-medium">Coba ubah kata kunci atau kategori.</p>
+          </div>
+        )}
+
+        {!error && !loading && filteredPrices.length > 0 && (
         <div className="space-y-3.5">
           {filteredPrices.map((item) => (
             <div
@@ -237,6 +284,7 @@ export default function PasarHargaPemasokView() {
             </div>
           ))}
         </div>
+        )}
       </div>
     </div>
   );
