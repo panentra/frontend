@@ -250,7 +250,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
   const [expenseCategory, setExpenseCategory] = useState("Pupuk");
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseSeasonId, setExpenseSeasonId] = useState("season-1");
-  const [expenses, setExpenses] = useState(INITIAL_EXPENSE_HISTORY);
+  const [expenses, setExpenses] = useState<any[]>([]);
 
   React.useEffect(() => {
     async function loadUserData() {
@@ -278,7 +278,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
     async function loadExpensesData() {
       try {
         const res = await getExpenses();
-        if (res && res.data && res.data.length > 0) {
+        if (res && res.data && Array.isArray(res.data)) {
           const mapped = res.data.slice().reverse().map((item) => ({
             id: item.id,
             title: item.title,
@@ -291,9 +291,12 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
             seasonName: item.season_name || "MT-1: Tomat",
           }));
           setExpenses(mapped);
+        } else {
+          setExpenses([]);
         }
       } catch (err) {
         console.warn("Gagal memuat API expenses:", err);
+        setExpenses([]);
       }
     }
 
