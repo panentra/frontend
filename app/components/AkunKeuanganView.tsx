@@ -5,6 +5,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   Land,
+  getLands,
+  createLand,
   getCurrentUser,
   getExpenses,
   createExpense,
@@ -253,9 +255,29 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showBankModal, setShowBankModal] = useState(false);
+  const [showAddLandModal, setShowAddLandModal] = useState(false);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [showLangModal, setShowLangModal] = useState(false);
+
+  // Form State Add Land
+  const [landNameInput, setLandNameInput] = useState("");
+  const [landAreaInput, setLandAreaInput] = useState("");
+  const [landAreaUnitInput, setLandAreaUnitInput] = useState("ha");
+  const [landCommodityIdInput, setLandCommodityIdInput] = useState("1");
+  const [localLands, setLocalLands] = useState<Land[]>(lands || []);
+
+  React.useEffect(() => {
+    if (lands && lands.length > 0) {
+      setLocalLands(lands);
+    } else {
+      getLands().then((res) => {
+        if (res && res.data && Array.isArray(res.data)) {
+          setLocalLands(res.data);
+        }
+      }).catch(() => {});
+    }
+  }, [lands]);
 
   // Form State Profile
   const [profileName, setProfileName] = useState("Pak Budi Santoso");
@@ -360,6 +382,38 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
     }
   };
 
+  const handleCreateLandSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!landNameInput || !landAreaInput) {
+      showToast("Harap isi nama lahan dan luas lahan.", "error");
+      return;
+    }
+    try {
+      await createLand({
+        name: landNameInput,
+        area: parseFloat(landAreaInput) || 0.5,
+        area_unit: landAreaUnitInput,
+        commodity_id: parseInt(landCommodityIdInput) || 1,
+      });
+      setShowAddLandModal(false);
+      setLandNameInput("");
+      setLandAreaInput("");
+
+      try {
+        const res = await getLands();
+        if (res && res.data && Array.isArray(res.data)) {
+          setLocalLands(res.data);
+        }
+      } catch (err) {
+        console.warn("Gagal refresh lands:", err);
+      }
+
+      showToast("Lahan pertanian baru berhasil ditambahkan!");
+    } catch (err: any) {
+      showToast(err.message || "Gagal menambahkan lahan baru.", "error");
+    }
+  };
+
   React.useEffect(() => {
     async function loadUserData() {
       const storedUser = getAuthUser();
@@ -461,8 +515,8 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
   const [selectedLang, setSelectedLang] = useState("Bahasa Indonesia");
 
   const plots = React.useMemo(() => {
-    if (lands && lands.length > 0) {
-      return lands.map((l, index) => {
+    if (localLands && localLands.length > 0) {
+      return localLands.map((l, index) => {
         const season = l.seasons?.[0];
         let progressDay = 68;
         let totalDays = 90;
@@ -1144,7 +1198,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
           </h2>
           <button
             type="button"
-            onClick={() => showToast("Fitur Tambah Lahan Tanam Baru", "info")}
+            onClick={() => setShowAddLandModal(true)}
             className="text-xs font-black text-[#0F4C25] hover:underline flex items-center gap-1 cursor-pointer bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -2118,6 +2172,101 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
                   className="flex-1 justify-center py-2.5 font-bold"
                 >
                   Simpan Biaya
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 8.5 MODAL TAMBAH LAHAN TANAM BARU (100% REAL API INTEGRATION) */}
+      {showAddLandModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[380px] bg-white rounded-[32px] p-6 space-y-4 shadow-2xl border border-gray-100 relative">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-sm font-black text-[#1A1C19] flex items-center gap-2">
+                <Sprout className="w-4 h-4 text-[#0F4C25]" />
+                Tambah Lahan Pertanian
+              </h3>
+              <button
+                onClick={() => setShowAddLandModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateLandSubmit} className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Nama Lahan / Kebun</label>
+                <input
+                  type="text"
+                  placeholder="Contoh: Kebun Lembang Blok B"
+                  value={landNameInput}
+                  onChange={(e) => setLandNameInput(e.target.value)}
+                  className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Luas Lahan</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Contoh: 0.5"
+                    value={landAreaInput}
+                    onChange={(e) => setLandAreaInput(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-gray-700 block mb-1">Satuan</label>
+                  <select
+                    value={landAreaUnitInput}
+                    onChange={(e) => setLandAreaUnitInput(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                  >
+                    <option value="ha">Hektar (ha)</option>
+                    <option value="m2">Meter Persegi (m²)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-gray-700 block mb-1">Komoditas Utama</label>
+                <select
+                  value={landCommodityIdInput}
+                  onChange={(e) => setLandCommodityIdInput(e.target.value)}
+                  className="w-full h-10 px-3 bg-[#F8FAF8] border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold"
+                >
+                  <option value="1">Cabai Rawit Merah</option>
+                  <option value="2">Tomat</option>
+                  <option value="3">Pakcoy</option>
+                  <option value="4">Bawang Merah</option>
+                  <option value="5">Jagung Manis</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddLandModal(false)}
+                  className="flex-1 justify-center"
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  className="flex-1 justify-center py-2.5 font-bold"
+                >
+                  Simpan Lahan
                 </Button>
               </div>
             </form>
