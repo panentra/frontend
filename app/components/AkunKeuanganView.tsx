@@ -3,7 +3,17 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { logoutUser } from "@/lib/api";
+import {
+  Land,
+  getCurrentUser,
+  getExpenses,
+  createExpense,
+  deleteExpense,
+  getFarmerOrders,
+  downloadSalesInvoice,
+  getAuthUser,
+  logoutUser,
+} from "@/lib/api";
 import {
   User,
   Wallet,
@@ -209,8 +219,6 @@ const FARM_PLOTS = [
   },
 ];
 
-import { Land, getExpenses, createExpense, deleteExpense, getCurrentUser, getAuthUser, ExpenseItem } from "@/lib/api";
-
 interface AkunKeuanganViewProps {
   onSubViewChange?: (isOpen: boolean) => void;
   lands?: Land[];
@@ -251,6 +259,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseSeasonId, setExpenseSeasonId] = useState("season-1");
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [salesHistory, setSalesHistory] = useState<any[]>([]);
 
   React.useEffect(() => {
     async function loadUserData() {
@@ -300,8 +309,53 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
       }
     }
 
+    async function loadSalesOrdersData() {
+      try {
+        const res = await getFarmerOrders();
+        if (res && res.data && Array.isArray(res.data)) {
+          const mapped = res.data.map((order) => {
+            const rawStatus = (order.status || "incoming").toLowerCase();
+            let statusLabel = "Dalam Proses";
+            if (rawStatus === "completed" || rawStatus === "delivered" || rawStatus === "selesai") {
+              statusLabel = "Selesai";
+            } else if (rawStatus === "shipping" || rawStatus === "dikirim") {
+              statusLabel = "Dikirim";
+            }
+
+            const totalVal = order.grandTotal || order.subtotal || (order.qtyKg && order.pricePerKg ? order.qtyKg * order.pricePerKg : 0);
+            const qtyVal = order.qtyKg || 0;
+            const priceVal = order.pricePerKg || 0;
+
+            return {
+              numericId: order.id,
+              id: order.order_no || `TRX-${order.id}`,
+              buyer: order.buyer?.name || "Toko Berkah",
+              buyerType: "Pemasok Terverifikasi",
+              item: `${order.commodity || "Komoditas Panen"} ${order.grade ? `(${order.grade})` : ""}`,
+              qty: `${qtyVal} kg`,
+              rawQty: qtyVal,
+              unitPrice: `Rp ${priceVal.toLocaleString("id-ID")} / kg`,
+              total: `Rp ${totalVal.toLocaleString("id-ID")}`,
+              rawTotal: totalVal,
+              date: order.createdAt ? new Date(order.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "5 Agustus 2026",
+              status: statusLabel,
+              escrow: order.paymentStatus || "Panentra Secure Escrow",
+              location: typeof order.deliveryAddress === "string" ? order.deliveryAddress : (typeof order.listingLocation === "string" ? order.listingLocation : "Lembang, Bandung Barat"),
+            };
+          });
+          setSalesHistory(mapped);
+        } else {
+          setSalesHistory([]);
+        }
+      } catch (err) {
+        console.warn("Gagal memuat API sales orders di AkunKeuanganView:", err);
+        setSalesHistory([]);
+      }
+    }
+
     loadUserData();
     loadExpensesData();
+    loadSalesOrdersData();
   }, []);
 
   // Preference Toggles
@@ -423,12 +477,15 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
     setExpenseAmount("");
   };
 
-  const filteredSales = SALES_HISTORY.filter(
+  const filteredSales = salesHistory.filter(
     (s) =>
       s.buyer.toLowerCase().includes(salesSearch.toLowerCase()) ||
       s.item.toLowerCase().includes(salesSearch.toLowerCase()) ||
       s.id.toLowerCase().includes(salesSearch.toLowerCase())
   );
+
+  const totalSalesRevenue = salesHistory.reduce((sum, item) => sum + (item.rawTotal || 0), 0);
+  const totalSalesVolume = salesHistory.reduce((sum, item) => sum + (item.rawQty || 0), 0);
 
   const plantingSeasons = React.useMemo(() => {
     const seasonMap = new Map<string, { id: string; name: string; period: string; status: string; numericId: number }>();
@@ -519,7 +576,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
           </div>
 
           <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] font-black text-[10px] rounded-md border border-emerald-200">
-            {SALES_HISTORY.length} Transaksi
+            {salesHistory.length} Transaksi
           </span>
         </div>
 
@@ -531,10 +588,10 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
               Total Pendapatan Terjual
             </span>
             <div className="text-2xl sm:text-3xl font-black tracking-tight">
-              Rp 17.490.000
+              Rp {totalSalesRevenue.toLocaleString("id-ID")}
             </div>
             <div className="flex items-center justify-between text-xs pt-1 border-t border-white/15 text-emerald-100">
-              <span>Total Volume Terjual: <strong>730 kg</strong></span>
+              <span>Total Volume Terjual: <strong>{totalSalesVolume.toLocaleString("id-ID")} kg</strong></span>
               <span className="bg-white/15 px-2 py-0.5 rounded-full text-[10px] font-bold">100% Escrow Aman</span>
             </div>
           </div>
@@ -553,79 +610,93 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
 
           {/* Detailed Transaction Cards List */}
           <div className="space-y-3">
-            {filteredSales.map((sale) => (
-              <div
-                key={sale.id}
-                className="bg-white rounded-[24px] p-4 border border-gray-200 shadow-xs space-y-3 relative overflow-hidden hover:border-emerald-300 transition-all"
-              >
-                {/* Header: ID, Date, Status */}
-                <div className="flex items-center justify-between text-xs pb-2.5 border-b border-gray-100">
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-[#0F4C25] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 text-[11px]">
-                      {sale.id}
-                    </span>
-                    <span className="text-[11px] font-bold text-gray-400">· {sale.date}</span>
-                  </div>
-                  <span className="px-2.5 py-0.5 bg-emerald-50 text-[#0F4C25] border border-emerald-200 rounded-full text-[10px] font-black">
-                    ✓ {sale.status}
-                  </span>
-                </div>
-
-                {/* Item Title & Buyer Info */}
-                <div className="space-y-1">
-                  <h3 className="text-sm font-black text-[#1A1C19] leading-snug">
-                    {sale.item}
-                  </h3>
-                  <p className="text-xs font-semibold text-gray-600 flex items-center gap-1 flex-wrap">
-                    <span className="text-gray-400 font-normal">Pembeli:</span>
-                    <strong className="text-[#0F4C25]">{sale.buyer}</strong>
-                    <span className="text-gray-400 text-[10px]">({sale.buyerType})</span>
-                  </p>
-                </div>
-
-                {/* Financial Summary Inner Box (Full Width & Clean Separation) */}
-                <div className="p-3 bg-[#F8FAF8] rounded-2xl border border-gray-200 flex items-center justify-between text-xs">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider block">
-                      Kuantitas & Harga Satuan
-                    </span>
-                    <div className="font-black text-[#1A1C19]">
-                      {sale.qty} <span className="text-gray-400 font-medium text-[11px]">({sale.unitPrice})</span>
-                    </div>
-                  </div>
-
-                  <div className="text-right space-y-0.5">
-                    <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider block">
-                      Total Diterima
-                    </span>
-                    <div className="text-base font-black text-[#0F4C25]">
-                      {sale.total}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer Action & Escrow Info */}
-                <div className="pt-1 flex items-center justify-between text-xs gap-2 flex-wrap">
-                  <div className="flex items-center gap-2 text-gray-500 text-[10px] font-medium min-w-0 flex-wrap">
-                    <span className="flex items-center gap-1 shrink-0">
-                      <MapPin className="w-3 h-3 text-[#0F4C25]" /> {sale.location}
-                    </span>
-                    <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] rounded-md font-extrabold border border-emerald-100 shrink-0">
-                      {sale.escrow}
-                    </span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => alert(`Mengunduh Invoice Penjualan ${sale.id}...`)}
-                    className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-[11px] rounded-xl border border-gray-200 flex items-center gap-1 cursor-pointer transition-colors shrink-0 active:scale-95 ml-auto"
-                  >
-                    <Download className="w-3 h-3 text-gray-600" />
-                    <span>Cetak Invoice</span>
-                  </button>
-                </div>
+            {filteredSales.length === 0 ? (
+              <div className="p-8 text-center bg-white rounded-2xl border border-gray-200 space-y-1">
+                <p className="text-xs font-bold text-gray-600">Belum Ada Transaksi Penjualan</p>
+                <p className="text-[11px] text-gray-400">Riwayat transaksi penjualan hasil panen akan muncul di sini.</p>
               </div>
-            ))}
+            ) : (
+              filteredSales.map((sale) => (
+                <div
+                  key={sale.id}
+                  className="bg-white rounded-[24px] p-4 border border-gray-200 shadow-xs space-y-3 relative overflow-hidden hover:border-emerald-300 transition-all"
+                >
+                  {/* Header: ID, Date, Status */}
+                  <div className="flex items-center justify-between text-xs pb-2.5 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-[#0F4C25] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 text-[11px]">
+                        {sale.id}
+                      </span>
+                      <span className="text-[11px] font-bold text-gray-400">· {sale.date}</span>
+                    </div>
+                    <span className="px-2.5 py-0.5 bg-emerald-50 text-[#0F4C25] border border-emerald-200 rounded-full text-[10px] font-black">
+                      ✓ {sale.status}
+                    </span>
+                  </div>
+
+                  {/* Item Title & Buyer Info */}
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-black text-[#1A1C19] leading-snug">
+                      {sale.item}
+                    </h3>
+                    <p className="text-xs font-semibold text-gray-600 flex items-center gap-1 flex-wrap">
+                      <span className="text-gray-400 font-normal">Pembeli:</span>
+                      <strong className="text-[#0F4C25]">{sale.buyer}</strong>
+                      <span className="text-gray-400 text-[10px]">({sale.buyerType})</span>
+                    </p>
+                  </div>
+
+                  {/* Financial Summary Inner Box (Full Width & Clean Separation) */}
+                  <div className="p-3 bg-[#F8FAF8] rounded-2xl border border-gray-200 flex items-center justify-between text-xs">
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider block">
+                        Kuantitas & Harga Satuan
+                      </span>
+                      <div className="font-black text-[#1A1C19]">
+                        {sale.qty} <span className="text-gray-400 font-medium text-[11px]">({sale.unitPrice})</span>
+                      </div>
+                    </div>
+
+                    <div className="text-right space-y-0.5">
+                      <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider block">
+                        Total Diterima
+                      </span>
+                      <div className="text-base font-black text-[#0F4C25]">
+                        {sale.total}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer Action & Escrow Info */}
+                  <div className="pt-1 flex items-center justify-between text-xs gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 text-gray-500 text-[10px] font-medium min-w-0 flex-wrap">
+                      <span className="flex items-center gap-1 shrink-0">
+                        <MapPin className="w-3 h-3 text-[#0F4C25]" /> {sale.location}
+                      </span>
+                      <span className="px-2 py-0.5 bg-emerald-50 text-[#0F4C25] rounded-md font-extrabold border border-emerald-100 shrink-0">
+                        {sale.escrow}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await downloadSalesInvoice(sale.numericId);
+                        } catch (err) {
+                          console.warn("Gagal unduh invoice sales order API:", err);
+                          alert(`Mengunduh dokumen Invoice Penjualan ${sale.id}...`);
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-[11px] rounded-xl border border-gray-200 flex items-center gap-1 cursor-pointer transition-colors shrink-0 active:scale-95 ml-auto"
+                    >
+                      <Download className="w-3 h-3 text-gray-600" />
+                      <span>Cetak Invoice</span>
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -1164,31 +1235,37 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
             Riwayat Penjualan Hasil Panen
           </h3>
           <span className="text-[10px] font-extrabold text-[#0F4C25] bg-emerald-50 px-2 py-0.5 rounded-full">
-            {SALES_HISTORY.length} Transaksi
+            {salesHistory.length} Transaksi
           </span>
         </div>
 
         <div className="space-y-2">
-          {SALES_HISTORY.slice(0, 2).map((sale) => (
-            <div
-              key={sale.id}
-              className="p-3.5 bg-white rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between text-xs"
-            >
-              <div className="space-y-0.5 min-w-0 pr-2">
-                <h4 className="font-black text-[#1A1C19] truncate">{sale.item}</h4>
-                <p className="text-[10px] text-gray-500 font-semibold truncate">
-                  Pembeli: {sale.buyer} · {sale.qty}
-                </p>
-              </div>
-
-              <div className="text-right shrink-0">
-                <span className="font-black text-[#0F4C25] block text-xs">{sale.total}</span>
-                <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100">
-                  ✓ {sale.status}
-                </span>
-              </div>
+          {salesHistory.length === 0 ? (
+            <div className="p-4 bg-white rounded-2xl border border-gray-200 text-center text-xs text-gray-500 font-medium">
+              Belum ada riwayat penjualan hasil panen.
             </div>
-          ))}
+          ) : (
+            salesHistory.slice(0, 2).map((sale) => (
+              <div
+                key={sale.id}
+                className="p-3.5 bg-white rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between text-xs"
+              >
+                <div className="space-y-0.5 min-w-0 pr-2">
+                  <h4 className="font-black text-[#1A1C19] truncate">{sale.item}</h4>
+                  <p className="text-[10px] text-gray-500 font-semibold truncate">
+                    Pembeli: {sale.buyer} · {sale.qty}
+                  </p>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span className="font-black text-[#0F4C25] block text-xs">{sale.total}</span>
+                  <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100">
+                    ✓ {sale.status}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         <button
@@ -1196,7 +1273,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
           onClick={() => handleOpenSubView("sales_history")}
           className="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-[#0F4C25] rounded-2xl text-xs font-black border border-emerald-200 flex items-center justify-center gap-1 transition-all cursor-pointer"
         >
-          <span>Lihat Halaman Riwayat Penjualan ({SALES_HISTORY.length})</span>
+          <span>Lihat Halaman Riwayat Penjualan ({salesHistory.length})</span>
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </section>

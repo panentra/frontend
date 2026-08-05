@@ -565,11 +565,30 @@ export async function updateTask(
   });
 }
 
-export async function respondNegotiation(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-  return fetchWithAuth<Record<string, unknown>>("/api/farmer/negotiations/respond", {
-    method: "POST",
-    body: JSON.stringify(payload),
+export async function downloadSalesInvoice(orderId: number | string): Promise<Blob> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const res = await fetch(`${API_BASE_URL}/api/farmer/orders/${orderId}/invoice`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   });
+  if (!res.ok) {
+    throw new Error(`Failed to download invoice: ${res.statusText}`);
+  }
+  return res.blob();
+}
+
+export async function downloadHppReport(): Promise<Blob> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const res = await fetch(`${API_BASE_URL}/api/farmer/hpp-report`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to download HPP report: ${res.statusText}`);
+  }
+  return res.blob();
 }
 
 // ==========================================
