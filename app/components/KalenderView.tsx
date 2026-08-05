@@ -41,10 +41,11 @@ const MONTH_NAMES = [
 const YEARS = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
 
 const SEASONAL_CROPS = [
-  { id: "semua", name: "Semua Komoditas"},
-  { id: "Cabai Rawit Red", name: "Cabai Rawit Red"},
-  { id: "Pakcoy Hydro", name: "Pakcoy Hydro"},
-  { id: "Tomat Super", name: "Tomat Super" },
+  { id: "semua", name: "Semua Komoditas" },
+  { id: "Tomat", name: "Tomat" },
+  { id: "Cabai Rawit Merah", name: "Cabai Rawit Merah" },
+  { id: "Bawang Merah", name: "Bawang Merah" },
+  { id: "Jagung", name: "Jagung" },
 ];
 
 const TYPE_CONFIG = {
@@ -621,12 +622,15 @@ export default function KalenderView({ lands }: KalenderViewProps = {}) {
                   <select
                     value={newCrop}
                     onChange={(e) => setNewCrop(e.target.value)}
-                    className="w-full h-10 px-3 border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold text-gray-800 bg-white"
+                    className="w-full h-10 px-3 border border-gray-200 rounded-xl outline-none focus:border-[#0F4C25] font-bold text-gray-800 bg-white cursor-pointer"
                   >
-                    <option value="Cabai Rawit Red">Cabai Rawit Red</option>
-                    <option value="Pakcoy Hydro">Pakcoy Hydro</option>
-                    <option value="Tomat Super">Tomat Super</option>
-                    <option value="Kopi Arabika">Kopi Arabika</option>
+                    {seasonalCrops
+                      .filter((c) => c.id !== "semua")
+                      .map((crop) => (
+                        <option key={crop.id} value={crop.name}>
+                          {crop.name}
+                        </option>
+                      ))}
                   </select>
                 </div>
 
