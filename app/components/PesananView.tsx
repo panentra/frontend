@@ -187,7 +187,7 @@ export default function PesananView({
   const handleUpdateStatus = async (id: string, newStatus: OrderItem["status"]) => {
     const targetOrder = orders.find((o) => o.id === id);
     const targetNumericId = targetOrder?.numericId || parseInt(id.replace("TRX-", "")) || id;
-    const apiStatus = newStatus === "shipping" ? "shipping" : "completed";
+    const apiStatus = newStatus === "shipping" ? "shipping" : "delivered";
     try {
       await updateOrderStatus(targetNumericId, apiStatus);
     } catch (err) {
