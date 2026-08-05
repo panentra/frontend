@@ -206,6 +206,17 @@ export default function PesananView({
   const shippingCount = orders.filter((o) => o.status === "shipping").length;
   const completedCount = orders.filter((o) => o.status === "completed").length;
 
+  const calculatedRevenue = React.useMemo(() => {
+    return orders
+      .filter((o) => o.status === "completed")
+      .reduce((sum, o) => {
+        const rawTotal = parseInt(o.total.replace(/[^0-9]/g, "")) || 0;
+        return sum + rawTotal;
+      }, 0);
+  }, [orders]);
+
+  const displayRevenue = revenue && revenue > 0 ? revenue : calculatedRevenue;
+
   return (
     <div className="space-y-5 animate-fade-in pb-10">
       {/* Header Title */}
@@ -272,11 +283,9 @@ export default function PesananView({
             <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
           </div>
           <div className="text-lg font-black text-[#1A1C19] tracking-tight">
-            {revenue != null
-              ? revenue >= 1000000
-                ? `Rp ${(revenue / 1000000).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Jt`
-                : `Rp ${revenue.toLocaleString("id-ID")}`
-              : "Rp 2,40 Jt"}
+            {displayRevenue >= 1000000
+              ? `Rp ${(displayRevenue / 1000000).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Jt`
+              : `Rp ${displayRevenue.toLocaleString("id-ID")}`}
           </div>
         </div>
       </div>
