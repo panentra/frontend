@@ -313,6 +313,22 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
     if (lands && lands.length > 0) {
       return lands.map((l, index) => {
         const season = l.seasons?.[0];
+        let progressDay = 68;
+        let totalDays = 90;
+
+        if (season && season.start_date && season.end_date) {
+          const startDate = new Date(season.start_date);
+          const endDate = new Date(season.end_date);
+          const today = new Date();
+
+          const totalMs = endDate.getTime() - startDate.getTime();
+          totalDays = Math.max(1, Math.round(totalMs / (1000 * 3600 * 24)));
+
+          const passedMs = today.getTime() - startDate.getTime();
+          const daysPassedRaw = Math.round(passedMs / (1000 * 3600 * 24));
+          progressDay = Math.min(totalDays, Math.max(0, daysPassedRaw));
+        }
+
         const cropName = season?.commodity?.name || season?.name || l.commodity?.name || "Tomat";
         const areaStr = `${l.area} ${l.area_unit || "ha"}`;
         return {
@@ -321,13 +337,19 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
           area: areaStr,
           location: l.address || "Pangalengan, Kab. Bandung",
           crop: cropName,
-          progressDay: 68,
-          totalDays: 90,
+          progressDay: progressDay,
+          totalDays: totalDays,
         };
       });
     }
     return FARM_PLOTS;
   }, [lands]);
+
+  React.useEffect(() => {
+    if (plots && plots.length > 0 && activePlotId === "plot-1" && plots[0].id !== "plot-1") {
+      setActivePlotId(plots[0].id);
+    }
+  }, [plots, activePlotId]);
 
   const currentPlot = plots.find((p) => p.id === activePlotId) || plots[0];
 
