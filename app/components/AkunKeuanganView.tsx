@@ -257,7 +257,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
       try {
         const res = await getExpenses();
         if (res && res.data && res.data.length > 0) {
-          const mapped = res.data.map((item) => ({
+          const mapped = res.data.slice().reverse().map((item) => ({
             id: item.id,
             title: item.title,
             category: item.category,
@@ -327,10 +327,11 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
 
     const rawAmt = parseInt(expenseAmount);
     const targetSeason = PLANTING_SEASONS.find((s) => s.id === expenseSeasonId) || PLANTING_SEASONS[1];
+    const seasonNumericId = parseInt(expenseSeasonId.replace("season-", "")) || 3;
 
     try {
       await createExpense({
-        planting_season_id: 3,
+        planting_season_id: seasonNumericId,
         title: expenseTitle,
         category: expenseCategory,
         amount: rawAmt,
@@ -339,7 +340,7 @@ export default function AkunKeuanganView({ onSubViewChange, lands }: AkunKeuanga
 
       const res = await getExpenses();
       if (res && res.data) {
-        const mapped = res.data.map((item) => ({
+        const mapped = res.data.slice().reverse().map((item) => ({
           id: item.id,
           title: item.title,
           category: item.category,

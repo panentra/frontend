@@ -28,7 +28,7 @@ import {
   ArrowUpRight,
   Info,
 } from "lucide-react";
-import { getAuthUser, getFarmerDashboard, getLands, FarmerDashboardData, LandsResponse, Land } from "@/lib/api";
+import { getAuthUser, getFarmerDashboard, getLands, getExpenses, createExpense, FarmerDashboardData, LandsResponse, Land } from "@/lib/api";
 import BottomNavbar from "./BottomNavbar";
 import Button from "./Button";
 import KalenderView from "./KalenderView";
@@ -190,8 +190,27 @@ export default function DashboardPetani() {
       }
     }
 
+    async function loadExpensesData() {
+      try {
+        const expRes = await getExpenses();
+        if (expRes && expRes.data && expRes.data.length > 0) {
+          const mapped = expRes.data.slice().reverse().map((item) => ({
+            id: item.id,
+            title: item.title,
+            category: item.category,
+            amount: item.amount,
+            date: "5 Agu 2026",
+          }));
+          setProductionExpenses(mapped);
+        }
+      } catch (err) {
+        console.warn("Gagal memuat expenses API di DashboardPetani:", err);
+      }
+    }
+
     loadDashboardData();
     loadLandsData();
+    loadExpensesData();
   }, []);
   const [viewMode, setViewMode] = useState<"dashboard" | "rekomendasi" | "jual">("dashboard");
   const [isChatRoomActive, setIsChatRoomActive] = useState(false);
@@ -224,13 +243,8 @@ export default function DashboardPetani() {
     estimatedHarvestKg: 1280,
   });
 
-  // Financial Production Expense State (Workflow Stage 2)
-  const [productionExpenses, setProductionExpenses] = useState([
-    { id: 1, title: "Bibit Cabai Unggul (10 Pack)", category: "Bibit", amount: 150000, date: "25 Jul 2026" },
-    { id: 2, title: "Pupuk NPK 16-16-16 (50kg)", category: "Pupuk", amount: 480000, date: "28 Jul 2026" },
-    { id: 3, title: "Pestisida Organik Neem (2L)", category: "Obat", amount: 120000, date: "30 Jul 2026" },
-    { id: 4, title: "Upah Buruh Olah Lahan (2 Hari)", category: "Tenaga Kerja", amount: 300000, date: "1 Agu 2026" },
-  ]);
+  // Financial Production Expense State (Workflow Stage 2) - Loaded dynamically from API
+  const [productionExpenses, setProductionExpenses] = useState<{ id: number; title: string; category: string; amount: number; date: string }[]>([]);
 
   // Form states for adding expense
   const [expCategory, setExpCategory] = useState("Pupuk");
@@ -248,21 +262,52 @@ export default function DashboardPetani() {
 
   const activeData = COMMODITY_PRICE_DATA[selectedCommodity];
 
-  const handleAddExpenseSubmit = (e: React.FormEvent) => {
+  const handleAddExpenseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!expTitle || !expAmount) return;
-    const newExp = {
+
+    const amt = parseInt(expAmount);
+    const newTempExp = {
       id: Date.now(),
       title: expTitle,
       category: expCategory,
-      amount: parseInt(expAmount),
+      amount: amt,
       date: "Hari Ini",
     };
-    setProductionExpenses([newExp, ...productionExpenses]);
+
+    // Optimistically update UI
+    setProductionExpenses((prev) => [newTempExp, ...prev]);
+
+    const titleToSave = expTitle;
+    const catToSave = expCategory;
+
     setExpTitle("");
     setExpAmount("");
     setShowExpenseModal(false);
-    alert("Pengeluaran produksi berhasil dicatat! HPP otomatis diperbarui.");
+
+    try {
+      await createExpense({
+        planting_season_id: 3,
+        title: titleToSave,
+        category: catToSave,
+        amount: amt,
+        note: "Toko Tani",
+      });
+
+      const expRes = await getExpenses();
+      if (expRes && expRes.data) {
+        const mapped = expRes.data.slice().reverse().map((item) => ({
+          id: item.id,
+          title: item.title,
+          category: item.category,
+          amount: item.amount,
+          date: "5 Agu 2026",
+        }));
+        setProductionExpenses(mapped);
+      }
+    } catch (err) {
+      console.warn("Gagal createExpense API:", err);
+    }
   };
 
   const handleSaleSubmit = (e: React.FormEvent) => {
