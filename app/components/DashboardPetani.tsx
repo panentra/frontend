@@ -184,6 +184,32 @@ export default function DashboardPetani() {
         const landsRes = await getLands();
         if (landsRes) {
           setLandsData(landsRes);
+          if (landsRes.data && landsRes.data.length > 0) {
+            const firstLand = landsRes.data[0];
+            const activeSeason = firstLand.seasons?.[0];
+            if (activeSeason && activeSeason.start_date && activeSeason.end_date) {
+              const startDate = new Date(activeSeason.start_date);
+              const endDate = new Date(activeSeason.end_date);
+              const today = new Date();
+
+              const totalMs = endDate.getTime() - startDate.getTime();
+              const totalDays = Math.max(1, Math.round(totalMs / (1000 * 3600 * 24)));
+
+              const passedMs = today.getTime() - startDate.getTime();
+              const daysPassedRaw = Math.round(passedMs / (1000 * 3600 * 24));
+              const daysPassed = Math.min(totalDays, Math.max(0, daysPassedRaw));
+
+              const cropName = activeSeason.commodity?.name || activeSeason.name || firstLand.commodity?.name || firstLand.name || "Tomat";
+              const estKg = activeSeason.estimated_harvest_kg || 2100;
+
+              setActiveCrop({
+                name: cropName,
+                daysPassed: daysPassed,
+                totalDays: totalDays,
+                estimatedHarvestKg: estKg,
+              });
+            }
+          }
         }
       } catch (err) {
         console.warn("Gagal memuat lahan API:", err);
