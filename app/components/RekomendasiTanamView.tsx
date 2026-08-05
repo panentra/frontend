@@ -21,7 +21,7 @@ import {
   Calendar,
 } from "lucide-react";
 import Button from "./Button";
-import { getLands, createSeason, Land } from "@/lib/api";
+import { getLands, getFarmerDashboard, createSeason, Land } from "@/lib/api";
 
 interface CropRecommendation {
   id: string;
@@ -127,19 +127,43 @@ export default function RekomendasiTanamView({
     }, 4000);
   }, []);
 
+  // Dynamic Farmer & Land Location from API
+  const [farmerLocationName, setFarmerLocationName] = useState<string>("Lembang");
+  const [farmerLandDetail, setFarmerLandDetail] = useState<string>("1.200 mdpl");
+
   React.useEffect(() => {
-    async function loadLands() {
+    async function loadFarmerLocationData() {
       try {
-        const res = await getLands();
-        if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
-          setLandsList(res.data);
-          setSelectedLandId(res.data[0].id);
+        const [dashRes, landsRes] = await Promise.allSettled([
+          getFarmerDashboard(),
+          getLands(),
+        ]);
+
+        let foundLoc = "";
+
+        if (landsRes.status === "fulfilled" && landsRes.value?.data && landsRes.value.data.length > 0) {
+          setLandsList(landsRes.value.data);
+          setSelectedLandId(landsRes.value.data[0].id);
+          const firstLand = landsRes.value.data[0];
+          foundLoc = firstLand.address || firstLand.name || "";
+          if (firstLand.area_ha) {
+            setFarmerLandDetail(`${firstLand.area_ha} Ha`);
+          }
+        }
+
+        if (!foundLoc && dashRes.status === "fulfilled" && dashRes.value && (dashRes.value as any).user?.location) {
+          foundLoc = (dashRes.value as any).user.location;
+        }
+
+        if (foundLoc) {
+          const mainDistrict = foundLoc.split(",")[0].trim().replace(/^Kebun\s+/i, "");
+          setFarmerLocationName(mainDistrict || "Lembang");
         }
       } catch (err) {
-        console.warn("Gagal memuat lands di RekomendasiTanamView:", err);
+        console.warn("Gagal memuat lokasi petani dari API:", err);
       }
     }
-    loadLands();
+    loadFarmerLocationData();
   }, []);
 
   const handleOpenPlantingModal = (crop: CropRecommendation) => {
@@ -223,7 +247,7 @@ export default function RekomendasiTanamView({
         {/* Text Content (Layered ON TOP) */}
         <div className="space-y-1.5 z-10 relative max-w-[62%]">
           <h2 className="text-base sm:text-lg font-black tracking-tight leading-snug drop-shadow-md">
-            Rekomendasi Musim Tanam Lembang
+            Rekomendasi Musim Tanam {farmerLocationName}
           </h2>
           <p className="text-xs text-emerald-100/90 leading-relaxed font-medium drop-shadow-sm">
             Sistem telah memproses data cuaca 3 bulan ke depan & histori harga pasar terdekat untuk hasil panen paling menguntungkan.
@@ -251,7 +275,7 @@ export default function RekomendasiTanamView({
         <div className="grid grid-cols-3 gap-2 text-xs">
           <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-2xs space-y-1 text-center flex flex-col justify-center items-center min-h-[76px]">
             <span className="text-[10px] font-bold text-gray-500 block">Lokasi Lahan</span>
-            <span className="text-xs font-black text-[#1A1C19]">Lembang (1.200 mdpl)</span>
+            <span className="text-xs font-black text-[#1A1C19]">{farmerLocationName} ({farmerLandDetail})</span>
           </div>
 
           <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-2xs space-y-1 text-center flex flex-col justify-center items-center min-h-[76px]">
@@ -358,7 +382,7 @@ export default function RekomendasiTanamView({
                 <span className="font-black text-[#0F4C25] flex items-center gap-1 text-[11px]">
                   Analisis AI Panentra:
                 </span>
-                <p>{crop.reason}</p>
+                <p>{crop.reason.replaceAll("Lembang", farmerLocationName)}</p>
               </div>
 
               {/* Key Metrics Grid */}
