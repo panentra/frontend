@@ -379,12 +379,16 @@ export async function deleteLand(id: number | string): Promise<{ message: string
   });
 }
 
-export async function getSeasons(): Promise<Season[]> {
-  return fetchWithAuth<Season[]>("/api/farmer/seasons");
+export interface SeasonResponse {
+  data: Season[];
 }
 
-export async function createSeason(payload: Record<string, unknown>): Promise<Season> {
-  return fetchWithAuth<Season>("/api/farmer/seasons", {
+export async function getSeasons(landId: number | string = 3): Promise<SeasonResponse> {
+  return fetchWithAuth<SeasonResponse>(`/api/farmer/lands/${landId}/seasons`);
+}
+
+export async function createSeason(landId: number | string = 3, payload: Record<string, unknown>): Promise<{ data: Season }> {
+  return fetchWithAuth<{ data: Season }>(`/api/farmer/lands/${landId}/seasons`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
